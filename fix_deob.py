@@ -2,22 +2,50 @@
 """
 Fix decompiler bugs in YBA deobfuscated Lua script.
 
-1. Truthiness inversions: flips all bare `if [not] VAR then` / `elseif [not] VAR then`
-   Does NOT touch == ~= < > <= >= comparisons (those aren't inverted by the decompiler).
-2. Setlist bugs: replaces `-- setlist _rN (batch=K)` comments with actual table packing.
-3. Targeted patches: fixes specific decompiler artifacts that general passes can't handle:
-   a. Namecall hook varargs passthrough (decompiler drops multi-arg forwarding)
-   b. Game-ready wait loop missing break (decompiler drops break from while-true)
-   c. Stand farm _G.YBAItemFarm bridge (startStandFarm/stopStandFarm registration)
-4. Broken if/else: moves assignments back inside their if blocks (decompiler drops them outside).
-5. Varargs passthrough: replaces register captures of ... with direct forwarding.
-6. Timeout breaks: inserts missing break in `if NUMBER < _rN then end` patterns.
-7. Branding: renames YBA Hub to YBA / YBA Script in user-facing strings.
-8. Key stubs: replaces key-checking functions with bypass stubs.
+Passes run in this order:
+0b. Structural repairs: four one-off blocks the decompiler left open to the end of the file
+    (selectedFarmItems cleanup loop, anti-teleport bypass else, game-ready GameModes or-chain,
+    outer `while true do` around the game-ready wait).
+0.  TESTSET restoration: `X = Y` / `if [not] X then` where Y is the function's own register
+    or param is printed with the correct sense; mark it so Pass 1 leaves it, and move its
+    right operand / lost ternary else into place.
+1.  Truthiness inversions: flips bare `if [not] VAR then` / `elseif [not] VAR then` (TEST).
+    Does NOT touch == ~= < > <= >= comparisons (those aren't inverted by the decompiler).
+1b. Boolean materializations: `x = (a == b)` whose lost `else x = true` nested the rest of
+    the block inside the if.
+2.  Setlist bugs: replaces `-- setlist _rN (batch=K)` comments with table packing.
+2b. Multi-return forwarding: `f(g())` printed with a fixed register range of stale values.
+3.  Targeted patches: namecall varargs, game-ready break, stand farm bridge, first-spawn loop.
+3b. Or-chains: `if a or b then REST end` printed as nested tests with an empty innermost if.
+4.  Broken if/else: moves dropped right operands (`x = x or v`) back inside their empty ifs.
+5.  Varargs passthrough: replaces register captures of ... with direct forwarding.
+6.  Timeout breaks: inserts missing break in `if NUMBER < _rN then end` patterns.
+7.  Branding: renames YBA Hub to YBA / YBA Script in user-facing strings.
+8.  Key stubs: replaces key-checking functions with bypass stubs.
+8b. While-condition chains: `while A and B do ... end` printed without its exits.
+8c. Loop tail exits: search loops whose break was dropped and whose wait went into an else.
+9.  Missing breaks in remaining while-true loops + safety yields.
+10. Players service upvalue fixes.
+11. Dropped return-false blocks (single tests; chains are handled by 3b).
+12. Game-ready initial skip.
+13. Scope leaks: registers declared `local` inside a nested block but used outside it are
+    hoisted to function scope; registers sharing a name with an upvalue are renamed.
+14. Garbled empty strings: 2-byte garbage constants that stand for "".
 """
 
 import re
 import sys
+from collections import defaultdict
+
+def split_lines(text):
+    """Split on newlines only, keeping line endings. str.splitlines() also splits on
+    other separators such as 0x85, which occurs inside latin-1 string literals here."""
+    parts = text.split('\n')
+    out = [p + '\n' for p in parts[:-1]]
+    if parts[-1]:
+        out.append(parts[-1])
+    return out
+
 
 # --- INVERSION FIX ---
 
@@ -34,7 +62,9 @@ BARE_TRUTH_RE = re.compile(
 )
 
 def fix_inversion(line):
-    """Flip a bare truthiness test if present."""
+    """Flip a bare truthiness test if present (TESTSET-marked tests are already correct)."""
+    if TS_MARK in line:
+        return line
     stripped = line.rstrip('\r\n')
     m = BARE_TRUTH_RE.match(stripped)
     if not m:
@@ -193,7 +223,10 @@ def fix_setlists(lines):
             i += 1
             continue
 
-        # General case: pack values into table
+        # General case: pack values into table.
+        # SETLIST stores the final values of registers t+1..L, where L is the register written
+        # by the last assignment before it. Registers are reused while elements are computed
+        # (temporaries, call arguments above L), so each register is packed once, in order.
         # For batch=1: _rN = {val1, val2, ...} or _rN[1], _rN[2] = val1, val2
         # For batch>1: append at offset
 
@@ -201,7 +234,7 @@ def fix_setlists(lines):
             # We can replace the table creation with an initializer
             # But only if the values are simple register references
             # For safety, use explicit index assignment
-            reg_names = [v[1] for v in sorted(values, key=lambda x: x[0])]
+            reg_names = [f'_r{n}' for n in range(tnum + 1, values[-1][0] + 1)]
 
             # Generate index assignments
             pack_lines = []
@@ -220,7 +253,7 @@ def fix_setlists(lines):
             BATCH_SIZE = 50
             offset = (batch - 1) * BATCH_SIZE
 
-            reg_names = [v[1] for v in sorted(values, key=lambda x: x[0])]
+            reg_names = [f'_r{n}' for n in range(tnum + 1, values[-1][0] + 1)]
             pack_lines = []
             for idx, rname in enumerate(reg_names, offset + 1):
                 pack_lines.append(f"{indent}{table_reg}[{idx}] = {rname}")
@@ -232,7 +265,7 @@ def fix_setlists(lines):
             stats['fixed'] += 1
         else:
             # Couldn't determine table creation, use index assignments
-            reg_names = [v[1] for v in sorted(values, key=lambda x: x[0])]
+            reg_names = [f'_r{n}' for n in range(tnum + 1, values[-1][0] + 1)]
             pack_lines = []
             for idx, rname in enumerate(reg_names, 1):
                 pack_lines.append(f"{indent}{table_reg}[{idx}] = {rname}")
@@ -382,6 +415,49 @@ def _gameready_initial_skip(text):
 
 
 
+# 3e: First-spawn wait (`_r79`): `while not (_r65 and _r65()) do task.wait(0.5) end` followed
+# by one-time first-spawn code. The decompiler put that code inside the loop's inner if and
+# dropped the exit, so once in game it re-ran (log, _r73(), _r69()) every frame. Rebuild the
+# loop with its break and move the first-spawn block after it.
+FIRST_SPAWN_HEAD = [
+    '_r79 = function()', '    while true do', '        local _r0 = _r65', '        if _r0 then',
+    '            _r0 = _r65', '            _r0 = _r0()', '            if _r0 then',
+]
+FIRST_SPAWN_TAIL = [
+    '            end', '        else', '            _r0 = task', '            _r0 = _r0.wait',
+    '            _r1 = 0.5', '            _r0(_r1)', '        end', '    end',
+]
+
+
+def _first_spawn_loop(text):
+    lines = split_lines(text)
+    k = next((n for n, ln in enumerate(lines)
+              if '"FIRST SPAWN (strict main game) reached"' in ln), None)
+    if k is None:
+        return text, 0
+    h = k
+    while h > 0 and lines[h].strip() != '_r79 = function()':
+        h -= 1
+    base = lines[h][:_indent(lines[h])]
+    n = len(FIRST_SPAWN_HEAD)
+    assert [ln.rstrip('\r\n') for ln in lines[h:h + n]] == [base + s for s in FIRST_SPAWN_HEAD], \
+        'first-spawn loop: unexpected head'
+    t = h + n
+    while lines[t].rstrip('\r\n') != base + FIRST_SPAWN_TAIL[0]:
+        t += 1
+    m = len(FIRST_SPAWN_TAIL)
+    assert [ln.rstrip('\r\n') for ln in lines[t:t + m]] == [base + s for s in FIRST_SPAWN_TAIL], \
+        'first-spawn loop: unexpected tail'
+    body = [ln[12:] if ln.startswith(base + ' ' * 16) else ln for ln in lines[h + n:t]]
+    loop = [base + s + '\n' for s in (
+        '_r79 = function()', '    while true do', '        local _r0 = _r65', '        if _r0 then',
+        '            _r0 = _r65', '            _r0 = _r0()', '        end', '        if _r0 then',
+        '            break', '        end', '        _r0 = task', '        _r0 = _r0.wait',
+        '        _r1 = 0.5', '        _r0(_r1)', '    end')]
+    lines[h:t + m] = loop + body
+    return ''.join(lines), 1
+
+
 def apply_targeted_patches(text):
     """Apply targeted fixes for specific decompiler artifacts."""
     stats = {}
@@ -395,83 +471,46 @@ def apply_targeted_patches(text):
     text, n = STANDFARM_BRIDGE_RE.subn(STANDFARM_BRIDGE_REPL, text)
     stats['standfarm_bridge'] = n
 
+    text, n = _first_spawn_loop(text)
+    stats['first_spawn_loop'] = n
+
     return text, stats
 
 
 # --- BROKEN IF/ELSE FIX ---
-# The decompiler places the default-value assignment outside the if block:
-#   if [not] VAR then / end / VAR = VALUE   (assignment always executes)
-# Fix: move the assignment inside:
-#   if [not] VAR then / VAR = VALUE / end   (assignment only when condition holds)
+# `x = x or v` / `x = x and v` (TEST in place) decompile to an empty if followed by the
+# statements that compute the right operand, which then always execute:
+#   if [not] VAR then / end / VAR = ... [/ VAR = VAR(...) ...]
+# Fix: move the whole right operand (see operand_extent) inside the if:
+#   if [not] VAR then / VAR = ... [/ VAR = VAR(...) ...] / end
 
 BARE_IF_RE = re.compile(r'^(\s*)if\s+(?:not\s+)?(_r\d+|_p\d+)\s+then\s*$')
 BARE_END_RE = re.compile(r'^(\s*)end\s*$')
 
 def fix_broken_if_else(lines):
-    """Move assignments back inside their if blocks."""
-    result = []
-    i = 0
+    """Move dropped right operands back inside their empty if blocks."""
+    lines = list(lines)
     count = 0
-
-    while i < len(lines):
-        if i + 2 >= len(lines):
-            result.append(lines[i])
-            i += 1
-            continue
-
-        s1 = lines[i].rstrip('\r\n')
-        s2 = lines[i + 1].rstrip('\r\n')
-        s3 = lines[i + 2].rstrip('\r\n')
-
-        m_if = BARE_IF_RE.match(s1)
+    for i in range(len(lines) - 3, -1, -1):
+        m_if = BARE_IF_RE.match(lines[i].rstrip('\r\n'))
         if not m_if:
-            result.append(lines[i])
-            i += 1
             continue
-
-        indent = m_if.group(1)
-        var = m_if.group(2)
-
-        m_end = BARE_END_RE.match(s2)
+        indent, var = m_if.group(1), m_if.group(2)
+        m_end = BARE_END_RE.match(lines[i + 1].rstrip('\r\n'))
         if not m_end or m_end.group(1) != indent:
-            result.append(lines[i])
-            i += 1
             continue
-
-        m_assign = re.match(
-            r'^' + re.escape(indent) + re.escape(var) + r'\s*=\s*(.+)$', s3
-        )
-        if not m_assign:
-            result.append(lines[i])
-            i += 1
+        if not re.match(r'^' + re.escape(indent) + re.escape(var) + r'\s*=\s*(.+)$',
+                        lines[i + 2].rstrip('\r\n')):
             continue
-
-        # Check if the NEXT line calls VAR (VAR = VAR(...) or VAR = VAR.X).
-        # If so, the assignment is a new computation (e.g. VAR = getgenv; VAR = VAR()),
-        # NOT a default value — it must stay unconditional.
-        skip = False
-        if i + 3 < len(lines):
-            s4 = lines[i + 3].rstrip('\r\n')
-            call_pat = r'^\s*' + re.escape(var) + r'\s*=\s*' + re.escape(var) + r'[\.(]'
-            if re.match(call_pat, s4):
-                skip = True
-
-        if skip:
-            # Keep the empty if block and unconditional assignment as-is
-            result.append(lines[i])
-            result.append(lines[i + 1])
-            result.append(lines[i + 2])
-            i += 3
+        if var.startswith('_r'):
+            stop = operand_extent(lines, i + 2, len(indent), var)
+        else:
+            stop = i + 3
+        if stop <= i + 2:
             continue
-
-        ending = lines[i][len(s1):]
-        result.append(lines[i])
-        result.append(f"{indent}    {var} = {m_assign.group(1)}{ending}")
-        result.append(lines[i + 1])
+        lines[i + 1:stop] = ['    ' + ln for ln in lines[i + 2:stop]] + [lines[i + 1]]
         count += 1
-        i += 3
-
-    return result, count
+    return lines, count
 
 
 # --- VARARGS PASSTHROUGH FIX ---
@@ -590,7 +629,7 @@ def fix_branding(text):
 
 def fix_key_stubs(text):
     """Replace key-checking functions with bypass stubs."""
-    lines = text.splitlines(True)
+    lines = split_lines(text)
     # Find the sequence: _r165 = function(_p1) ... _r166 = function() ...
     # _r167 = function() ... _r168 = function() ... _r169 = nil
     # at the specific indent level where they're the key system functions.
@@ -840,6 +879,7 @@ def fix_players_upvalue(lines):
 # Fix: move the two lines inside the empty if block.
 
 RETURN_FALSE_RE = re.compile(r'^(\s*)(_r\d+)\s*=\s*false\s*$')
+SIMPLE_STMT_RE = re.compile(r'^(?:local\s+)?_r\d+(?:\s*,\s*_r\d+)*\s*=\s*[^\n]*$')
 DO_RETURN_RE = re.compile(r'^(\s*)do return (_r\d+) end\s*$')
 
 def fix_dropped_returns(lines):
@@ -904,6 +944,1393 @@ def fix_dropped_returns(lines):
     return result, count
 
 
+# --- SCOPE ANALYSIS ---
+# The decompiler emits `local _rN` at a register's first assignment even when that
+# assignment sits inside a nested block. Later uses outside the block then resolve to a
+# global or to an enclosing function's variable of the same name. In the VM every
+# register is function-wide, so these are leaks. This section tokenizes the output,
+# rebuilds lexical scopes, and finds those leaks (used by Pass 0 and Pass 13).
+
+KEYWORDS = {
+    'and', 'break', 'do', 'else', 'elseif', 'end', 'false', 'for', 'function', 'if', 'in',
+    'local', 'nil', 'not', 'or', 'repeat', 'return', 'then', 'true', 'until', 'while',
+}
+REG_RE = re.compile(r'^_[rp]\d+$')
+
+TOKEN_RE = re.compile(r'''
+    (?P<ws>[ \t\r]+)
+  | (?P<nl>\n)
+  | (?P<lcomment>--\[(?P<lceq>=*)\[.*?\](?P=lceq)\])
+  | (?P<comment>--[^\n]*)
+  | (?P<lstring>\[(?P<lseq>=*)\[.*?\](?P=lseq)\])
+  | (?P<string>"(?:\\.|\\\n|[^"\\\n])*"|'(?:\\.|\\\n|[^'\\\n])*')
+  | (?P<number>0[xX][0-9a-fA-F]+|\d+\.?\d*(?:[eE][+-]?\d+)?|\.\d+(?:[eE][+-]?\d+)?)
+  | (?P<name>[A-Za-z_][A-Za-z0-9_]*)
+  | (?P<op>\.\.\.|\.\.|==|~=|<=|>=|::|[-+*/%^#<>=(){}\[\];:,.])
+''', re.S | re.X)
+
+
+def tokenize(text):
+    """Yield (kind, value, line, offset). Strings/comments are dropped but counted for lines."""
+    toks = []
+    line = 1
+    pos = 0
+    n = len(text)
+    while pos < n:
+        m = TOKEN_RE.match(text, pos)
+        if not m:
+            raise ValueError(f'cannot tokenize at line {line}: {text[pos:pos + 30]!r}')
+        kind = m.lastgroup
+        val = m.group(0)
+        if kind == 'name':
+            toks.append(('kw' if val in KEYWORDS else 'name', val, line, pos))
+        elif kind == 'op':
+            toks.append(('op', val, line, pos))
+        elif kind in ('number', 'string', 'lstring'):
+            toks.append(('lit', None, line, pos))
+        line += val.count('\n')
+        pos = m.end()
+    return toks
+
+
+class Block:
+    __slots__ = ('kind', 'locals', 'func', 'line')
+
+    def __init__(self, kind, func, line):
+        self.kind, self.func, self.line = kind, func, line
+        self.locals = {}
+
+
+class Func:
+    __slots__ = ('parent', 'line', 'blocks', 'decls', 'uses', 'body_tok', 'header_tok', 'end_tok', 'children')
+
+    def __init__(self, parent, line, header_tok):
+        self.parent, self.line, self.header_tok = parent, line, header_tok
+        self.blocks, self.decls, self.uses, self.children = [], [], [], []
+        self.body_tok = None
+        self.end_tok = None
+
+
+class Decl:
+    __slots__ = ('name', 'line', 'tok', 'block', 'is_param', 'captured_by')
+
+    def __init__(self, name, line, tok, block, is_param=False):
+        self.name, self.line, self.tok, self.block, self.is_param = name, line, tok, block, is_param
+        self.captured_by = []
+
+
+def _resolve(F, name):
+    for b in reversed(F.blocks):
+        d = b.locals.get(name)
+        if d is not None:
+            return 'own', d
+    G = F.parent
+    while G is not None:
+        for b in reversed(G.blocks):
+            d = b.locals.get(name)
+            if d is not None:
+                return 'up', d
+        G = G.parent
+    return 'global', None
+
+
+def analyze(toks):
+    """Walk tokens, build function/block scopes, record register declarations and uses."""
+    main = Func(None, 0, -1)
+    main.blocks.append(Block('func', main, 0))
+    main.body_tok = 0
+    funcs = [main]
+    fstack = [main]
+    pending = []          # [func, names, line, depth, tok]
+    for_pending = []      # stack of (block, names) waiting for their header 'do'
+    until_line = None
+    n = len(toks)
+    i = 0
+    while i < n:
+        kind, val, line, _ = toks[i]
+        F = fstack[-1]
+        if pending:
+            keep = []
+            for p in pending:
+                if line > p[2] and fstack[-1] is p[0] and len(p[0].blocks) == p[3]:
+                    blk = p[0].blocks[-1]
+                    for nm in p[1]:
+                        d = Decl(nm, p[2], p[4], blk)
+                        blk.locals[nm] = d
+                        p[0].decls.append(d)
+                elif len(p[0].blocks) < p[3] or p[0] not in fstack:
+                    pass  # its block closed before activation; drop
+                else:
+                    keep.append(p)
+            pending = keep
+        if until_line is not None and line > until_line:
+            F.blocks.pop()
+            until_line = None
+        if kind == 'kw':
+            if val == 'function':
+                j = i + 1
+                is_method = False
+                while toks[j][0] == 'name' or (toks[j][0] == 'op' and toks[j][1] in ('.', ':')):
+                    if toks[j][1] == ':':
+                        is_method = True
+                    if toks[j][0] == 'name' and REG_RE.match(toks[j][1]) and j == i + 1:
+                        res, d = _resolve(F, toks[j][1])
+                        F.uses.append((toks[j][1], toks[j][2], j, res, d))
+                    j += 1
+                assert toks[j][1] == '(', f'expected ( at line {toks[j][2]}'
+                NF = Func(F, line, i)
+                root = Block('func', NF, line)
+                NF.blocks.append(root)
+                if is_method:
+                    root.locals['self'] = Decl('self', line, j, root, True)
+                j += 1
+                while toks[j][1] != ')':
+                    if toks[j][0] == 'name':
+                        d = Decl(toks[j][1], line, j, root, True)
+                        root.locals[toks[j][1]] = d
+                    j += 1
+                NF.body_tok = j + 1
+                F.children.append(NF)
+                fstack.append(NF)
+                funcs.append(NF)
+                i = j + 1
+                continue
+            if val == 'local':
+                if toks[i + 1][1] == 'function':
+                    nm = toks[i + 2][1]
+                    d = Decl(nm, line, i, F.blocks[-1])
+                    F.blocks[-1].locals[nm] = d
+                    F.decls.append(d)
+                    i += 1
+                    continue
+                j = i + 1
+                names = []
+                while toks[j][0] == 'name':
+                    names.append(toks[j][1])
+                    if toks[j + 1][1] == ',':
+                        j += 2
+                    else:
+                        j += 1
+                        break
+                pending.append([F, names, line, len(F.blocks), i])
+                i = j
+                continue
+            if val == 'for':
+                j = i + 1
+                names = []
+                while toks[j][1] not in ('=', 'in'):
+                    if toks[j][0] == 'name':
+                        names.append(toks[j][1])
+                    j += 1
+                blk = Block('for', F, line)
+                F.blocks.append(blk)
+                for_pending.append((blk, names, i))
+                i = j
+                continue
+            if val == 'while':
+                F.blocks.append(Block('while', F, line))
+                for_pending.append((None, [], i))
+            elif val == 'do':
+                if for_pending:
+                    blk, names, ti = for_pending.pop()
+                    if blk is not None:
+                        for nm in names:
+                            d = Decl(nm, line, ti, blk)
+                            blk.locals[nm] = d
+                            F.decls.append(d)
+                else:
+                    F.blocks.append(Block('do', F, line))
+            elif val == 'then':
+                F.blocks.append(Block('then', F, line))
+            elif val == 'elseif':
+                F.blocks.pop()
+            elif val == 'else':
+                F.blocks.pop()
+                F.blocks.append(Block('else', F, line))
+            elif val == 'repeat':
+                F.blocks.append(Block('repeat', F, line))
+            elif val == 'until':
+                until_line = line
+            elif val == 'end':
+                F.blocks.pop()
+                if not F.blocks:
+                    F.end_tok = i
+                    fstack.pop()
+        elif kind == 'name' and REG_RE.match(val):
+            prev = toks[i - 1]
+            if not (prev[0] == 'op' and prev[1] in ('.', ':')):
+                res, d = _resolve(F, val)
+                F.uses.append((val, line, i, res, d))
+                if res == 'up':
+                    d.captured_by.append(F)
+        i += 1
+    assert len(fstack) == 1, f'unbalanced: {len(fstack)} functions open'
+    main.end_tok = n
+    return funcs
+
+
+
+# --- Per-line helpers (decompiler output has one statement per line) ---
+
+REG_NUM_RE = re.compile(r'^_r(\d+)$')
+
+
+def own_line_tokens(F, toks):
+    """Map line -> token indices in F's own body, excluding nested function spans."""
+    spans = sorted((c.header_tok, c.end_tok) for c in F.children)
+    out = {}
+    lo = F.body_tok
+    hi = F.end_tok if F.end_tok is not None else len(toks)
+    si = 0
+    i = lo
+    while i < hi:
+        while si < len(spans) and spans[si][1] < i:
+            si += 1
+        if si < len(spans) and spans[si][0] <= i <= spans[si][1]:
+            i = spans[si][1] + 1
+            continue
+        out.setdefault(toks[i][2], []).append(i)
+        i += 1
+    return out
+
+
+def _top_eq(toks, lt):
+    """Position (in lt) of the top-level assignment '=', or None."""
+    depth = 0
+    for pos, ti in enumerate(lt):
+        kind, v = toks[ti][0], toks[ti][1]
+        if kind != 'op':
+            continue
+        if v in ('(', '[', '{'):
+            depth += 1
+        elif v in (')', ']', '}'):
+            depth -= 1
+        elif v == '=' and depth == 0:
+            return pos
+    return None
+
+
+def classify_use(toks, lt, pos):
+    """Classify the register occurrence lt[pos]: 'owrite' | 'cwrite' | 'oread' | 'cread'.
+
+    c* = a plain copy (`X = R` / `R = _rX`), the only shape a GETUPVAL/SETUPVAL can take.
+    """
+    first = toks[lt[0]][1]
+    if first == 'for':
+        for q, ti in enumerate(lt):
+            if toks[ti][1] in ('in', '='):
+                return 'owrite' if pos < q else 'oread'
+        return 'oread'
+    start = 1 if first == 'local' else 0
+    eq = _top_eq(toks, lt)
+    if start == 1 and (eq is None or pos < eq):
+        return 'owrite'          # declaration
+    if eq is None:
+        return 'oread'
+    lhs, rhs = lt[start:eq], lt[eq + 1:]
+    if pos < eq:
+        nxt = toks[lt[pos + 1]][1]
+        if nxt not in (',', '='):
+            return 'oread'       # R.x = v / R[k] = v
+        if len(lhs) == 1 and len(rhs) == 1 and REG_RE.match(toks[rhs[0]][1] or ''):
+            return 'cwrite'
+        return 'owrite'
+    if len(lhs) == 1 and len(rhs) == 1 and toks[lhs[0]][0] == 'name':
+        return 'cread'
+    return 'oread'
+
+
+def call_kill_threshold(toks, lt):
+    """For a call statement `[local] [a, b =] _rB(...)`, registers numbered >= B + #results
+    hold garbage afterwards. Return that threshold, or None if the line is not such a call."""
+    start = 1 if toks[lt[0]][1] == 'local' else 0
+    eq = _top_eq(toks, lt)
+    if eq is None:
+        cpos, nres = start, 0
+    else:
+        cpos = eq + 1
+        nres = sum(1 for ti in lt[start:eq] if toks[ti][0] == 'name')
+    if cpos + 1 >= len(lt):
+        return None
+    m = REG_NUM_RE.match(toks[lt[cpos]][1] or '')
+    if not m or toks[lt[cpos + 1]][1] != '(':
+        return None
+    depth = 0
+    for q in range(cpos + 1, len(lt)):
+        v = toks[lt[q]][1]
+        if v == '(':
+            depth += 1
+        elif v == ')':
+            depth -= 1
+            if depth == 0:
+                return int(m.group(1)) + nres if q == len(lt) - 1 else None
+    return None
+
+def find_leaks(funcs, toks=None):
+    """Return {func: {name: {'decls': set(Decl), 'uses': [(line, tok, res)]}}} for leaked registers.
+
+    A use is a leak when it does not resolve to one of the function's own visible locals,
+    yet the function declared that register earlier in its own body. With toks given,
+    registers a (non-main) function writes with a non-copy write but never declares are
+    reported too (their declaration set is empty): such a write can only target the
+    function's own register.
+    """
+    out = {}
+    for F in funcs:
+        by_name = {}
+        for d in F.decls:
+            by_name.setdefault(d.name, []).append(d)
+        for name, line, tok, res, _ in F.uses:
+            if res == 'own' or name not in by_name:
+                continue
+            earlier = [d for d in by_name[name] if d.tok < tok]
+            if not earlier:
+                continue
+            ent = out.setdefault(F, {}).setdefault(name, {'decls': set(), 'uses': []})
+            ent['decls'].add(earlier[-1])
+            ent['uses'].append((line, tok, res))
+        if toks is None or F.parent is None:
+            continue
+        lines_F = own_line_tokens(F, toks)
+        # Non-copy writes before a register's first declaration can only target F's own
+        # register (an upvalue is written only by a plain copy).
+        for name, line, tok, res, _ in F.uses:
+            if res == 'own' or name not in by_name or not name.startswith('_r'):
+                continue
+            lt = lines_F.get(line)
+            if lt and tok in lt and tok < min(d.tok for d in by_name[name]) \
+                    and classify_use(toks, lt, lt.index(tok)) == 'owrite':
+                ent = out.setdefault(F, {}).setdefault(name, {'decls': set(), 'uses': []})
+                ent['uses'].append((line, tok, res))
+        # `R = R` / `local R = R`: GETUPVAL of an enclosing variable that shares its name
+        # with F's own register R. Always a collision, leak or not.
+        for name, line, tok, res, _ in F.uses:
+            lt = lines_F.get(line)
+            if lt and name.startswith('_r') and [toks[t][1] for t in lt] in (
+                    [name, '=', name], ['local', name, '=', name]):
+                ent = out.setdefault(F, {}).setdefault(name, {'decls': set(), 'uses': []})
+                ent['uses'].append((line, tok, res))
+        declared = set(by_name)
+        cands = [u for u in F.uses if u[3] != 'own' and u[0] not in declared and u[0].startswith('_r')]
+        if not cands:
+            continue
+        undeclared = set()
+        for name, line, tok, res, _ in cands:
+            lt = lines_F.get(line)
+            if lt and tok in lt and classify_use(toks, lt, lt.index(tok)) == 'owrite':
+                undeclared.add(name)
+        for name, line, tok, res, _ in cands:
+            if name in undeclared:
+                ent = out.setdefault(F, {}).setdefault(name, {'decls': set(), 'uses': []})
+                ent['uses'].append((line, tok, res))
+    return out
+
+
+def classify_pair(F, R, toks, lines_F, is_main):
+    """Decide, for every occurrence of R in F's own body, whether it is F's own
+    register ('own') or the enclosing variable of the same name ('up').
+
+    Returns (decision, timeline). timeline is a list of (last token of line, live) giving
+    whether F's own R holds a value after each line that touches R.
+    F's register starts at its first declaration, or (for registers the decompiler never
+    declared) at its first non-copy write."""
+    num = int(R[2:])
+    events = []                       # (occurrences [(tok, kind)], kill, last token)
+    for line in sorted(lines_F):
+        lt = lines_F[line]
+        occ = []
+        for pos, ti in enumerate(lt):
+            if toks[ti][1] == R and toks[ti][0] == 'name':
+                prev = toks[ti - 1]
+                if prev[0] == 'op' and prev[1] in ('.', ':'):
+                    continue
+                occ.append((ti, classify_use(toks, lt, pos)))
+        thr = call_kill_threshold(toks, lt)
+        kill = thr is not None and num >= thr
+        if occ or kill:
+            events.append((occ, kill, lt[-1]))
+    decl_toks = [d.tok for d in F.decls if d.name == R]
+    owr = [ti for occ, _, _ in events for ti, k in occ if k == 'owrite']
+    first_decl = min(decl_toks + owr) if decl_toks or owr else len(toks)
+    decision = {}
+    timeline = []
+    live = False
+    for idx, (occ, kill, last) in enumerate(events):
+        if len(occ) == 2 and occ[0][1] in ('cwrite', 'owrite') and occ[1][1] == 'cread' and not is_main:
+            # `R = R`: a register is never moved onto itself, so this is GETUPVAL of the
+            # enclosing variable named R into F's own register R.
+            decision[occ[1][0]] = 'up'
+            decision[occ[0][0]] = 'own'
+            live = True
+            timeline.append((last, live))
+            continue
+        for ti, k in occ:
+            if k not in ('oread', 'cread'):
+                continue
+            if is_main or (ti > first_decl and (k == 'oread' or live)):
+                decision[ti] = 'own'
+            else:
+                decision[ti] = 'up'
+        if kill:
+            live = False
+        for ti, k in occ:
+            if k not in ('owrite', 'cwrite'):
+                continue
+            if is_main or (ti >= first_decl and k == 'owrite'):
+                decision[ti] = 'own'
+                live = True
+                continue
+            if ti < first_decl:
+                decision[ti] = 'up'
+                continue
+            own = False
+            for occ2, kill2, _ in events[idx + 1:]:
+                if any(k2 in ('oread', 'cread') for _, k2 in occ2):
+                    own = True
+                    break
+                if kill2 or occ2:
+                    break
+            decision[ti] = 'own' if own else 'up'
+            live = live or own
+        timeline.append((last, live))
+    return decision, timeline
+
+
+def live_at(timeline, tok):
+    """Whether the register is live just before token index tok, per classify_pair's timeline."""
+    lo, hi = 0, len(timeline)
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if timeline[mid][0] < tok:
+            lo = mid + 1
+        else:
+            hi = mid
+    return timeline[lo - 1][1] if lo else False
+
+
+def _local_names(toks, ltok):
+    """Token indices of the names declared by the `local` statement at ltok."""
+    out = []
+    j = ltok + 1
+    while toks[j][0] == 'name':
+        out.append(j)
+        if toks[j + 1][1] != ',':
+            break
+        j += 2
+    return out
+
+
+def fix_scope_leaks(text):
+    """Hoist leaked registers to function scope. Returns (new_text, stats, warnings)."""
+    toks = tokenize(text)
+    funcs = analyze(toks)
+    leaks = find_leaks(funcs, toks)
+    lines_of = {F: own_line_tokens(F, toks) for F in leaks}
+    decisions = {}                      # (F, R) -> ({tok: 'own' | 'up'}, timeline)
+    for F, names in leaks.items():
+        for R in names:
+            if R.startswith('_r'):
+                decisions[(F, R)] = classify_pair(F, R, toks, lines_of[F], F.parent is None)
+    depth = {}
+    for F in funcs:                     # parents precede children in funcs
+        depth[F] = 0 if F.parent is None else depth[F.parent] + 1
+
+    # A reference that is not F-own binds to the nearest enclosing function owning R whose
+    # register is live where the closure on the path is created (else it is a pass-through
+    # upvalue and the next ancestor is checked). Main-chunk registers are globals: no claim.
+    claims = {}                         # (G, tok) -> claiming Func
+    refs = defaultdict(list)            # R -> [(G, tok)] for every not-own reference
+    for G in funcs:
+        for name, _, tok, res, d in G.uses:
+            if not name.startswith('_r'):
+                continue
+            gd = decisions.get((G, name))
+            if (gd[0].get(tok, 'own' if res == 'own' else 'up') if gd else res) == 'own':
+                continue
+            refs[name].append((G, tok))
+            C, A = G, G.parent
+            while A is not None and A.parent is not None:
+                if d is not None and d.block.func is A:
+                    if (A, name) in decisions:
+                        claims[(G, tok)] = A
+                    break
+                if (A, name) in decisions and live_at(decisions[(A, name)][1], C.header_tok):
+                    claims[(G, tok)] = A
+                    break
+                C, A = A, A.parent
+
+    def inside(X, F):
+        """X is F or nested in F."""
+        while X is not None:
+            if X is F:
+                return True
+            X = X.parent
+        return False
+
+    edits = []                          # (start, end, replacement)
+    stats = {'pairs': 0, 'renamed': 0, 'converted': 0, 'kept': 0, 'hoisted': 0}
+    warnings = []
+
+    def rename_at(ti, new):
+        off = toks[ti][3]
+        edits.append((off, off + len(toks[ti][1]), new))
+
+    for F, names in leaks.items():
+        is_main = F.parent is None
+        hoist = []
+        for R in sorted(names, key=lambda r: int(r[2:]) if r[2:].isdigit() else 0):
+            if not R.startswith('_r'):
+                continue
+            stats['pairs'] += 1
+            decision = decisions[(F, R)][0]
+            decls = [d for d in F.decls if d.name == R]
+            nested_bound = []
+            outward = False
+            for G, tok in refs.get(R, ()):
+                if not inside(G, F):
+                    continue
+                cl = claims.get((G, tok))
+                if cl is F:
+                    nested_bound.append(tok)
+                elif cl is None or not (cl is not F and inside(cl, F)):
+                    outward = True
+            rename = (not is_main) and outward
+            new = f'{R}o{depth[F]}' if rename else R
+            stats['renamed'] += rename
+            handled = set()
+            for d in decls:
+                first = toks[d.tok][1]
+                if first == 'for':
+                    reason = 'for-loop variable'
+                    j = d.tok + 1
+                    name_toks = []
+                    while toks[j][1] not in ('in', '='):
+                        if toks[j][1] == R:
+                            name_toks.append(j)
+                        j += 1
+                elif toks[d.tok + 1][1] == 'function':
+                    reason = 'local function'
+                    name_toks = [d.tok + 2]
+                else:
+                    stmt = _local_names(toks, d.tok)
+                    name_toks = [j for j in stmt if toks[j][1] == R]
+                    if d.captured_by:
+                        reason = 'captured by closure'
+                    elif len(stmt) > 1:
+                        reason = 'multi-name local'
+                    else:
+                        reason = None
+                if reason is None:
+                    nt = name_toks[0]
+                    loff = toks[d.tok][3]
+                    if toks[nt + 1][1] == '=' and toks[nt + 1][0] == 'op':
+                        edits.append((loff, toks[nt][3], ''))
+                        if rename:
+                            rename_at(nt, new)
+                    else:
+                        edits.append((loff, toks[nt][3] + len(R), f'{new} = nil'))
+                    handled.add(nt)
+                    stats['converted'] += 1
+                else:
+                    stats['kept'] += 1
+                    warnings.append(f'fn@{F.line} {R}: kept local at line {d.line} ({reason})')
+                    if rename:
+                        for nt in name_toks:
+                            rename_at(nt, new)
+                    handled.update(name_toks)
+            if rename:
+                for ti, v in decision.items():
+                    if v == 'own' and ti not in handled:
+                        rename_at(ti, new)
+                for ti in nested_bound:
+                    rename_at(ti, new)
+            if not is_main:
+                hoist.append(new)   # main-chunk registers stay globals (main is at the local limit)
+        if not hoist:
+            continue
+        stats['hoisted'] += len(hoist)
+        bt = F.body_tok
+        boff = toks[bt][3]
+        if toks[bt][2] == F.line and not is_main:
+            edits.append((boff, boff, f'local {", ".join(hoist)}; '))
+        else:
+            ls = text.rfind('\n', 0, boff) + 1
+            indent = text[ls:boff]
+            if indent.strip():
+                indent = ''
+            edits.append((ls, ls, f'{indent}local {", ".join(hoist)}\n'))
+    edits.sort(key=lambda e: (e[0], e[1]))
+    for a, b in zip(edits, edits[1:]):
+        assert a[1] <= b[0] or (a[0] == a[1] == b[0]), f'overlapping edits {a} {b}'
+    out = []
+    pos = 0
+    for start, end, rep in edits:
+        out.append(text[pos:start])
+        out.append(rep)
+        pos = end
+    out.append(text[pos:])
+    return ''.join(out), stats, warnings
+
+
+# --- OPERAND EXTENT ---
+# `x = a or b` / `x = a and b` decompile to an empty `if` followed by the statements
+# that compute the right operand. These helpers find where that operand ends.
+
+ASSIGN_REG_RE = re.compile(r'^(?:local\s+)?_r(\d+)(?:\s*,\s*_r\d+)*\s*=\s*(.*)$')
+MAX_OPERAND = 12
+
+
+def _indent(line):
+    return len(line) - len(line.lstrip(' '))
+
+
+def block_end(lines, start, ind):
+    """Index of the `end` closing the block opened at lines[start] (indent ind).
+    Continuation lines of multi-line strings (previous line ends in a backslash) are skipped."""
+    j = start + 1
+    prev_bs = False
+    while j < len(lines):
+        ln = lines[j].rstrip('\r\n')
+        if not prev_bs:
+            if _indent(ln) == ind and ln.strip() == 'end':
+                return j
+            if _indent(ln) < ind and ln.strip():
+                return None
+        prev_bs = ln.endswith('\\')
+        j += 1
+    return None
+
+
+def operand_extent(lines, start, ind, reg):
+    """Return the exclusive end index of the right operand that begins at lines[start].
+
+    Accepts same-indent assignments to registers >= reg, and chained `if [not] reg then`
+    blocks whose first body line assigns reg. Trimmed to the last line that assigns reg.
+    Returns start when no operand is found.
+    """
+    xn = int(reg[2:])
+    pat_x = re.compile(r'^(?:local\s+)?' + re.escape(reg) + r'(?:\s*,\s*_r\d+)*\s*=')
+    pat_if = re.compile(r'^if (?:not )?' + re.escape(reg) + r' then$')
+    j = start
+    last = start
+    while j < len(lines) and j - start < MAX_OPERAND:
+        ln = lines[j].rstrip('\r\n')
+        if _indent(ln) != ind:
+            break
+        s = ln.strip()
+        if pat_if.match(s):
+            e = block_end(lines, j, ind)
+            if e is None or e == j + 1:
+                break          # empty if: a separate chained test, handled on its own
+            if not pat_x.match(lines[j + 1].strip()):
+                break          # consumer, not chain continuation
+            j = e + 1
+            last = j
+            continue
+        m = ASSIGN_REG_RE.match(s)
+        if not m or int(m.group(1)) < xn or 'function' in m.group(2):
+            break
+        j += 1
+        if pat_x.match(s):
+            last = j
+    return last
+
+
+# --- TESTSET RESTORATION (Pass 0) ---
+# A copy from the function's OWN register/param followed by a test (`X = Y` /
+# `if [not] X then`) is a TESTSET. Unlike TEST, the decompiler prints TESTSET
+# conditions with the correct sense, so Pass 1 must not flip them. Copies from true
+# upvalues (GETUPVAL + TEST) are inverted like every other TEST.
+
+TS_MARK = ' --[[TS]]'
+COPY_RE = re.compile(r'^(\s*)(?:local\s+)?(_r\d+) = (_r\d+|_p\d+)\s*$')
+TEST_RE = re.compile(r'^(\s*)if (not )?(_r\d+) then\s*$')
+
+
+def _is_own_source(F, Y, tok, res, toks, cache):
+    """True when Y is F's own register/param in VM terms (TESTSET), False for an upvalue."""
+    if res == 'own':
+        return True
+    if Y.startswith('_p') or not any(d.name == Y and d.tok < tok for d in F.decls):
+        return False
+    key = (id(F), Y)
+    if key not in cache:
+        cache[key] = classify_pair(F, Y, toks, own_line_tokens(F, toks), F.parent is None)[0]
+    return cache[key].get(tok) == 'own'
+
+
+def fix_testsets(lines):
+    """Mark TESTSET tests so Pass 1 leaves them, and move empty-if right operands inside."""
+    text = ''.join(lines)
+    toks = tokenize(text)
+    funcs = analyze(toks)
+    by_line = defaultdict(list)
+    for idx, t in enumerate(toks):
+        by_line[t[2]].append(idx)
+    use_info = {}
+    for F in funcs:
+        for _, _, tok, res, _ in F.uses:
+            use_info[tok] = (F, res)
+    cache = {}
+    targets = []
+    for i in range(1, len(lines)):
+        f = TEST_RE.match(lines[i].rstrip('\r\n'))
+        if not f:
+            continue
+        m = COPY_RE.match(lines[i - 1].rstrip('\r\n'))
+        if not m or m.group(2) != f.group(3) or m.group(1) != f.group(1):
+            continue
+        Y = m.group(3)
+        ytoks = [t for t in by_line[i] if toks[t][1] == Y]
+        if not ytoks or ytoks[-1] not in use_info:
+            continue
+        F, res = use_info[ytoks[-1]]
+        if _is_own_source(F, Y, ytoks[-1], res, toks, cache):
+            targets.append(i)
+
+    stats = {'marked': 0, 'operand_moved': 0, 'ternary_else': 0}
+    for i in reversed(targets):
+        s = lines[i].rstrip('\r\n')
+        ending = lines[i][len(s):]
+        lines[i] = s + TS_MARK + ending
+        stats['marked'] += 1
+        ind = len(s) - len(s.lstrip(' '))
+        reg = TEST_RE.match(s).group(3)
+        if lines[i + 1].rstrip('\r\n') != ' ' * ind + 'end':
+            continue
+        start = i + 2
+        stop = operand_extent(lines, start, ind, reg)
+        if stop == start:
+            continue
+        operand = lines[start:stop]
+        new = ['    ' + ln for ln in operand] + [lines[i + 1]]
+        parent = lines[i - 2].rstrip('\r\n') if i >= 2 else ''
+        if (stop < len(lines) and ind >= 4
+                and lines[stop].rstrip('\r\n') == ' ' * (ind - 4) + 'end'
+                and len(parent) - len(parent.lstrip(' ')) == ind - 4
+                and re.match(r'^\s*if\b.*\b' + re.escape(reg) + r'\b.*\bthen$', parent)):
+            new += [' ' * (ind - 4) + 'else' + ending] + operand
+            stats['ternary_else'] += 1
+        lines[i + 1:stop] = new
+        stats['operand_moved'] += 1
+    return lines, stats
+
+
+# --- STRUCTURAL REPAIRS (Pass 0b) ---
+# One-off block-structure errors on the raw decompiler output. In each case the decompiler
+# lost a block boundary and left the block open until the end of the file, nesting the rest
+# of the script inside it. Every repair is anchored on exact text and asserted.
+
+def _dedent(lines, lo, hi, n=4):
+    """Remove n leading spaces from lines[lo:hi], skipping multi-line string continuations."""
+    pad = ' ' * n
+    prev_bs = lo > 0 and lines[lo - 1].rstrip('\r\n').endswith('\\')
+    for k in range(lo, hi):
+        if not prev_bs and lines[k].startswith(pad):
+            lines[k] = lines[k][n:]
+        prev_bs = lines[k].rstrip('\r\n').endswith('\\')
+
+
+def _find_line(lines, pattern, start=0):
+    rx = re.compile(pattern)
+    for k in range(start, len(lines)):
+        if rx.match(lines[k].rstrip('\r\n')):
+            return k
+    return None
+
+
+# (c) Game-ready check: `if menu and (visible(menu) or (modes and visible(modes))) then
+# return false end`. The or-chain decompiles with its return outside both tests. Written in
+# raw (pre-Pass 1) polarity.
+GAMEMODES_OR_RE = re.compile(
+    r'(?P<i>[ ]*)if not _r6 then\n'
+    r'(?P=i)    _r8 = _r62\n(?P=i)    _r9 = _r6\n(?P=i)    _r8 = _r8\(_r9\)\n'
+    r'(?P=i)    if _r8 then\n(?P=i)    end\n'
+    r'(?P=i)    if not _r7 then\n'
+    r'(?P=i)        _r8 = _r62\n(?P=i)        _r9 = _r7\n(?P=i)        _r8 = _r8\(_r9\)\n'
+    r'(?P=i)        if not _r8 then\n(?P=i)        end\n'
+    r'(?P=i)        _r8 = false\n(?P=i)        do return _r8 end\n'
+    r'(?P=i)    end\n'
+    r'(?P=i)end\n'
+)
+
+
+def _gamemodes_or_repl(m):
+    i = m.group('i')
+    return (
+        f'{i}if not _r6 then\n'
+        f'{i}    _r8 = _r62\n{i}    _r9 = _r6\n{i}    _r8 = _r8(_r9)\n'
+        f'{i}    if _r8 then\n'
+        f'{i}        if not _r7 then\n'
+        f'{i}            _r8 = _r62\n{i}            _r9 = _r7\n{i}            _r8 = _r8(_r9)\n'
+        f'{i}        end\n'
+        f'{i}    end\n'
+        f'{i}    if not _r8 then\n'
+        f'{i}        _r8 = false\n{i}        do return _r8 end\n'
+        f'{i}    end\n'
+        f'{i}end\n'
+    )
+
+
+def fix_structural_repairs(lines):
+    lines = list(lines)
+    stats = {}
+
+    # (a) Reverse loop removing non-farmable items from selectedFarmItems: its `end` belongs
+    # before the `if _r172 then` save that follows the loop.
+    f = _find_line(lines, r'^(\s*)for _r176 = _r173, _r174, _r175 do$')
+    assert f is not None, 'repair (a): loop header not found'
+    ind = len(lines[f]) - len(lines[f].lstrip(' '))
+    a = _find_line(lines, r'^' + ' ' * (ind + 4) + r'if not _r172 then$', f + 1)
+    e = block_end(lines, f, ind)
+    assert a is not None and e is not None and a < e, 'repair (a): anchors not found'
+    _dedent(lines, a, e)
+    del lines[e]
+    lines.insert(a, ' ' * ind + 'end\n')
+    stats['loop_end'] = 1
+
+    # (b) Anti-teleport bypass: the failure branch is the lost `else` of the pcall check,
+    # and the code after it (UI header image onward) runs either way.
+    h = _find_line(lines, r'^\s*if not _r148 then$')
+    assert h is not None and lines[h - 1].strip() == '_r148, _r149 = _r148(_r149)', 'repair (b): header'
+    hind = len(lines[h]) - len(lines[h].lstrip(' '))
+    fl = _find_line(lines, r'^\s*_r152 = "Bypass failed - using Tween movement to avoid server kick"$', h)
+    f0 = fl - 2
+    assert lines[f0].strip() == '_r150 = _r110', 'repair (b): failure branch start'
+    g = f0
+    while lines[g].strip() != 'end' or len(lines[g]) - len(lines[g].lstrip(' ')) != hind + 4:
+        g += 1
+    e = block_end(lines, h, hind)
+    assert e is not None and g < e, 'repair (b): block end'
+    _dedent(lines, g + 1, e)
+    del lines[e]
+    lines[g] = ' ' * hind + 'end\n'
+    _dedent(lines, f0, g)
+    lines[f0:f0] = [' ' * (hind + 4) + 'end\n', ' ' * hind + 'else\n']
+    stats['bypass_else'] = 1
+
+    # (c) Game-ready GameModes or-chain.
+    text = ''.join(lines)
+    text, n = GAMEMODES_OR_RE.subn(_gamemodes_or_repl, text)
+    assert n == 1, f'repair (c): expected 1 match, got {n}'
+    lines = split_lines(text)
+    stats['gamemodes_or'] = n
+
+    # (d) The game-ready wait is `while true do / while true do ...`: the outer loop is a
+    # decompiler artifact that wraps the whole rest of the script. Remove it.
+    w = _find_line(lines, r'^\s*_r100 = "Waiting for strict main game before initializing YBAHub UI & features\.\.\."$')
+    assert w is not None, 'repair (d): anchor'
+    o = _find_line(lines, r'^\s*while true do$', w)
+    assert o is not None and o - w < 8 and lines[o + 1].strip() == 'while true do', 'repair (d): nested loops'
+    oind = len(lines[o]) - len(lines[o].lstrip(' '))
+    e = block_end(lines, o, oind)
+    assert e is not None, 'repair (d): loop end'
+    _dedent(lines, o + 1, e)
+    del lines[e]
+    del lines[o]
+    stats['outer_while'] = 1
+
+    return lines, stats
+
+
+# --- BOOLEAN MATERIALIZATION (Pass 1b) ---
+# `x = (a == b)` / `x = (v ~= false)` compile to a compare plus two boolean loads. The
+# decompiler keeps only the first load, drops `else x = <other>`, and nests the whole
+# continuation inside the if:
+#   if a ~= b then / x = false / <rest of the enclosing block> / end
+# Detected when the block runs to the end of its enclosing block (nothing follows it).
+# Fix: if a ~= b then / x = false / else / x = true / end / <rest, dedented>
+
+CMP_IF_RE = re.compile(r'^(\s*)if (.+ (?:==|~=|<=|>=|<|>) .+) then$')
+BOOL_LOAD_RE = re.compile(r'^(\s*)(_r\d+) = (true|false)$')
+
+
+def fix_bool_materialization(lines):
+    lines = list(lines)
+    count = 0
+    i = 0
+    while i < len(lines) - 2:
+        m = CMP_IF_RE.match(lines[i].rstrip('\r\n'))
+        b = BOOL_LOAD_RE.match(lines[i + 1].rstrip('\r\n')) if m else None
+        if not b:
+            i += 1
+            continue
+        ind = len(m.group(1))
+        X, val = b.group(2), b.group(3)
+        if len(b.group(1)) != ind + 4 or not re.search(r'\b' + re.escape(X) + r'\b', m.group(2)):
+            i += 1
+            continue
+        e = block_end(lines, i, ind)
+        if e is None or e - i <= 2 or any(
+                lines[k].startswith(' ' * ind + 'else') and _indent(lines[k]) == ind for k in range(i + 1, e)):
+            i += 1
+            continue
+        k = e + 1
+        while k < len(lines) and not lines[k].strip():
+            k += 1
+        if k < len(lines) and _indent(lines[k]) >= ind:
+            i += 1
+            continue
+        if re.match(r'^(?:do )?return\b', lines[i + 2].strip()):
+            # `return a ~= b` at the end of a function, or a guarded `return false` at the
+            # end of an inner block? Only the former when the enclosing block is a function.
+            o = i - 1
+            while o >= 0 and (not lines[o].strip() or _indent(lines[o]) >= ind):
+                o -= 1
+            if o < 0 or 'function(' not in lines[o]:
+                i += 1
+                continue
+        pad = ' ' * ind
+        opp = 'true' if val == 'false' else 'false'
+        _dedent(lines, i + 2, e)
+        lines[e:e + 1] = []
+        lines[i + 2:i + 2] = [pad + 'else\n', pad + f'    {X} = {opp}\n', pad + 'end\n']
+        count += 1
+        i += 2
+    return lines, count
+
+
+# --- OR-CHAINS (Pass 3b) ---
+# `if a or b then REST end` (and longer chains) decompiles to nested tests whose innermost
+# test is empty, with REST left at the end of the outermost block:
+#   if F1 then / <setup> / [if F2 then / <setup> / ...] if C then / end / [end ...] / REST / end
+# where F1, F2 (after Pass 1) are the "keep evaluating" conditions and C the final one.
+# Real meaning: REST runs iff (not F1) or (not F2) or ... or C. As decompiled it runs iff F1.
+# Fix with a flag:
+#   local _orK = true / if F1 then <setup> [...] if not (C) then _orK = false end [...] end
+#   if _orK then / REST / end
+# Applied only when every test in the chain shares a register, setups are plain
+# assignments, no level has an else, and REST is non-empty.
+
+COND_IF_RE = re.compile(r'^(\s*)if (.+) then$')
+COND_REG_RE = re.compile(r'\b_[rp]\d+\b')
+
+
+def _negate_cond(cond):
+    m = re.match(r'^not (_[rp]\d+)$', cond)
+    if m:
+        return m.group(1)
+    if re.match(r'^_[rp]\d+$', cond):
+        return 'not ' + cond
+    return f'not ({cond})'
+
+
+def _has_else(lines, lo, hi, ind):
+    pad = ' ' * ind
+    return any(lines[k].startswith(pad + 'else') and _indent(lines[k]) == ind for k in range(lo, hi))
+
+
+def _chain_level(lines, start, end, ind, regs, relaxed=False):
+    """Scan the body of the if at lines[start] (indent ind, closed at end) for the chain's
+    next test: plain-assignment setup lines, then an `if` sharing a register with regs
+    (relaxed: or testing a register the setup assigned).
+    Returns (if_index, its block end, regs for the next level) or None."""
+    body = ind + 4
+    k = start + 1
+    assigned = set()
+    while k < end:
+        s = lines[k].rstrip('\r\n')
+        if _indent(s) == body and COND_IF_RE.match(s):
+            break
+        if _indent(s) != body or not SIMPLE_STMT_RE.match(s.strip()) or 'function' in s:
+            return None
+        assigned.update(n.strip() for n in s.split('=')[0].replace('local ', '').split(','))
+        k += 1
+    if k >= end:
+        return None
+    nregs = set(COND_REG_RE.findall(COND_IF_RE.match(lines[k].rstrip('\r\n')).group(2)))
+    shared = nregs & (regs | assigned) if relaxed else nregs & regs
+    ek = block_end(lines, k, body)
+    if not shared or ek is None or _has_else(lines, k + 1, ek, body):
+        return None
+    return k, ek, (nregs if relaxed else shared)
+
+
+def _find_chain(lines, i, I, e, regs, relaxed):
+    """Descend the chain of the if at lines[i]; return (empty test index, end of the
+    depth-1 element, depth of the empty test) or None."""
+    lvl_start, lvl_ind, lvl_end = i, I, e
+    top_end = None
+    while True:
+        nxt = _chain_level(lines, lvl_start, lvl_end, lvl_ind, regs, relaxed)
+        if nxt is None:
+            return None
+        k, ek, regs = nxt
+        if lvl_start != i and any(lines[q].strip() for q in range(ek + 1, lvl_end)):
+            return None                    # deeper levels must end with the next test
+        if lvl_start == i:
+            top_end = ek
+        if ek == k + 1:
+            return k, top_end, (lvl_ind - I) // 4 + 1
+        lvl_start, lvl_ind, lvl_end = k, lvl_ind + 4, ek
+
+
+def _relaxed_rest_ok(rest, test_line):
+    """With registers that differ per level, REST inside the outer block is accepted unless
+    it starts by assigning the final test's register (Pass 4's `x = x or v` operand), with
+    the exception of a plain `X = <literal>` / `return X` block."""
+    m = re.search(r'\b(_[rp]\d+)\b', COND_IF_RE.match(test_line.rstrip('\r\n')).group(2))
+    first = rest[0].strip()
+    if not m or not re.match(r'^(?:local\s+)?' + re.escape(m.group(1)) + r'\s*=', first):
+        return True
+    return len(rest) == 2 and re.match(r'^(?:do )?return\b', rest[1].strip()) is not None \
+        and re.match(r'^(?:local\s+)?_r\d+\s*=\s*(?:true|false|nil|-?\d[\d.]*|"[^"]*")$', first) is not None
+
+
+def _dropped_rest_end(lines, e, I):
+    """REST dropped after the outer block: a short run of plain statements ending in a
+    return (a body reached from several tests cannot be nested by the decompiler).
+    Returns the index of the return line, or None."""
+    r = e + 1
+    while r < len(lines) and r - e <= 4 and _indent(lines[r]) == I \
+            and SIMPLE_STMT_RE.match(lines[r].strip()) and 'function' not in lines[r]:
+        r += 1
+    if r >= len(lines) or r - e > 4 or _indent(lines[r]) != I \
+            or not re.match(r'^(?:do )?return\b', lines[r].strip()):
+        return None
+    return r
+
+
+def fix_or_chains(lines):
+    lines = list(lines)
+    count = 0
+    i = 0
+    while i < len(lines):
+        m = COND_IF_RE.match(lines[i].rstrip('\r\n'))
+        regs = set(COND_REG_RE.findall(m.group(2))) if m else set()
+        if not regs:
+            i += 1
+            continue
+        I = len(m.group(1))
+        e = block_end(lines, i, I)
+        if e is None or _has_else(lines, i + 1, e, I):
+            i += 1
+            continue
+        rest = None
+        for relaxed in (False, True):
+            found = _find_chain(lines, i, I, e, regs, relaxed)
+            if found is None:
+                continue
+            E, top_end, depth = found
+            if any(lines[q].strip() for q in range(top_end + 1, e)):
+                inside = [ln for ln in lines[top_end + 1:e] if ln.strip()]
+                if relaxed and depth < 2 and not _relaxed_rest_ok(inside, lines[E]):
+                    continue
+                rest = lines[top_end + 1:e]      # REST inside the outer block
+                tail_end = e + 1
+                break
+            r = _dropped_rest_end(lines, e, I)
+            if r is not None:
+                rest = lines[e + 1:r + 1]
+                tail_end = r + 1
+                break
+        if rest is None:
+            i += 1
+            continue
+        pad = ' ' * I
+        eind = _indent(lines[E])
+        flag = f'_or{count}'
+        cond = COND_IF_RE.match(lines[E].rstrip('\r\n')).group(2)
+        new = [pad + f'local {flag} = true\n']
+        new += lines[i:E]
+        new += [' ' * eind + f'if {_negate_cond(cond)} then\n', ' ' * (eind + 4) + f'{flag} = false\n']
+        new += lines[E + 1:top_end + 1]
+        new += [lines[e], pad + f'if {flag} then\n']
+        new += ['    ' + ln for ln in rest] if tail_end > e + 1 else rest
+        new += [pad + 'end\n']
+        lines[i:tail_end] = new
+        count += 1
+        i += 1
+    if count:
+        # Main-chunk registers are globals and the main chunk is at the 200-local limit,
+        # so flags declared in the main chunk's own scope become globals as well.
+        main = analyze(tokenize(''.join(lines)))[0]
+        for d in main.decls:
+            if d.name.startswith('_or'):
+                ln = d.line - 1
+                lines[ln] = lines[ln].replace(f'local {d.name} = ', f'{d.name} = ', 1)
+    return lines, count
+
+
+# --- WHILE-CONDITION CHAINS (Pass 8b) ---
+# `while A and B and C do BODY end` decompiles to a `while true do` whose whole body is a
+# chain of nested ifs with every exit dropped:
+#   while true do / if A then / <setup> / if B then / <setup> / if C then / BODY / end / end / end / end
+# Each level is plain setup statements followed by the next test (testing a register the
+# setup computed) as its last statement. When a test fails the loop must exit, so every
+# if in the chain gets `else break`. Descent stops at the first level that does not fit.
+
+def _while_chain(lines, k, ind, first_end=None):
+    """Indices of the ifs forming a while-condition chain starting at lines[k]. first_end,
+    when given, is the line closing the first level's then-branch (its `else`)."""
+    chain = [k]
+    while True:
+        e = block_end(lines, k, ind) if first_end is None or len(chain) > 1 else first_end
+        body = ind + 4
+        q = k + 1
+        assigned = set()
+        while q < e and _indent(lines[q]) == body and SIMPLE_STMT_RE.match(lines[q].strip()) \
+                and 'function' not in lines[q]:
+            assigned.update(n.strip() for n in lines[q].strip().split('=')[0].replace('local ', '').split(','))
+            q += 1
+        m = COND_IF_RE.match(lines[q].rstrip('\r\n')) if q < e and _indent(lines[q]) == body else None
+        if not m or not assigned & set(COND_REG_RE.findall(m.group(2))):
+            return chain
+        eq = block_end(lines, q, body)
+        if eq != e - 1 or _has_else(lines, q + 1, eq, body):
+            return chain
+        chain.append(q)
+        k, ind = q, body
+
+
+def fix_while_chains(lines):
+    lines = list(lines)
+    count = 0
+    for i in range(len(lines) - 1, -1, -1):
+        if lines[i].strip() != 'while true do':
+            continue
+        w = _indent(lines[i])
+        e = block_end(lines, i, w)
+        k = i + 1
+        if e is None or k >= e:
+            continue
+        assigned = set()
+        while k < e and _indent(lines[k]) == w + 4 and SIMPLE_STMT_RE.match(lines[k].strip()) \
+                and 'function' not in lines[k]:
+            assigned.update(n.strip() for n in lines[k].strip().split('=')[0].replace('local ', '').split(','))
+            k += 1
+        m = COND_IF_RE.match(lines[k].rstrip('\r\n')) if k < e and _indent(lines[k]) == w + 4 else None
+        if not m or block_end(lines, k, w + 4) != e - 1:
+            continue
+        if k > i + 1 and not assigned & set(COND_REG_RE.findall(m.group(2))):
+            continue                     # setup must compute the loop condition
+        pad = ' ' * (w + 4)
+        elses = [q for q in range(k + 1, e - 1) if _indent(lines[q]) == w + 4
+                 and lines[q].strip().startswith('else')]
+        if elses:
+            # `while A do BODY end; AFTER` rendered as `if A then BODY else AFTER end` in the
+            # loop: AFTER (no yield) belongs after the loop, the failing test exits.
+            if len(elses) != 1 or lines[elses[0]].strip() != 'else':
+                continue
+            after = lines[elses[0] + 1:e - 1]
+            if any(YIELD_RE.search(ln) for ln in after):
+                continue
+            chain = _while_chain(lines, k, w + 4, first_end=elses[0])
+            moved = list(after)
+            _dedent(moved, 0, len(moved), 8)
+            lines[elses[0] + 1:e - 1] = [pad + '    break\n']
+            e = block_end(lines, i, w)
+            lines[e + 1:e + 1] = moved
+            chain = chain[1:]
+        else:
+            chain = _while_chain(lines, k, w + 4)
+            if len(chain) < 2 and k == i + 1 and IF_GUARD_RE.match(lines[k].rstrip('\r\n')):
+                continue                 # single bare test: Pass 9 adds its guard break
+        for c in reversed(chain):
+            ci = _indent(lines[c])
+            ce = block_end(lines, c, ci)
+            lines[ce:ce] = [' ' * ci + 'else\n', ' ' * (ci + 4) + 'break\n']
+        count += 1
+    return lines, count
+
+
+# --- LOOP TAIL EXITS (Pass 8c) ---
+# Search loops `repeat <find>; if <found> then <success>; break end; task.wait() until` /
+# `while true do ... if A and B then ok = true; break end; task.wait(x) end` decompile with
+# the exit dropped and the trailing wait placed in the else of the FIRST test only:
+#   if A then / if B then / ok = true / end / else / task.wait(x) / end   (in loop tail)
+# so any inner failure, or success, loops again without yielding (a client freeze).
+# Fix: (a) the yielding else-content runs after the if; (b) when the then-branch only does
+# lookups (no calls that could yield or act), break at its innermost success point.
+
+YIELD_RE = re.compile(r'\.wait\b|\bwait\b|\.Wait\b')
+SAFE_CALLS = {
+    'FindFirstChild', 'FindFirstChildOfClass', 'FindFirstChildWhichIsA', 'FindFirstAncestor',
+    'FindFirstAncestorOfClass', 'IsA', 'IsDescendantOf', 'GetChildren', 'GetDescendants',
+    'GetAttribute', 'tostring', 'tonumber', 'type', 'typeof', 'find', 'lower', 'upper', 'sub',
+    'match', 'gsub', 'format', 'len', 'tick', 'time', 'clock', '_r20',
+}
+
+
+def _branch_pure(seg):
+    """True when every call in seg goes to a lookup/string helper or the boot logger."""
+    callee = {}
+    for ln in seg:
+        s = ln.strip()
+        for c in re.findall(r'(_[rp]\w+)\(', s):
+            if callee.get(c) not in SAFE_CALLS:
+                return False
+        m = re.match(r'^(?:local\s+)?(_r\w+) = ([\w.]+)$', s)
+        if m:
+            callee[m.group(1)] = m.group(2).split('.')[-1]
+    return True
+
+
+def _innermost_body_end(lines, o, ind):
+    """Follow the last statement of the if at lines[o] while it is an else-less if;
+    return the index of the innermost block's `end`."""
+    while True:
+        e = block_end(lines, o, ind)
+        q = e - 1
+        while q > o and not lines[q].strip():
+            q -= 1
+        if _indent(lines[q]) != ind + 4 or lines[q].strip() != 'end':
+            return e
+        p = q - 1
+        while p > o and not (_indent(lines[p]) == ind + 4 and lines[p].strip().startswith('if ')):
+            p -= 1
+        if p <= o or block_end(lines, p, ind + 4) != q or _has_else(lines, p + 1, q, ind + 4):
+            return e
+        o, ind = p, ind + 4
+
+
+def fix_loop_tail_exits(lines):
+    lines = list(lines)
+    stats = {'yield_moved': 0, 'success_break': 0}
+    i = len(lines) - 1
+    while i >= 0:
+        if lines[i].strip() != 'while true do':
+            i -= 1
+            continue
+        w = _indent(lines[i])
+        e = block_end(lines, i, w)
+        o = e - 1 if e else i
+        while e and o > i:
+            s = lines[o].strip()
+            ind = _indent(lines[o])
+            if s.startswith('if ') and s.endswith(' then'):
+                k = block_end(lines, o, ind)
+                tail = k is not None and k < e and all(
+                    lines[q].strip() in ('end', 'else', 'break', '') for q in range(k + 1, e))
+                elses = [q for q in range(o + 1, k) if _indent(lines[q]) == ind
+                         and lines[q].strip().startswith('else')] if tail else []
+                in_fn = any('function(' in lines[q] and _indent(lines[q]) < ind for q in range(i + 1, o))
+                if tail and len(elses) == 1 and lines[elses[0]].strip() == 'else' and not in_fn:
+                    a, b = lines[o + 1:elses[0]], lines[elses[0] + 1:k]
+                    a_exits = any(ln.strip() in ('break',) or ln.strip().startswith(('return', 'do return'))
+                                  for ln in a)
+                    if any(YIELD_RE.search(ln) for ln in b) and not any(YIELD_RE.search(ln) for ln in a):
+                        brk = None
+                        if not a_exits and _branch_pure(a):
+                            if any(ln.strip().startswith('if ') for ln in a):
+                                p = o + 1
+                                last_if = max(q for q in range(o + 1, elses[0])
+                                              if _indent(lines[q]) == ind + 4 and lines[q].strip().startswith('if '))
+                                if block_end(lines, last_if, ind + 4) == elses[0] - 1:
+                                    brk = _innermost_body_end(lines, last_if, ind + 4)
+                            else:
+                                brk = elses[0]
+                        lines[elses[0]:k + 1] = [lines[k]] + b   # else-content after the if
+                        _dedent(lines, elses[0] + 1, elses[0] + 1 + len(b))
+                        stats['yield_moved'] += 1
+                        if brk is not None:
+                            bi = _indent(lines[brk])
+                            lines.insert(brk, ' ' * (bi + 4 if brk != elses[0] else ind + 4) + 'break\n')
+                            stats['success_break'] += 1
+                        break
+            o -= 1
+        i -= 1
+    return lines, stats
+
+
+# --- MULTI-RETURN FORWARDING (Pass 2b) ---
+# `f(g(...))` (all results of g forwarded) decompiles to a fixed register range:
+#   _rX = g(...) --[[multi-ret]]
+#   f(..., _rX, _rX+1, ..., _rN)
+# The extra registers hold stale values, e.g. tonumber(v, "IESPSize") with a string base.
+# Fix: inline the call as the last argument: f(..., g(...)).
+
+MULTIRET_RE = re.compile(r'^(\s*)(?:local\s+)?_r(\d+) = ((?:_r\d+|\w+)\(.*\)) --\[\[multi-ret\]\]\s*$')
+
+
+def fix_multiret(lines):
+    lines = list(lines)
+    count = 0
+    i = 0
+    while i < len(lines) - 1:
+        m = MULTIRET_RE.match(lines[i].rstrip('\r\n'))
+        if not m:
+            i += 1
+            continue
+        x = int(m.group(2))
+        nxt = lines[i + 1]
+        t = re.search(r'(?<=[( ])(_r%d(?:, _r\d+)*)\)' % x, nxt)
+        if not t or [int(r[2:]) for r in t.group(1).split(', ')] != \
+                list(range(x, x + t.group(1).count(',') + 1)):
+            i += 1
+            continue
+        lines[i + 1] = nxt[:t.start(1)] + m.group(3) + nxt[t.end(1):]
+        del lines[i]
+        count += 1
+    return lines, count
+
+
+# --- GARBLED EMPTY STRINGS (Pass 14) ---
+# The empty string "" decodes to a 2-byte garbage constant (a different one per function),
+# e.g. gsub("^%s+", "[\xbc") for a trim, or `if url ~= "\xc7\x84" then`. Every 2-byte
+# constant that is not valid text is one of these. A few garbled values happen to be
+# printable; those were identified from context (emptiness checks, `or ""` defaults,
+# field resets) and are listed explicitly. Legitimate 2-char strings ("SF", "RM", "p6",
+# "%D", ...) are not touched.
+
+GARBLED_PRINTABLE = {s.encode('utf-8') for s in (
+    '}U', '(&', '|1', 'DX', '[-', 'pV', '4L', '\u01c4', 're', 'Y(', '\u0789', 'ax', 'gF',
+    '\u0397', '2@',
+)}
+LUA_ESCAPES = {'n': 10, 't': 9, 'r': 13, 'a': 7, 'b': 8, 'f': 12, 'v': 11,
+               '\\': 92, '"': 34, "'": 39, '\n': 10}
+
+
+def _lua_string_bytes(body):
+    """Decode the body of a quoted Lua string literal (latin-1 text) to bytes."""
+    out = bytearray()
+    i = 0
+    while i < len(body):
+        ch = body[i]
+        if ch != '\\':
+            out.append(ord(ch))
+            i += 1
+            continue
+        m = re.match(r'\\(\d{1,3})', body[i:])
+        if m:
+            out.append(int(m.group(1)) & 0xFF)
+            i += len(m.group(0))
+            continue
+        out.append(LUA_ESCAPES.get(body[i + 1], ord(body[i + 1])))
+        i += 2
+    return bytes(out)
+
+
+def _is_garbled_empty(b):
+    if len(b) != 2:
+        return False
+    if b in GARBLED_PRINTABLE:
+        return True
+    try:
+        txt = b.decode('utf-8')
+    except UnicodeDecodeError:
+        return True
+    return any(ord(c) < 32 for c in txt)
+
+
+def fix_garbled_strings(text):
+    """Replace garbled 2-byte empty-string constants with ""."""
+    out = []
+    pos = 0
+    count = 0
+    for m in TOKEN_RE.finditer(text):
+        if m.lastgroup != 'string':
+            continue
+        lit = m.group(0)
+        if _is_garbled_empty(_lua_string_bytes(lit[1:-1])):
+            out.append(text[pos:m.start()])
+            out.append(lit[0] * 2)
+            pos = m.end()
+            count += 1
+    out.append(text[pos:])
+    return ''.join(out), count
+
+
 def main():
     input_file = sys.argv[1] if len(sys.argv) > 1 else 'yba_hub_deobfuscated.lua'
     output_file = sys.argv[2] if len(sys.argv) > 2 else 'yba_fixed.lua'
@@ -912,6 +2339,17 @@ def main():
         lines = f.readlines()
 
     print(f"Read {len(lines)} lines from {input_file}")
+
+    # Pass 0b: Structural repairs on the raw output (blocks left open to end of file)
+    lines, sr_stats = fix_structural_repairs(lines)
+    sr_total = sum(sr_stats.values())
+    print(f"Pass 0b: {sr_total} structural repairs: " + ', '.join(f'{k}={v}' for k, v in sr_stats.items()))
+
+    # Pass 0: TESTSET restoration (marks tests Pass 1 must not flip)
+    lines, ts_stats = fix_testsets(lines)
+    ts_total = ts_stats['marked'] + ts_stats['operand_moved'] + ts_stats['ternary_else']
+    print(f"Pass 0: Marked {ts_stats['marked']} TESTSET tests, moved {ts_stats['operand_moved']} "
+          f"right operands, restored {ts_stats['ternary_else']} ternary else-branches")
 
     # Pass 1: Fix inversions
     inv_count = 0
@@ -924,20 +2362,32 @@ def main():
 
     print(f"Pass 1: Fixed {inv_count} truthiness inversions")
 
+    # Pass 1b: Boolean materializations with nested continuations
+    fixed_lines, bm_count = fix_bool_materialization(fixed_lines)
+    print(f"Pass 1b: Fixed {bm_count} boolean materializations")
+
     # Pass 2: Fix setlists
     fixed_lines, sl_stats = fix_setlists(fixed_lines)
 
     print(f"Pass 2: Fixed {sl_stats['fixed']} setlist bugs, skipped {sl_stats['skipped']}")
 
+    # Pass 2b: Multi-return forwarding
+    fixed_lines, mr_count = fix_multiret(fixed_lines)
+    print(f"Pass 2b: Fixed {mr_count} multi-return forwarding calls")
+
     # Pass 3: Targeted patches (operate on full text, not line-by-line)
     full_text = ''.join(fixed_lines)
     full_text, tp_stats = apply_targeted_patches(full_text)
-    fixed_lines = full_text.splitlines(True)
+    fixed_lines = split_lines(full_text)
 
     tp_total = sum(tp_stats.values())
     print(f"Pass 3: {tp_total} targeted patches applied:")
     for name, count in tp_stats.items():
         print(f"  - {name}: {count}")
+
+    # Pass 3b: Or-chains (must run before Pass 4 and Pass 11 read the empty ifs)
+    fixed_lines, oc_count = fix_or_chains(fixed_lines)
+    print(f"Pass 3b: Fixed {oc_count} or-chain conditions")
 
     # Pass 4: Fix broken if/else reconstruction
     fixed_lines, ie_count = fix_broken_if_else(fixed_lines)
@@ -950,20 +2400,28 @@ def main():
     # Pass 6: Fix timeout breaks
     full_text = ''.join(fixed_lines)
     full_text, tb_count = fix_timeout_breaks(full_text)
-    fixed_lines = full_text.splitlines(True)
+    fixed_lines = split_lines(full_text)
     print(f"Pass 6: Fixed {tb_count} timeout break statements")
 
     # Pass 7: Branding
     full_text = ''.join(fixed_lines)
     full_text, br_count = fix_branding(full_text)
-    fixed_lines = full_text.splitlines(True)
+    fixed_lines = split_lines(full_text)
     print(f"Pass 7: Fixed {br_count} branding strings")
 
     # Pass 8: Key system stubs
     full_text = ''.join(fixed_lines)
     full_text, ks_count = fix_key_stubs(full_text)
-    fixed_lines = full_text.splitlines(True)
+    fixed_lines = split_lines(full_text)
     print(f"Pass 8: Replaced {ks_count} key system function(s) with stubs")
+
+    # Pass 8b: While-condition chains (must run before Pass 9 adds guards/yields)
+    fixed_lines, wc_count = fix_while_chains(fixed_lines)
+    print(f"Pass 8b: Fixed {wc_count} while-condition chains")
+
+    # Pass 8c: Loop tail exits (search loops with the exit dropped)
+    fixed_lines, lt_stats = fix_loop_tail_exits(fixed_lines)
+    print(f"Pass 8c: Moved {lt_stats['yield_moved']} loop-tail yields, added {lt_stats['success_break']} success breaks")
 
     # Pass 9: Fix missing breaks in while-true loops
     fixed_lines, gb_count, sy_count = fix_missing_breaks(fixed_lines)
@@ -980,13 +2438,26 @@ def main():
     # Pass 12: Game-ready initial skip (must run after Pass 4 creates the if-not block)
     full_text = ''.join(fixed_lines)
     full_text, gis_count = _gameready_initial_skip(full_text)
-    fixed_lines = full_text.splitlines(True)
+    fixed_lines = split_lines(full_text)
     print(f"Pass 12: Fixed {gis_count} game-ready initial skip")
+
+    # Pass 13: Scope leaks (must run last among structural passes)
+    full_text = ''.join(fixed_lines)
+    full_text, sc_stats, sc_warnings = fix_scope_leaks(full_text)
+    print(f"Pass 13: Fixed {sc_stats['pairs']} leaked registers ({sc_stats['converted']} declarations "
+          f"widened, {sc_stats['renamed']} renamed for upvalue collisions, {sc_stats['kept']} kept local)")
+
+    # Pass 14: Garbled empty strings
+    full_text, gs_count = fix_garbled_strings(full_text)
+    print(f"Pass 14: Replaced {gs_count} garbled empty-string constants")
+
+    full_text = full_text.replace(TS_MARK, '')
+    fixed_lines = split_lines(full_text)
 
     with open(output_file, 'w', encoding='latin-1') as f:
         f.writelines(fixed_lines)
 
-    total = inv_count + sl_stats['fixed'] + tp_total + ie_count + va_count + tb_count + br_count + ks_count + gb_count + sy_count + pu_count + dr_count + gis_count
+    total = sr_total + ts_total + inv_count + bm_count + sl_stats['fixed'] + mr_count + oc_count + wc_count + lt_stats['yield_moved'] + lt_stats['success_break'] + tp_total + ie_count + va_count + tb_count + br_count + ks_count + gb_count + sy_count + pu_count + dr_count + gis_count + sc_stats['pairs'] + gs_count
     print(f"\nTotal: {total} fixes applied")
     print(f"Output written to {output_file} ({len(fixed_lines)} lines)")
 

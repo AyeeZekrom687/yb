@@ -1,17 +1,18 @@
 # YBA Deobfuscation Handoff
 
 ## Project Summary
-Deobfuscating a Roblox YBA (Your Bizarre Adventure) exploit script. A Python deobfuscator (`fix_deob.py`) applies 12 passes of fixes to undo decompiler bugs on the original decompiled output, producing a working Lua script pushed to GitHub for loading via Roblox executor.
+Deobfuscating a Roblox YBA (Your Bizarre Adventure) exploit script. A Python deobfuscator (`fix_deob.py`) applies a series of passes that undo decompiler bugs in the original decompiled output, producing a Lua script pushed to GitHub for loading via a Roblox executor.
 
 ## Repository
 - GitHub: `AyeeZekrom687/yb` (branch: `main`, file: `scr`)
 - Load URL: `loadstring(game:HttpGet("https://raw.githubusercontent.com/AyeeZekrom687/yb/main/scr?t=" .. tostring(tick())))()`
 
-## Files (all in the repo root)
+## Files
 - `yba_hub_deobfuscated.lua` — Original decompiler output (READ-ONLY reference, latin-1 encoding, 67,383 lines)
-- `fix_deob.py` — 12-pass deobfuscator script
-- `coordinator_block.lua` — Farm Coordinator module (303 lines, has U+2550 chars that MUST be replaced with `=` for latin-1 compat)
-- `scr` — Final output file (deob output + coordinator appended), loaded by Roblox
+- `fix_deob.py` — Deobfuscator (passes listed below; the docstring at the top documents each one)
+- `coordinator_block.lua` — Farm Coordinator module (has U+2550 chars that MUST be replaced with `=` for latin-1 compat)
+- `scr` — Final output file (deob output + coordinator inserted), loaded by Roblox
+- `tools/harness.lua` — Lua 5.1 mock Roblox/executor environment for tracing `scr` (see "Testing")
 
 ## Build Process (MUST follow every time)
 ```bash
@@ -46,75 +47,79 @@ print(f'Written ({result.count(chr(10)) + 1} lines)')
 # 4. Final verify
 luac -p scr
 grep -cP '\xEF\xBF\xBD' scr   # MUST be 0
+luau-compile --null scr        # optional: real Luau compiler (github.com/luau-lang/luau releases)
 
 # 5. Push
 git add scr && git commit -m "description" && git push -u origin main
 ```
+Never pipe the build through `tail`/`grep` without `set -o pipefail`: an assertion in a pass would be hidden and an old `yba_fixed.lua` would be used.
 
-## Decompiler Bug Rules
-1. **ALL bare truthiness tests are INVERTED.** `if _r5 then` in decompiler = `if not _r5 then` in reality. Comparisons (`==`, `~=`, `<`, `>`, `<=`, `>=`) are NOT inverted.
-2. **Register reuse**: `_r3`, `_r5` etc. get overwritten with different values later. Closures capture by reference, see stale values.
-3. **Dropped assignments outside if blocks**: `if not VAR then end; VAR = VALUE` should be `if not VAR then; VAR = VALUE; end`
-4. **Dropped return-false blocks**: `VAR = false; do return VAR end` placed unconditionally outside their if/elseif blocks
-5. **Missing breaks** in `while true do` loops
-6. **Latin-1 encoding**: File has non-UTF-8 bytes. MUST read/write as latin-1, never UTF-8.
+## Decompiler Bug Rules (corrected)
+1. **TEST conditions are printed inverted** (`if _r5 then` means `if not _r5 then`). This covers bare tests on a register computed in place and copies from a true upvalue (GETUPVAL + TEST). Comparisons are NOT inverted.
+2. **TESTSET conditions are printed correctly.** A copy from the function's OWN register/param directly followed by a test (`_rX = _rY` / `if [not] _rX then`) is `x = y or ...` / `x = y and ...` and must not be flipped (392 sites). Rule 1 alone was wrong for these.
+3. **Scope leaks.** `local _rN` is emitted at the first assignment even inside a nested block; uses after the block resolve to a global or to an enclosing function's variable of the same name. Writes then clobber shared state (e.g. `pairs()`'s third value `nil` overwrote the main chunk's UserInputService; AutoPlay overwrote the `_r20` logger with a string).
+4. **Register/upvalue name collisions.** Upvalues are named after the parent's register, so a function can use `_r20` both as its own temp and as the main chunk's logger. Upvalues are only reachable through plain copies (`_rX = R` / `R = _rX`); `R = R` is always GETUPVAL into the own register.
+5. **Or-chains.** `if a or b then BODY end` prints as nested tests with an empty innermost `if`, BODY at the end of the outer block or dropped after it. BODY must run iff `(not F1) or (not F2) or ... or C`.
+6. **Boolean materializations.** `x = (a == b)` loses `else x = true`, nesting the rest of the block (up to 59k lines) inside the if.
+7. **Missing loop exits.** `while A and B do` prints as `while true do` + nested ifs without breaks; search loops lose their success `break` and put the trailing wait in the first test's else; post-loop code lands in the else of the loop test.
+8. **Multi-return forwarding.** `f(g())` prints with a fixed range of stale registers as extra arguments (e.g. `tonumber(v, "IESPSize")`).
+9. **Setlist packing.** Table constructors pack the final values of registers t+1..L (L = register of the last assignment before the setlist); temporaries are not elements.
+10. **Garbled empty strings.** `""` decodes to a different 2-byte garbage constant per function.
+11. **Latin-1 encoding.** Read/write as latin-1. Split lines on `\n` only (`split_lines`), never `str.splitlines()`: the file contains 0x85 inside strings.
 
-## The 12 Passes in fix_deob.py
+## Passes in fix_deob.py (current counts)
 | Pass | What | Count |
 |------|------|-------|
-| 1 | Truthiness inversions | 5,784 |
+| 0b | Structural repairs (loop end, bypass else, GameModes or-chain, outer game-ready while) | 4 |
+| 0 | TESTSET restoration (marked / operands moved / ternary else) | 392 / 32 / 11 |
+| 1 | Truthiness inversions (TEST) | 5,392 |
+| 1b | Boolean materializations | 53 |
 | 2 | Setlist bugs | 198 fixed, 66 skipped |
-| 3 | Targeted patches: namecall varargs, game-ready break, standfarm bridge | 6 |
-| 4 | Broken if/else reconstruction (with call-next-line guard) | 493 |
+| 2b | Multi-return forwarding | 210 |
+| 3 | Targeted patches (namecall varargs, game-ready break, standfarm bridge, first-spawn loop) | 7 |
+| 3b | Or-chains | 692 |
+| 4 | Dropped right operands (`x = x or v`), whole operand | 196 |
 | 5 | Varargs passthrough wrappers | 98 |
 | 6 | Timeout breaks | 5 |
 | 7 | Branding replacements | 39 |
 | 8 | Key system stubs | 1 |
-| 9 | Missing breaks in while-true loops + safety yields | 10 + 101 |
-| 10 | Players service upvalue fixes (all _rN = _rM.LocalPlayer) | 75 |
-| 11 | Dropped return-false blocks | 26 |
-| 12 | Game-ready initial skip (close if-not before outer while) | 1 |
+| 8b | While-condition chains | 98 |
+| 8c | Loop tail exits (yields moved / success breaks) | 37 / 32 |
+| 9 | Remaining while-true guard breaks + safety yields | 2 + 24 |
+| 10 | Players service upvalue fixes | 75 |
+| 11 | Dropped return-false (single tests; chains go to 3b) | 0 |
+| 12 | Game-ready initial skip | 1 |
+| 13 | Scope leaks (registers hoisted; 143 renamed for collisions) | 1,618 |
+| 14 | Garbled empty strings | 219 |
+
+## Testing (tools/harness.lua)
+Runs `scr` under Lua 5.1 with mocked `game`/Instances/services, `task.*` scheduler, executor API, an in-memory filesystem and a fake MacLib. Prints the boot log (`_r20` writes `YBA/boot_log.txt`), every error swallowed by `pcall`, task errors, and infinite loops (instruction budget).
+```bash
+curl -sS -o maclib.lua https://raw.githubusercontent.com/AZX0OZ/maclib/refs/heads/main/maclib
+# in-game scenario (menu / loading GUIs absent):
+MACLIB_PATH=maclib.lua ABSENT="LoadingScreen1,LoadingScreen,BlackScreen,Main Menu" lua5.1 tools/harness.lua scr 50000000
+# main-menu scenario: same without ABSENT
+```
+Expected now: in-game `_r65()` is true on the first call, "FIRST SPAWN" logs once, the window, tab group, 8 tabs, 22 sections, 62 toggles, 16 dropdowns, 9 sliders, 15 buttons are built, and `main chunk returned normally`. Mock limitations: every child exists unless listed in ABSENT, `.X` returns a number (so `UDim2.X.Scale` errors at ~30300), MacLib is a stub.
 
 ## Current Status
-- Script PARTIALLY works in Roblox: character "bugs out" (hooks running), but **no UI appears** and no console errors
-- Pass 12 fixed the "attempt to call a boolean value" crash at line 7171
-- The game-ready check (`_r65()`) now correctly returns true and the init code path is entered
-- MacLib download + loadstring should execute, but UI still doesn't appear
+- Previous blockers (each confirmed in the harness): main chunk crashed at `normalizeItemName` (scope leak), at the settings loader (TESTSET), and looped back into the game-ready wait (outer `while true` + materialization nesting); none occur now.
+- Default settings no longer auto-start item farm / stand farm or run Remove Map (or-chain fix).
+- First-spawn code no longer re-runs `_r73()` / `_r69()` every frame.
+- Not yet confirmed in Roblox itself.
 
-## Key Code Sections (line numbers in `scr` / yba_fixed_base.lua)
-- **_r65** (~line 3030): Game-ready check function. Has 3 return-false patterns fixed by Pass 11 (HUD check, character parent, health).
-- **_r69** (~line 5180): Initialization trigger function
-- **Game-ready flow** (~line 7164-7200): `if _r65 then` block with Pass 12 fix
-- **MacLib loading** (~line 7200-7330): Downloads MacLib from 3 CDN URLs, applies gsub patches, runs loadstring
-- **Settings/getgenv** (~line 7328-7405): Initializes config values
-- **Window creation** (~line 28380): `getgenv().YBAHubWindow = _r108` / `_G.YBAHubWindow = _r108`
-- **Coordinator block** (~line 68177): Farm Coordinator module appended at end
+## Known Residual Issues
+- **Closure name collisions the liveness rule cannot resolve:** the HUD health loop (`_r159`, closure reads `_r5.PlayerGui` while the parent's own `_r5` is a boolean flag) and AutoPlay's stage-click log (`_r21 = _r20` copies the logger while the own `_r20` holds the stage). Both fail inside `pcall`.
+- `isSellableItem` / `isCandyItem` / `isProtectedItem` / `sellableItems` are read as globals in a few places but only defined as `_r142` fields (pre-existing in the original).
+- `_r65` indexes the character after the parent check; this matches the decompiled structure.
+- 66 setlists are still skipped (nested table constructors).
 
-## Key Register Mappings (top-level scope)
-- `_r3`: Starts as `wait`, then `game`, then `game.GetService`, then `game:GetService("Players")` — gets overwritten later (fixed by Pass 10)
-- `_r5`: Starts as "Players" string, reassigned to LocalPlayer
-- `_r20`: Logging/warn function (defined at line 127)
-- `_r31`: Settings getter function (may be nil if settings system stripped)
-- `_r48`: Get-player utility (replaced by Pass 10)
-- `_r49`: Get-PlayerGui utility
-- `_r65`: Game-ready check function
-- `_r69`: Called at line 5180, triggers initialization
-- `_r99`: MacLib library object (after line 7324)
-- `_r108`: Window object (around line 28380)
-
-## Bugs Fixed So Far
-1. LocalPlayer nil error (Pass 10 — all cross-register patterns)
-2. "attempt to call a string value" at line 7354 (Pass 4 guard for call-next-line)
-3. Script silently hangs (Pass 11 — 3 broken return-false patterns in _r65)
-4. "attempt to call a boolean value" at line 7171 (Pass 12 — game-ready initial skip)
-
-## What Needs Investigation
-- **Why no UI?** The init code path should now be reached. Possible causes:
-  - MacLib download silently fails (inside pcall)
-  - loadstring fails silently
-  - A remaining inversion bug somewhere between MacLib load and window creation (~7300-28380)
-  - A remaining dropped-assignment bug (Pass 4 pattern) in the UI creation path
-  - An aborted Sonnet sweep session found (but did NOT push): a MacLib re-download loop, 6 guard patterns, and an anti-teleport else block — these findings should be verified independently
+## Key Code Sections (search by string; line numbers shift between builds)
+- `_r65` (`local _r65 = function()`): game-ready check (PlayerGui, LoadingScreen1, BlackScreen, LoadingScreen/GameModes, Main Menu, HUD, character, Humanoid health)
+- First-spawn wait: `"FIRST SPAWN (strict main game) reached"`
+- MacLib loading: `"downloading maclib..."`
+- Window creation: `"UI: window created"`
+- Coordinator block: `YBA Farm Coordinator`
 
 ## User Directives
 - Do NOT make your own additions — just port the script as-is with bug fixes only
