@@ -34,6 +34,7 @@
             local _r14 = tick
             _r14 = _r14()
             while true do
+                if _r13 then break end
                 if not _r13 then
                     local _r15 = tick
                     _r15 = _r15()
@@ -1241,6 +1242,7 @@
                 _r13 = _p1
                 local _r14 = false
                 while true do
+                    if not _r13 then break end
                     if _r13 then
                         local _r15 = _r9
                         if _r13 ~= _r15 then
@@ -1308,6 +1310,7 @@
                             _r11 = _p1
                             local _r12 = false
                             while true do
+                                if not _r11 then break end
                                 if _r11 then
                                     local _r13 = _p1
                                     if _r11 ~= _r13 then
@@ -5184,6 +5187,7 @@
                 _r1 = 0.5
                 _r0(_r1)
             end
+            task.wait(0)
         end
         _r0 = tick
         _r0 = _r0()
@@ -5201,6 +5205,7 @@
                 _r1 = _r69
                 _r1()
             end
+            task.wait(0)
         end
         return
     end
@@ -6332,12 +6337,14 @@
                 _r5 = 0.1
                 _r4(_r5)
             end
+            task.wait(0)
         end
         _r4 = false
         _r5 = os
         _r5 = _r5.clock
         _r5 = _r5()
         while true do
+            if _r4 then break end
             if not _r4 then
                 local _r6 = os
                 _r6 = _r6.clock
@@ -12583,6 +12590,7 @@
                                     _r18(_r19)
                                 end
                             end
+                            task.wait(0)
                         end
                         _r18 = _r88
                         if _r18 then
@@ -12640,6 +12648,7 @@
                                         end
                                     end
                                 end
+                                task.wait(0)
                             end
                             _r18 = _r87
                             if not _r18 then
@@ -13364,6 +13373,7 @@
                                         _r23(_r24)
                                     end
                                 end
+                                task.wait(0)
                             end
                         end
                         _r22 = _r13.Parent
@@ -13761,6 +13771,7 @@
                                                 _r5(_r6)
                                             end
                                         end
+                                        task.wait(0)
                                     end
                                 end
                             end
@@ -18270,6 +18281,7 @@
                                 local _r13 = 0.25
                                 _r12(_r13)
                             end
+                            task.wait(0)
                         end
                         return
                     end
@@ -21245,6 +21257,7 @@
                                 _r13 = 0.3125
                                 _r12(_r13)
                             end
+                            task.wait(0)
                         end
                         return
                     end
@@ -24228,6 +24241,7 @@
                                         _r23(_r24)
                                     end
                                 end
+                                task.wait(0)
                             end
                             if _r21 then
                                 _r23 = _r21.Enabled
@@ -24334,6 +24348,7 @@
                                         _r25(_r26)
                                     end
                                 end
+                                task.wait(0)
                             end
                             if not _r23 then
                                 if not _p1 then
@@ -24931,6 +24946,7 @@
                                         _r26(_r27)
                                     end
                                 end
+                                task.wait(0)
                             end
                             if _r24 then
                                 _r26 = _r24.Enabled
@@ -25015,6 +25031,7 @@
                                         _r29(_r30)
                                     end
                                 end
+                                task.wait(0)
                             end
                             if not _r26 then
                                 if not _p1 then
@@ -25110,6 +25127,7 @@
                                         _r31(_r32)
                                     end
                                 end
+                                task.wait(0)
                             end
                             if not _r28 then
                                 if not _p1 then
@@ -25262,6 +25280,7 @@
                                         _r34(_r35)
                                     end
                                 end
+                                task.wait(0)
                             end
                             if not _r32 then
                                 if not _p1 then
@@ -25688,6 +25707,7 @@
                                 _r7 = _r7.wait
                                 _r8 = 30
                                 _r7(_r8)
+                                task.wait(0)
                             end
                             return
                         end
@@ -26749,6 +26769,7 @@
                                                                 end
                                                             end
                                                         end
+                                                        task.wait(0)
                                                     end
                                                 end
                                                 _r12 = function()
@@ -30373,6 +30394,7 @@
                                                         _r18(_r19, _r20)
                                                     end
                                                 end
+                                                task.wait(0)
                                             end
                                         end
                                         return
@@ -31913,6 +31935,7 @@
                                                         _r7(_r8)
                                                     end
                                                 end
+                                                task.wait(0)
                                             end
                                             if _r6 then
                                                 _r7 = _r6
@@ -37952,6 +37975,7 @@
                                                             _r9 = _r14
                                                         end
                                                     end
+                                                    task.wait(0)
                                                 end
                                             end
                                         end
@@ -39324,6 +39348,7 @@
                                                                             end
                                                                         end
                                                                     end
+                                                                    task.wait(0)
                                                                 end
                                                             end
                                                             if not _r16 then
@@ -39334,6 +39359,7 @@
                                                             end
                                                         end
                                                     end
+                                                    task.wait(0)
                                                 end
                                                 _r19 = _r197
                                                 _r20 = _r15.enemy
@@ -39342,7 +39368,9 @@
                                                 _r19 = _r19.wait
                                                 _r20 = 0.05
                                                 _r19(_r20)
+                                                task.wait(0)
                                             end
+                                            task.wait(0)
                                         end
                                         _r13 = _r173
                                         _r14 = "quest"
@@ -39462,7 +39490,9 @@
                                                 _r5 = _r5.wait
                                                 _r6 = 0.05
                                                 _r5(_r6)
+                                                task.wait(0)
                                             end
+                                            task.wait(0)
                                         end
                                         _r4 = _r173
                                         _r5 = "quest"
@@ -40786,6 +40816,7 @@
                                                 end
                                             end
                                         end
+                                        task.wait(0)
                                     end
                                     return
                                 end
@@ -41097,6 +41128,7 @@
                                             _r16 = tick
                                             _r16 = _r16()
                                             while true do
+                                                if not _r15 then break end
                                                 if _r15 then
                                                     _r17 = _r15.Parent
                                                     if _r17 then
@@ -41507,6 +41539,7 @@
                                             _r19(_r20)
                                         end
                                     end
+                                    task.wait(0)
                                 end
                                 if _r17 then
                                     _r19 = _r17.Enabled
@@ -42942,6 +42975,7 @@
                                                                                                                     end
                                                                                                                 end
                                                                                                             end
+                                                                                                            task.wait(0)
                                                                                                         end
                                                                                                         _r15 = pcall
                                                                                                         _r16 = function()
@@ -44019,6 +44053,7 @@
                                                             end
                                                         end
                                                     end
+                                                    task.wait(0)
                                                 end
                                             end
                                         end
@@ -44084,6 +44119,7 @@
                                                         end
                                                     end
                                                 end
+                                                task.wait(0)
                                             end
                                             _r23 = _r152
                                             _r23 = _r23.standFarmRunning
@@ -44157,6 +44193,7 @@
                                                         end
                                                     end
                                                 end
+                                                task.wait(0)
                                             end
                                             _r25 = _p8.Stand
                                             _r25 = _r25.Value
@@ -44290,6 +44327,7 @@
                                                         end
                                                     end
                                                 end
+                                                task.wait(0)
                                             end
                                             _r23 = _p8.Stand
                                             _r23 = _r23.Value
@@ -44347,6 +44385,7 @@
                                                         end
                                                     end
                                                 end
+                                                task.wait(0)
                                             end
                                             _r25 = _p8.Stand
                                             _r25 = _r25.Value
@@ -45508,6 +45547,7 @@
                                                                                         end
                                                                                     end
                                                                                 end
+                                                                                task.wait(0)
                                                                             end
                                                                         end
                                                                     end
@@ -46973,6 +47013,7 @@
                                                                                     end
                                                                                     -- goto [480]
                                                                                 end
+                                                                                task.wait(0)
                                                                             end
                                                                             if _r23 ~= "None" then
                                                                                 _r27 = _r157
@@ -47003,6 +47044,7 @@
                                                                                             end
                                                                                             -- goto [480]
                                                                                         end
+                                                                                        task.wait(0)
                                                                                     end
                                                                                     if _r23 ~= "None" then
                                                                                         _r27 = _r157
@@ -50910,6 +50952,7 @@
                                                         _r10()
                                                     end
                                                 end
+                                                task.wait(0)
                                             end
                                             return
                                         end
@@ -53601,6 +53644,7 @@
                                                                                                             _r12 = task
                                                                                                             _r12 = _r12.wait
                                                                                                             _r12()
+                                                                                                            task.wait(0)
                                                                                                         end
                                                                                                     end
                                                                                                 end
@@ -55780,6 +55824,7 @@
                                                                 _r13 = tick
                                                                 _r13 = _r13()
                                                                 while true do
+                                                                    if not _r12 then break end
                                                                     if _r12 then
                                                                         _r14 = _r12.Parent
                                                                         if _r14 then
@@ -55932,6 +55977,7 @@
                                                                     end
                                                                 end
                                                             end
+                                                            task.wait(0)
                                                         end
                                                         _r11 = pcall
                                                         _r12 = function()
@@ -56076,6 +56122,7 @@
                                                                 end
                                                             end
                                                         end
+                                                        task.wait(0)
                                                     end
                                                     _r4 = _r7
                                                     _r4 = _r4.Character
@@ -56263,6 +56310,7 @@
                                                                             end
                                                                         end
                                                                     end
+                                                                    task.wait(0)
                                                                 end
                                                                 _r19 = _r7
                                                                 _r19 = _r19.Character
@@ -56523,6 +56571,7 @@
                                                                                                 end
                                                                                             end
                                                                                         end
+                                                                                        task.wait(0)
                                                                                     end
                                                                                     _r10 = _r3
                                                                                     _r10 = _r10()
@@ -56837,6 +56886,7 @@
                                                     end
                                                     _r16(_r17)
                                                     while true do
+                                                        if _r13 then break end
                                                         if not _r13 then
                                                             _r16 = task
                                                             _r16 = _r16.wait
@@ -56985,6 +57035,7 @@
                                                                     end
                                                                 end
                                                             end
+                                                            task.wait(0)
                                                         end
                                                         _r16 = task
                                                         _r16 = _r16.wait
@@ -61240,6 +61291,7 @@
                                                                         end
                                                                     end
                                                                 end
+                                                                task.wait(0)
                                                             end
                                                             _r14 = task
                                                             _r14 = _r14.wait
@@ -61963,6 +62015,7 @@
                                                                                     _r14 = 1
                                                                                     _r13(_r14)
                                                                                 end
+                                                                                task.wait(0)
                                                                             end
                                                                         end
                                                                     end
@@ -65014,6 +65067,7 @@
                                         _r23 = 0.1
                                         _r22(_r23)
                                     end
+                                    task.wait(0)
                                 end
                                 _r23 = _r21
                                 _r22 = _r21.Disconnect
