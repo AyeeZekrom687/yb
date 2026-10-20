@@ -27,7 +27,7 @@
     local _r5 = "Players"
     _r3 = _r3(_r4, _r5)
     local _players_svc = _r3
-    _r4 = _r3.LocalPlayer
+    _r4 = game:GetService("Players").LocalPlayer
     if not _r4 then
         _r4 = function()
             local _r13 = _r3
@@ -42,7 +42,7 @@
                     _r15 = _r15 - _r14
                     if _r15 < 10 then
                         _r15 = _r3
-                        _r13 = _r15.LocalPlayer
+                        _r13 = game:GetService("Players").LocalPlayer
                         if _r13 then
                         else
                             _r15 = task
@@ -4416,7 +4416,7 @@
                                         _r14 = _r14.GetService
                                         local _r16 = "Players"
                                         _r14 = _r14(_r15, _r16)
-                                        _r11 = _r14.LocalPlayer
+                                        _r11 = game:GetService("Players").LocalPlayer
                                     end
                                 end
                                 _r14 = _r49
@@ -4498,7 +4498,7 @@
                                         _r17 = _r17.GetService
                                         local _r19 = "Players"
                                         _r17 = _r17(_r18, _r19)
-                                        _r11 = _r17.LocalPlayer
+                                        _r11 = game:GetService("Players").LocalPlayer
                                     end
                                 end
                                 _r17 = workspace
