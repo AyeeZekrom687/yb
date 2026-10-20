@@ -392,7 +392,7 @@
             local _r15 = _r13
             _r14 = _r14(_r15)
             if _r14 == "string" then
-                if _r13 == "+ï¿½" then
+                if _r13 == "+Â" then
                 end
             end
             _r14 = nil
@@ -1544,7 +1544,7 @@
         _r13 = tostring
         local _r14 = _p1
         if _r14 then
-            _r14 = "ï¿½<"
+            _r14 = "‘<"
         end
         _r13 = _r13(_r14)
         _r14 = _r13
@@ -7134,7 +7134,7 @@
             _r6 = _r6(_r7)
             if _r6 == "string" then
                 _r6 = _r5.APWH
-                if _r6 ~= "ï¿½|" then
+                if _r6 ~= "µ|" then
                     _r6 = getgenv
                     _r6 = _r6()
                     _r7 = _r5.APWH
@@ -7523,48 +7523,48 @@
                 _r16 = _p1
                 _r15 = _p1.gsub
                 local _r17 = "^%s+"
-                local _r18 = "ï¿½ï¿½"
+                local _r18 = "ãÔ"
                 _r15 = _r15(_r16, _r17, _r18)
                 _r16 = _r15
                 _r15 = _r15.gsub
                 _r17 = "%s+$"
-                _r18 = "ï¿½ï¿½"
+                _r18 = "ãÔ"
                 _r15 = _r15(_r16, _r17, _r18)
                 _r17 = _r15
                 _r16 = _r15.gsub
                 _r18 = "^https?://"
-                local _r19 = "ï¿½ï¿½"
+                local _r19 = "ãÔ"
                 _r16 = _r16(_r17, _r18, _r19)
                 _r17 = _r16
                 _r16 = _r16.gsub
                 _r18 = "^www%."
-                _r19 = "ï¿½ï¿½"
+                _r19 = "ãÔ"
                 _r16 = _r16(_r17, _r18, _r19)
                 _r15 = _r16
                 _r17 = _r15
                 _r16 = _r15.gsub
                 _r18 = "^discord%.gg/"
-                _r19 = "ï¿½ï¿½"
+                _r19 = "ãÔ"
                 _r16 = _r16(_r17, _r18, _r19)
                 _r17 = _r16
                 _r16 = _r16.gsub
                 _r18 = "^discord%.com/invite/"
-                _r19 = "ï¿½ï¿½"
+                _r19 = "ãÔ"
                 _r16 = _r16(_r17, _r18, _r19)
                 _r15 = _r16
                 _r17 = _r15
                 _r16 = _r15.gsub
                 _r18 = "^invite/"
-                _r19 = "ï¿½ï¿½"
+                _r19 = "ãÔ"
                 _r16 = _r16(_r17, _r18, _r19)
                 _r15 = _r16
                 _r17 = _r15
                 _r16 = _r15.gsub
                 _r18 = "[/?#].*$"
-                _r19 = "ï¿½ï¿½"
+                _r19 = "ãÔ"
                 _r16 = _r16(_r17, _r18, _r19)
                 _r15 = _r16
-                if _r15 == "ï¿½ï¿½" then
+                if _r15 == "ãÔ" then
                     _r16 = nil
                     do return _r16 end
                 end
@@ -7575,7 +7575,7 @@
                 local _r16 = _p1
                 _r15 = _r15(_r16)
                 if _r15 == "string" then
-                    if _p1 == "ï¿½\12" then
+                    if _p1 == "™\12" then
                     end
                     _r15 = false
                     do return _r15 end
@@ -7674,7 +7674,7 @@
             end
             _r107 = function(_p1)
                 if _p1 then
-                    if _p1 ~= "\"ï¿½" then
+                    if _p1 ~= "\"í" then
                         local _r10 = setclipboard
                         if _r10 then
                             _r10 = setclipboard
@@ -8010,21 +8010,21 @@
                     _r6 = tostring
                     _r7 = _p1
                     if _r7 then
-                        _r7 = ")ï¿½"
+                        _r7 = ")æ"
                     end
                     _r6 = _r6(_r7)
                     _r7 = _r6
                     _r6 = _r6.gsub
                     local _r8 = "^%s+"
-                    local _r9 = ")ï¿½"
+                    local _r9 = ")æ"
                     _r6 = _r6(_r7, _r8, _r9)
                     _r7 = _r6
                     _r6 = _r6.gsub
                     _r8 = "%s+$"
-                    _r9 = ")ï¿½"
+                    _r9 = ")æ"
                     _r6 = _r6(_r7, _r8, _r9)
                     _p1 = _r6
-                    if _p1 ~= ")ï¿½" then
+                    if _p1 ~= ")æ" then
                         _r7 = _p1
                         _r6 = _p1.find
                         _r8 = "^https?://"
@@ -8035,7 +8035,7 @@
                         _r7 = "Invalid URL"
                         do return _r6, _r7 end
                     end
-                    _r6 = ")ï¿½"
+                    _r6 = ")æ"
                     _r7 = pcall
                     _r8 = function()
                         local _r10 = _r8
@@ -8115,7 +8115,7 @@
                                 if _r16 then
                                     _r16 = _r112
                                     _r16 = _r16.Url
-                                    if _r16 ~= "gï¿½" then
+                                    if _r16 ~= "g¢" then
                                         _r16 = _r112
                                         _r16 = _r16.Url
                                         if not _r16 then
@@ -8876,7 +8876,7 @@
                     _r7.name = _r8
                     _r8 = game
                     _r8 = _r8.JobId
-                    if _r8 ~= "ï¿½#" then
+                    if _r8 ~= "×#" then
                         _r8 = game
                         _r8 = _r8.JobId
                         if not _r8 then
@@ -9082,7 +9082,7 @@
                     end
                     if _p1 then
                         if _p1 ~= "None" then
-                            if _p1 == "ï¿½#" then
+                            if _p1 == "ë#" then
                             end
                         end
                         do return end
@@ -9090,7 +9090,7 @@
                     _r12 = _p2
                     if not _r12 then
                         if _p2 ~= "None" then
-                            if _p2 ~= "ï¿½#" then
+                            if _p2 ~= "ë#" then
                                 if _p2 == _p1 then
                                 end
                             end
@@ -9247,7 +9247,7 @@
                             if _r9 then
                                 _r9 = _r112
                                 _r9 = _r9.Url
-                                if _r9 ~= "ï¿½\27" then
+                                if _r9 ~= "º\27" then
                                     _r9 = _r112
                                     _r9 = _r9.Url
                                     if not _r9 then
@@ -9261,7 +9261,7 @@
                                 end
                             end
                             if _r9 then
-                                if _r9 == "ï¿½\27" then
+                                if _r9 == "º\27" then
                                 end
                                 do return end
                             end
@@ -9600,7 +9600,7 @@
                     _r12.name = _r13
                     _r13 = game
                     _r13 = _r13.JobId
-                    if _r13 ~= "ï¿½\27" then
+                    if _r13 ~= "¼\27" then
                         _r13 = game
                         _r13 = _r13.JobId
                         if not _r13 then
@@ -9852,7 +9852,7 @@
                 _r143["Ð¯"] = "Ñ"
                 local _r144 = function(_p1)
                     if not _p1 then
-                        local _r7 = "ï¿½"
+                        local _r7 = "òª"
                         do return _r7 end
                     end
                     _r7 = tostring
@@ -9877,7 +9877,7 @@
                                 _r14 = _r12
                                 _r13 = _r13(_r14)
                                 if _r13 == "string" then
-                                    if _r12 ~= "ï¿½" then
+                                    if _r12 ~= "òª" then
                                         _r13 = pcall
                                         _r14 = function()
                                             local _r8 = _r7
@@ -9901,7 +9901,7 @@
                 local _r145 = {}
                 local _r146 = function(_p1)
                     if not _p1 then
-                        local _r10 = "[ï¿½"
+                        local _r10 = "[¼"
                         do return _r10 end
                     end
                     _r10 = typeof
@@ -9923,12 +9923,12 @@
                     local _r13 = _r10
                     local _r12 = _r10.gsub
                     local _r14 = "^%s+"
-                    local _r15 = "[ï¿½"
+                    local _r15 = "[¼"
                     _r12 = _r12(_r13, _r14, _r15)
                     _r13 = _r12
                     _r12 = _r12.gsub
                     _r14 = "%s+$"
-                    _r15 = "[ï¿½"
+                    _r15 = "[¼"
                     _r12 = _r12(_r13, _r14, _r15)
                     _r13 = _r144
                     _r14 = _r12
@@ -13076,7 +13076,7 @@
                         end
                         _r18 = function(_p1)
                             if not _p1 then
-                                local _r8 = "ï¿½ï¿½"
+                                local _r8 = "¾æ"
                                 do return _r8 end
                             end
                             _r8 = {}
@@ -13101,7 +13101,7 @@
                                     _r17 = _p1
                                     _r17 = _r17.Text
                                     if not _r17 then
-                                        _r17 = "ï¿½ï¿½"
+                                        _r17 = "ÆÒ"
                                     end
                                     _r15(_r16, _r17)
                                 end
@@ -13126,7 +13126,7 @@
                                         end
                                         if _r20 then
                                             _r20 = _r19.Text
-                                            if _r20 ~= "ï¿½ï¿½" then
+                                            if _r20 ~= "ÆÒ" then
                                                 _r20 = table
                                                 _r20 = _r20.insert
                                                 _r21 = _r8
@@ -13479,7 +13479,7 @@
                             local _r10 = tostring
                             local _r11 = _p1
                             if _r11 then
-                                _r11 = "iï¿½"
+                                _r11 = "i¯"
                             end
                             _r10 = _r10(_r11)
                             _r11 = _r10
@@ -15088,7 +15088,7 @@
                 _r165[6] = _r171
                 _r166 = function(_p1)
                     if _p1 then
-                        if _p1 == "sï¿½" then
+                        if _p1 == "s„" then
                         end
                         do return end
                     end
@@ -15202,7 +15202,7 @@
                             if 1 < _r5 then
                                 _r14 = "s"
                                 if not _r14 then
-                                    _r14 = "sï¿½"
+                                    _r14 = "s„"
                                 end
                             end
                             local _r15 = "."
@@ -16161,7 +16161,7 @@
                     local _r11 = tostring
                     local _r12 = _p1
                     if _r12 then
-                        _r12 = "ï¿½ï¿½"
+                        _r12 = "Ú×"
                     end
                     _r11 = _r11(_r12)
                     _r12 = _r11
@@ -16497,7 +16497,7 @@
                         _r15 = _r13.ObjectText
                         if _r15 then
                             _r15 = _r13.ObjectText
-                            if _r15 ~= "'ï¿½" then
+                            if _r15 ~= "' " then
                                 _r15 = _r13.ObjectText
                                 if not _r15 then
                                 end
@@ -17993,7 +17993,7 @@
                                             _r24 = _r22.Value
                                             if _r24 ~= "None" then
                                                 _r24 = _r22.Value
-                                                if _r24 ~= "ï¿½ï¿½" then
+                                                if _r24 ~= "«Ú" then
                                                     _r24 = _r22.Value
                                                     if not _r24 then
                                                     end
@@ -18011,7 +18011,7 @@
                                             _r25 = _r23.Value
                                             if _r25 ~= "None" then
                                                 _r25 = _r23.Value
-                                                if _r25 ~= "ï¿½ï¿½" then
+                                                if _r25 ~= "«Ú" then
                                                     _r25 = _r23.Value
                                                     if not _r25 then
                                                     end
@@ -19626,7 +19626,7 @@
                         _r11 = _r9.ObjectText
                         if _r11 then
                             _r11 = _r9.ObjectText
-                            if _r11 ~= "ï¿½\23" then
+                            if _r11 ~= "¶\23" then
                                 _r11 = _r9.ObjectText
                                 if not _r11 then
                                 end
@@ -23704,7 +23704,7 @@
                                                                 if _r22 then
                                                                     _r22 = _r20.Text
                                                                     if not _r22 then
-                                                                        _r22 = "ï¿½ï¿½"
+                                                                        _r22 = "ÑÌ"
                                                                     end
                                                                 end
                                                                 _r21 = _r21(_r22)
@@ -25138,7 +25138,7 @@
                             _r30 = _r30.wait
                             _r31 = 0.7
                             _r30(_r31)
-                            _r30 = "ï¿½ï¿½"
+                            _r30 = "ŠÌ"
                             _r31 = ipairs
                             _r33 = _r24
                             _r32 = _r24.GetDescendants
@@ -25584,7 +25584,7 @@
                         end
                         _r178 = function(_p1, _p2)
                             if _p1 then
-                                if _p1 == "ï¿½\9" then
+                                if _p1 == "ú\9" then
                                 end
                                 do return end
                             end
@@ -25656,7 +25656,7 @@
                                 if _r7 then
                                     _r7 = game
                                     _r7 = _r7.JobId
-                                    if _r7 ~= "ï¿½y" then
+                                    if _r7 ~= "±y" then
                                         _r7 = _r48
                                         if _r7 then
                                             _r7 = _r48
@@ -28853,14 +28853,14 @@
                                     _r13 = _r12
                                     _r12 = _r12.gsub
                                     local _r14 = "^%s+"
-                                    local _r15 = "ï¿½K"
+                                    local _r15 = "õK"
                                     _r12 = _r12(_r13, _r14, _r15)
                                     _r13 = _r12
                                     _r12 = _r12.gsub
                                     _r14 = "%s+$"
-                                    _r15 = "ï¿½K"
+                                    _r15 = "õK"
                                     _r12 = _r12(_r13, _r14, _r15)
-                                    if _r12 ~= "ï¿½K" then
+                                    if _r12 ~= "õK" then
                                         if _r12 ~= "null" then
                                             if _r12 ~= "nil" then
                                                 if _r12 ~= "never" then
@@ -32956,7 +32956,7 @@
                                                                                 _r16 = _r16(_r17, _r18)
                                                                             end
                                                                             if _r16 ~= "None" then
-                                                                                if _r16 == "ï¿½\20" then
+                                                                                if _r16 == "ß\20" then
                                                                                 end
                                                                                 do return end
                                                                             end
@@ -33315,7 +33315,7 @@
                             _r166 = "Callback"
                             _r167 = function()
                                 local _r1 = _r162
-                                if _r1 ~= "#ï¿½" then
+                                if _r1 ~= "#ç" then
                                     _r1 = _G
                                     _r1 = _r1.YBAItemFarm
                                     if _r1 then
@@ -33854,7 +33854,7 @@
                                                 _r13 = "DialogueFrame"
                                                 _r14 = true
                                                 _r11 = _r11(_r12, _r13, _r14)
-                                                _r12 = "ï¿½y"
+                                                _r12 = "ºy"
                                                 if _r11 then
                                                     _r13 = ipairs
                                                     _r15 = _r11
@@ -33868,7 +33868,7 @@
                                                         _r18 = _r18(_r19, _r20)
                                                         if _r18 then
                                                             _r18 = _r17.Text
-                                                            if _r18 ~= "ï¿½y" then
+                                                            if _r18 ~= "ºy" then
                                                                 _r18 = _r12
                                                                 _r19 = " "
                                                                 _r20 = _r17.Text
@@ -34007,7 +34007,7 @@
                                                                                         end
                                                                                     end
                                                                                 end
-                                                                                _r23 = "ï¿½y"
+                                                                                _r23 = "ºy"
                                                                                 if _r22 then
                                                                                     _r25 = _r22
                                                                                     _r24 = _r22.IsA
@@ -34017,13 +34017,13 @@
                                                                                         _r24 = _r22.Text
                                                                                         if _r24 then
                                                                                             _r24 = _r22.Text
-                                                                                            if _r24 ~= "ï¿½y" then
+                                                                                            if _r24 ~= "ºy" then
                                                                                                 _r23 = _r22.Text
                                                                                             end
                                                                                         end
                                                                                     end
                                                                                 end
-                                                                                if _r23 == "ï¿½y" then
+                                                                                if _r23 == "ºy" then
                                                                                     _r24 = ipairs
                                                                                     _r26 = _r21
                                                                                     _r25 = _r21.GetDescendants
@@ -34044,7 +34044,7 @@
                                                                                             end
                                                                                             if _r29 then
                                                                                                 _r29 = _r28.Text
-                                                                                                if _r29 ~= "ï¿½y" then
+                                                                                                if _r29 ~= "ºy" then
                                                                                                     _r23 = _r28.Text
                                                                                                 end
                                                                                             end
@@ -34058,12 +34058,12 @@
                                                                                 _r25 = _r24
                                                                                 _r24 = _r24.gsub
                                                                                 _r26 = "^%s+"
-                                                                                _r27 = "ï¿½y"
+                                                                                _r27 = "ºy"
                                                                                 _r24 = _r24(_r25, _r26, _r27)
                                                                                 _r25 = _r24
                                                                                 _r24 = _r24.gsub
                                                                                 _r26 = "%s+$"
-                                                                                _r27 = "ï¿½y"
+                                                                                _r27 = "ºy"
                                                                                 _r24 = _r24(_r25, _r26, _r27)
                                                                                 _r26 = _r24
                                                                                 _r25 = _r24.find
@@ -34268,7 +34268,7 @@
                                     do return _r5 end
                                 end
                                 if _p1 then
-                                    if _p1 == ":ï¿½" then
+                                    if _p1 == ":‰" then
                                     end
                                     _r5 = nil
                                     do return _r5 end
@@ -34282,7 +34282,7 @@
                                 end
                                 _r6 = function(_p1)
                                     if not _p1 then
-                                        local _r10 = "\22ï¿½"
+                                        local _r10 = "\22‹"
                                         do return _r10 end
                                     end
                                     _r10 = tostring
@@ -34299,12 +34299,12 @@
                                     _r11 = _r10
                                     _r10 = _r10.gsub
                                     _r12 = "^%s+"
-                                    _r13 = "\22ï¿½"
+                                    _r13 = "\22‹"
                                     _r10 = _r10(_r11, _r12, _r13)
                                     _r11 = _r10
                                     _r10 = _r10.gsub
                                     _r12 = "%s+$"
-                                    _r13 = "\22ï¿½"
+                                    _r13 = "\22‹"
                                     return _r10(_r11, _r12, _r13)
                                 end
                                 _r7 = _r6
@@ -34319,7 +34319,7 @@
                                 _r9 = _r8
                                 _r8 = _r8.gsub
                                 local _r10 = "[%s%p]+"
-                                local _r11 = ":ï¿½"
+                                local _r11 = ":‰"
                                 _r8 = _r8(_r9, _r10, _r11)
                                 _r9 = ipairs
                                 _r11 = _r4
@@ -34351,7 +34351,7 @@
                                         _r15 = _r14
                                         _r14 = _r14.gsub
                                         _r16 = "[%s%p]+"
-                                        local _r17 = ":ï¿½"
+                                        local _r17 = ":‰"
                                         _r14 = _r14(_r15, _r16, _r17)
                                         if _r14 == _r8 then
                                             do return _r13 end
@@ -34462,7 +34462,7 @@
                                     _r21 = _r20
                                     _r20 = _r20.gsub
                                     _r22 = "[%s%p]+"
-                                    _r23 = ":ï¿½"
+                                    _r23 = ":‰"
                                     _r20 = _r20(_r21, _r22, _r23)
                                     if _r10 then
                                         _r22 = _r19
@@ -34640,7 +34640,7 @@
                             end
                             _r178 = function(_p1)
                                 if _p1 then
-                                    if _p1 ~= "ï¿½&" then
+                                    if _p1 ~= "½&" then
                                         if _p1 == "None" then
                                         end
                                     end
@@ -34791,7 +34791,7 @@
                             end
                             _r179 = function(_p1, _p2, _p3)
                                 if _p1 then
-                                    if _p1 ~= "ï¿½ï¿½" then
+                                    if _p1 ~= "íë" then
                                         if _p1 == "None" then
                                         end
                                     end
@@ -34813,23 +34813,23 @@
                                 _r10 = _r9
                                 _r9 = _r9.gsub
                                 _r11 = "^%s+"
-                                _r12 = "ï¿½ï¿½"
+                                _r12 = "íë"
                                 _r9 = _r9(_r10, _r11, _r12)
                                 _r10 = _r9
                                 _r9 = _r9.gsub
                                 _r11 = "%s+$"
-                                _r12 = "ï¿½ï¿½"
+                                _r12 = "íë"
                                 _r9 = _r9(_r10, _r11, _r12)
                                 _r10 = _p2.enemy
                                 if not _r10 then
-                                    _r10 = "ï¿½ï¿½"
+                                    _r10 = "íë"
                                 end
                                 _r11 = _r10
                                 _r10 = _r10.lower
                                 _r10 = _r10(_r11)
                                 _r11 = _p3
                                 if _r11 then
-                                    _r11 = "ï¿½ï¿½"
+                                    _r11 = "íë"
                                 end
                                 _r12 = _r11
                                 _r11 = _r11.lower
@@ -35578,7 +35578,7 @@
                                                     if _r8 then
                                                         _r9 = _r8.Text
                                                         if not _r9 then
-                                                            _r9 = "ï¿½3"
+                                                            _r9 = "ð3"
                                                         end
                                                     end
                                                     local _r11 = _r9
@@ -35617,7 +35617,7 @@
                                                                 _r18 = _r17.Text
                                                                 if _r18 then
                                                                     _r18 = _r17.Text
-                                                                    if _r18 ~= "ï¿½3" then
+                                                                    if _r18 ~= "ð3" then
                                                                         _r18 = table
                                                                         _r18 = _r18.insert
                                                                         _r19 = _r12
@@ -35662,14 +35662,14 @@
                                 end
                                 _r12 = _p1.enemy
                                 if not _r12 then
-                                    _r12 = "ï¿½ï¿½"
+                                    _r12 = "ÞÃ"
                                 end
                                 local _r13 = _r12
                                 _r12 = _r12.lower
                                 _r12 = _r12(_r13)
                                 _r13 = _p2
                                 if _r13 then
-                                    _r13 = "ï¿½ï¿½"
+                                    _r13 = "ÞÃ"
                                 end
                                 local _r14 = _r13
                                 _r13 = _r13.lower
@@ -35791,7 +35791,7 @@
                                         if not _r19 then
                                         end
                                     end
-                                    _r19 = "ï¿½@"
+                                    _r19 = "¬@"
                                 end
                                 if _r18 then
                                     _r21 = _r18
@@ -36204,7 +36204,7 @@
                                                 local _r37 = "DialogueFrame"
                                                 local _r38 = true
                                                 _r35 = _r35(_r36, _r37, _r38)
-                                                _r36 = "ï¿½B"
+                                                _r36 = "ìB"
                                                 if _r35 then
                                                     _r37 = ipairs
                                                     local _r39 = _r35
@@ -36218,7 +36218,7 @@
                                                         _r42 = _r42(_r43, _r44)
                                                         if _r42 then
                                                             _r42 = _r41.Text
-                                                            if _r42 ~= "ï¿½B" then
+                                                            if _r42 ~= "ìB" then
                                                                 _r42 = _r36
                                                                 _r43 = " "
                                                                 _r44 = _r41.Text
@@ -36418,7 +36418,7 @@
                             end
                             _r184 = function(_p1)
                                 if not _p1 then
-                                    local _r9 = "ï¿½\4"
+                                    local _r9 = "Ë\4"
                                     do return _r9 end
                                 end
                                 _r9 = tostring
@@ -36435,12 +36435,12 @@
                                 _r10 = _r9
                                 _r9 = _r9.gsub
                                 _r11 = "^%s+"
-                                _r12 = "ï¿½\4"
+                                _r12 = "Ë\4"
                                 _r9 = _r9(_r10, _r11, _r12)
                                 _r10 = _r9
                                 _r9 = _r9.gsub
                                 _r11 = "%s+$"
-                                _r12 = "ï¿½\4"
+                                _r12 = "Ë\4"
                                 return _r9(_r10, _r11, _r12)
                             end
                             _r185 = function(_p1)
@@ -36653,7 +36653,7 @@
                                 _r4 = _r3
                                 _r3 = _r3.gsub
                                 local _r5 = "[%p%s]+"
-                                local _r6 = "ï¿½}"
+                                local _r6 = "Ž}"
                                 _r3 = _r3(_r4, _r5, _r6)
                                 if _r3 ~= "deo" then
                                     _r5 = _r3
@@ -36854,12 +36854,12 @@
                                 local _r10 = _r7
                                 _r9 = _r7.gsub
                                 local _r11 = "[%p]"
-                                local _r12 = "ï¿½ï¿½"
+                                local _r12 = "Ìà"
                                 _r9 = _r9(_r10, _r11, _r12)
                                 _r11 = _r8
                                 _r10 = _r8.gsub
                                 _r12 = "[%p]"
-                                local _r13 = "ï¿½ï¿½"
+                                local _r13 = "Ìà"
                                 _r10 = _r10(_r11, _r12, _r13)
                                 if _r9 == _r10 then
                                     _r11 = true
@@ -36908,7 +36908,7 @@
                                                 _r17 = _r16
                                                 _r16 = _r16.gsub
                                                 local _r18 = "[%p]"
-                                                local _r19 = "ï¿½ï¿½"
+                                                local _r19 = "Ìà"
                                                 _r16 = _r16(_r17, _r18, _r19)
                                                 _r18 = _r16
                                                 _r17 = _r16.find
@@ -38350,7 +38350,7 @@
                                             if not _r30 then
                                             end
                                         end
-                                        _r30 = "ï¿½ï¿½"
+                                        _r30 = "Šù"
                                     end
                                     _r31 = 0
                                     _r32 = ipairs
@@ -38834,7 +38834,7 @@
                                                                                     _r50 = _r50(_r51, _r52)
                                                                                     if _r50 then
                                                                                         _r50 = _r49.Value
-                                                                                        if _r50 ~= "ï¿½ï¿½" then
+                                                                                        if _r50 ~= "Šù" then
                                                                                             _r50 = _r49.Value
                                                                                             _r51 = _r50
                                                                                             _r50 = _r50.lower
@@ -39202,14 +39202,14 @@
                                                         if not _r16 then
                                                             _r19 = _r15.enemy
                                                             if not _r19 then
-                                                                _r19 = "ï¿½ï¿½"
+                                                                _r19 = "ùô"
                                                             end
                                                             _r20 = _r19
                                                             _r19 = _r19.lower
                                                             _r19 = _r19(_r20)
                                                             _r20 = _r14
                                                             if _r20 then
-                                                                _r20 = "ï¿½ï¿½"
+                                                                _r20 = "ùô"
                                                             end
                                                             _r21 = _r20
                                                             _r20 = _r20.lower
@@ -39626,12 +39626,12 @@
                                                         _r13 = _r12
                                                         _r12 = _r12.gsub
                                                         _r14 = "^%s+"
-                                                        local _r15 = "`ï¿½"
+                                                        local _r15 = "`"
                                                         _r12 = _r12(_r13, _r14, _r15)
                                                         _r13 = _r12
                                                         _r12 = _r12.gsub
                                                         _r14 = "%s+$"
-                                                        _r15 = "`ï¿½"
+                                                        _r15 = "`"
                                                         _r12 = _r12(_r13, _r14, _r15)
                                                         _r14 = _r12
                                                         _r13 = _r12.lower
@@ -39773,7 +39773,7 @@
                                             local _r23 = _r21
                                             _r22 = _r22(_r23)
                                             if _r22 == "string" then
-                                                if _r21 ~= "ï¿½ï¿½" then
+                                                if _r21 ~= "²»" then
                                                     _r22 = table
                                                     _r22 = _r22.find
                                                     _r23 = _r16
@@ -39801,7 +39801,7 @@
                                                 _r23 = _r20
                                                 _r22 = _r22(_r23)
                                                 if _r22 == "string" then
-                                                    if _r20 ~= "ï¿½ï¿½" then
+                                                    if _r20 ~= "²»" then
                                                         _r22 = table
                                                         _r22 = _r22.find
                                                         _r23 = _r16
@@ -39824,7 +39824,7 @@
                                     _r18 = _r15
                                     _r17 = _r17(_r18)
                                     if _r17 == "string" then
-                                        if _r15 ~= "ï¿½ï¿½" then
+                                        if _r15 ~= "²»" then
                                             _r17 = table
                                             _r17 = _r17.insert
                                             _r18 = _r16
@@ -41657,7 +41657,7 @@
                                                                                     if _r11 then
                                                                                         _r12 = _r11.Text
                                                                                         if not _r12 then
-                                                                                            _r12 = "ï¿½\30"
+                                                                                            _r12 = "š\30"
                                                                                         end
                                                                                     end
                                                                                     _r13 = _r12
@@ -42545,7 +42545,7 @@
                                 end
                                 if _p1 then
                                     if _p1 ~= "None" then
-                                        if _p1 == "ï¿½ï¿½" then
+                                        if _p1 == "ðî" then
                                         end
                                     end
                                     _r3 = _p1
@@ -42563,7 +42563,7 @@
                                 _r3 = _r3()
                                 if _r3 then
                                     if _r3 ~= "None" then
-                                        if _r3 == "ï¿½ï¿½" then
+                                        if _r3 == "ðî" then
                                         end
                                     end
                                     _r4 = task
@@ -42576,7 +42576,7 @@
                                 end
                                 if _r3 then
                                     if _r3 ~= "None" then
-                                        if _r3 ~= "ï¿½ï¿½" then
+                                        if _r3 ~= "ðî" then
                                             _r4 = _r173
                                             _r5 = "âœ¨ "
                                             local _r6 = tostring
@@ -43314,7 +43314,7 @@
                                 _r2 = _r2()
                                 if _r2 then
                                     if _r2 ~= "None" then
-                                        if _r2 == "ï¿½J" then
+                                        if _r2 == "ðJ" then
                                         end
                                     end
                                     _r3 = task
@@ -43572,7 +43572,7 @@
                                 if _r4 then
                                     if _p1 then
                                         if _p1 ~= "None" then
-                                            if _p1 ~= "(ï¿½" then
+                                            if _p1 ~= "(Ü" then
                                                 _r4 = _r135
                                                 local _r5 = _p1
                                                 local _r6 = _p2
@@ -48176,7 +48176,7 @@
                                             _r15 = _r13
                                             _r14 = _r14(_r15)
                                             if _r14 == "string" then
-                                                if _r13 ~= "ï¿½\28" then
+                                                if _r13 ~= "Ø\28" then
                                                     _r14 = table
                                                     _r14 = _r14.find
                                                     _r15 = _p1
@@ -48206,7 +48206,7 @@
                                                 _r15 = _r12
                                                 _r14 = _r14(_r15)
                                                 if _r14 == "string" then
-                                                    if _r12 ~= "ï¿½\28" then
+                                                    if _r12 ~= "Ø\28" then
                                                         _r14 = table
                                                         _r14 = _r14.find
                                                         _r15 = _p1
@@ -48229,7 +48229,7 @@
                                     _r10 = _p2
                                     _r9 = _r9(_r10)
                                     if _r9 == "string" then
-                                        if _p2 ~= "ï¿½\28" then
+                                        if _p2 ~= "Ø\28" then
                                             _r9 = table
                                             _r9 = _r9.insert
                                             _r10 = _p1
@@ -54622,7 +54622,7 @@
                                 _r10 = _r10()
                                 _r10 = _r10.webhook
                                 if _r10 then
-                                    if _r10 == "ï¿½\9" then
+                                    if _r10 == "î\9" then
                                     end
                                     do return end
                                 end
@@ -57068,12 +57068,12 @@
                                                             _r11 = _r10
                                                             _r10 = _r10.gsub
                                                             _r12 = "^%s+"
-                                                            _r13 = "ï¿½ï¿½"
+                                                            _r13 = "»†"
                                                             _r10 = _r10(_r11, _r12, _r13)
                                                             _r11 = _r10
                                                             _r10 = _r10.gsub
                                                             _r12 = "%s+$"
-                                                            _r13 = "ï¿½ï¿½"
+                                                            _r13 = "»†"
                                                             _r10 = _r10(_r11, _r12, _r13)
                                                             _r11 = tostring
                                                             _r12 = _p2
@@ -57089,12 +57089,12 @@
                                                             _r12 = _r11
                                                             _r11 = _r11.gsub
                                                             _r13 = "^%s+"
-                                                            _r14 = "ï¿½ï¿½"
+                                                            _r14 = "»†"
                                                             _r11 = _r11(_r12, _r13, _r14)
                                                             _r12 = _r11
                                                             _r11 = _r11.gsub
                                                             _r13 = "%s+$"
-                                                            _r14 = "ï¿½ï¿½"
+                                                            _r14 = "»†"
                                                             _r11 = _r11(_r12, _r13, _r14)
                                                             if _r10 == _r11 then
                                                                 _r12 = true
@@ -57134,14 +57134,14 @@
                                                                         local _r16 = "%((.-)%)"
                                                                         _r14 = _r14(_r15, _r16)
                                                                         if _r14 then
-                                                                            if _r14 ~= "ï¿½ï¿½" then
+                                                                            if _r14 ~= "»†" then
                                                                                 _r16 = _r14
                                                                                 _r15 = _r14.lower
                                                                                 _r15 = _r15(_r16)
                                                                                 _r16 = _r15
                                                                                 _r15 = _r15.gsub
                                                                                 local _r17 = "[%p%s]+"
-                                                                                local _r18 = "ï¿½ï¿½"
+                                                                                local _r18 = "»†"
                                                                                 _r15 = _r15(_r16, _r17, _r18)
                                                                                 _r17 = _p1
                                                                                 _r16 = _p1.lower
@@ -57149,7 +57149,7 @@
                                                                                 _r17 = _r16
                                                                                 _r16 = _r16.gsub
                                                                                 _r18 = "[%p%s]+"
-                                                                                local _r19 = "ï¿½ï¿½"
+                                                                                local _r19 = "»†"
                                                                                 _r16 = _r16(_r17, _r18, _r19)
                                                                                 _r18 = _r16
                                                                                 _r17 = _r16.find
@@ -57204,14 +57204,14 @@
                                                                 _r16 = "%((.-)%)"
                                                                 _r14 = _r14(_r15, _r16)
                                                                 if _r14 then
-                                                                    if _r14 ~= "ï¿½ï¿½" then
+                                                                    if _r14 ~= "»†" then
                                                                         _r16 = _r14
                                                                         _r15 = _r14.lower
                                                                         _r15 = _r15(_r16)
                                                                         _r16 = _r15
                                                                         _r15 = _r15.gsub
                                                                         _r17 = "[%p%s]+"
-                                                                        _r18 = "ï¿½ï¿½"
+                                                                        _r18 = "»†"
                                                                         _r15 = _r15(_r16, _r17, _r18)
                                                                         _r17 = _p1
                                                                         _r16 = _p1.lower
@@ -57219,7 +57219,7 @@
                                                                         _r17 = _r16
                                                                         _r16 = _r16.gsub
                                                                         _r18 = "[%p%s]+"
-                                                                        _r19 = "ï¿½ï¿½"
+                                                                        _r19 = "»†"
                                                                         _r16 = _r16(_r17, _r18, _r19)
                                                                         _r18 = _r16
                                                                         _r17 = _r16.find
@@ -57569,7 +57569,7 @@
                                                                                             end
                                                                                         end
                                                                                     end
-                                                                                    _r22 = "<ï¿½"
+                                                                                    _r22 = "<§"
                                                                                     if _r21 then
                                                                                         _r24 = _r21
                                                                                         _r23 = _r21.IsA
@@ -57579,13 +57579,13 @@
                                                                                             _r23 = _r21.Text
                                                                                             if _r23 then
                                                                                                 _r23 = _r21.Text
-                                                                                                if _r23 ~= "<ï¿½" then
+                                                                                                if _r23 ~= "<§" then
                                                                                                     _r22 = _r21.Text
                                                                                                 end
                                                                                             end
                                                                                         end
                                                                                     end
-                                                                                    if _r22 == "<ï¿½" then
+                                                                                    if _r22 == "<§" then
                                                                                         _r23 = ipairs
                                                                                         _r25 = _r20
                                                                                         _r24 = _r20.GetDescendants
@@ -57606,7 +57606,7 @@
                                                                                                 end
                                                                                                 if _r28 then
                                                                                                     _r28 = _r27.Text
-                                                                                                    if _r28 ~= "<ï¿½" then
+                                                                                                    if _r28 ~= "<§" then
                                                                                                         _r22 = _r27.Text
                                                                                                     end
                                                                                                 end
@@ -57614,14 +57614,14 @@
                                                                                             end
                                                                                         end
                                                                                     end
-                                                                                    if _r22 == "<ï¿½" then
+                                                                                    if _r22 == "<§" then
                                                                                         _r24 = _r20
                                                                                         _r23 = _r20.IsA
                                                                                         _r25 = "TextLabel"
                                                                                         _r23 = _r23(_r24, _r25)
                                                                                         if _r23 then
                                                                                             _r23 = _r20.Text
-                                                                                            if _r23 ~= "<ï¿½" then
+                                                                                            if _r23 ~= "<§" then
                                                                                                 _r22 = _r20.Text
                                                                                             end
                                                                                         end
@@ -57641,7 +57641,7 @@
                                                                                     _r26 = tostring
                                                                                     _r27 = _r22
                                                                                     if _r27 then
-                                                                                        _r27 = "<ï¿½"
+                                                                                        _r27 = "<§"
                                                                                     end
                                                                                     _r26 = _r26(_r27)
                                                                                     _r27 = _r26
@@ -57650,12 +57650,12 @@
                                                                                     _r27 = _r26
                                                                                     _r26 = _r26.gsub
                                                                                     _r28 = "^%s+"
-                                                                                    _r29 = "<ï¿½"
+                                                                                    _r29 = "<§"
                                                                                     _r26 = _r26(_r27, _r28, _r29)
                                                                                     _r27 = _r26
                                                                                     _r26 = _r26.gsub
                                                                                     _r28 = "%s+$"
-                                                                                    _r29 = "<ï¿½"
+                                                                                    _r29 = "<§"
                                                                                     _r26 = _r26(_r27, _r28, _r29)
                                                                                     _r25.text = _r26
                                                                                     _r25.rawText = _r22
@@ -57683,7 +57683,7 @@
                                                             _r16 = _p3
                                                             if _r16 then
                                                                 _r16 = _p3
-                                                                if _r16 ~= "<ï¿½" then
+                                                                if _r16 ~= "<§" then
                                                                     _r16 = _p3
                                                                     _r17 = _r16
                                                                     _r16 = _r16.lower
@@ -57829,7 +57829,7 @@
                                                                         _r22 = _r21.text
                                                                         if _r22 ~= "..." then
                                                                             _r22 = _r21.text
-                                                                            if _r22 ~= "<ï¿½" then
+                                                                            if _r22 ~= "<§" then
                                                                                 _r22 = _r21.btn
                                                                                 do return _r22 end
                                                                             end
@@ -58038,7 +58038,7 @@
                                                                 _r25 = _r24.text
                                                                 if _r25 ~= "..." then
                                                                     _r25 = _r24.text
-                                                                    if _r25 ~= "<ï¿½" then
+                                                                    if _r25 ~= "<§" then
                                                                         _r25 = _r24.btn
                                                                         do return _r25 end
                                                                     end
@@ -58105,12 +58105,12 @@
                                                                         _r4 = _r4.Quest
                                                                         _r4 = _r4.Value
                                                                         if not _r4 then
-                                                                            _r4 = "ï¿½ï¿½"
+                                                                            _r4 = "´á"
                                                                         end
                                                                         _r3 = _r3(_r4)
                                                                         _r4 = _r31
-                                                                        if _r4 ~= "ï¿½ï¿½" then
-                                                                            if _r3 ~= "ï¿½ï¿½" then
+                                                                        if _r4 ~= "´á" then
+                                                                            if _r3 ~= "´á" then
                                                                                 _r4 = _r31
                                                                                 if _r3 ~= _r4 then
                                                                                     _r4 = true
@@ -58160,7 +58160,7 @@
                                                                                 _r7 = _r6.FindFirstChild
                                                                                 local _r9 = "DialogueFrame"
                                                                                 _r7 = _r7(_r8, _r9)
-                                                                                _r8 = "ï¿½ï¿½"
+                                                                                _r8 = "´á"
                                                                                 if _r7 then
                                                                                     _r9 = ipairs
                                                                                     local _r11 = _r7
@@ -58174,7 +58174,7 @@
                                                                                         _r14 = _r14(_r15, _r16)
                                                                                         if _r14 then
                                                                                             _r14 = _r13.Text
-                                                                                            if _r14 ~= "ï¿½ï¿½" then
+                                                                                            if _r14 ~= "´á" then
                                                                                                 _r14 = _r8
                                                                                                 _r15 = " "
                                                                                                 _r16 = _r13.Text
@@ -58569,7 +58569,7 @@
                                                     _r12 = _r12.Quest
                                                     _r12 = _r12.Value
                                                     if not _r12 then
-                                                        _r12 = "Fï¿½"
+                                                        _r12 = "FÒ"
                                                     end
                                                     _r11 = _r11(_r12)
                                                     _r12 = 1
@@ -58591,12 +58591,12 @@
                                                             _r18 = _r18.Quest
                                                             _r18 = _r18.Value
                                                             if not _r18 then
-                                                                _r18 = "Fï¿½"
+                                                                _r18 = "FÒ"
                                                             end
                                                             _r17 = _r17(_r18)
                                                             if not _r16 then
-                                                                if _r11 ~= "Fï¿½" then
-                                                                    if _r17 ~= "Fï¿½" then
+                                                                if _r11 ~= "FÒ" then
+                                                                    if _r17 ~= "FÒ" then
                                                                         if _r17 ~= _r11 then
                                                                         end
                                                                         _r18 = true
@@ -61069,7 +61069,7 @@
                                                             _r14 = _r14.Spec
                                                             _r14 = _r14.Value
                                                             if not _r14 then
-                                                                _r14 = "Nï¿½"
+                                                                _r14 = "Nò"
                                                             end
                                                             _r13 = _r13(_r14)
                                                             _r14 = _r13
@@ -61929,7 +61929,7 @@
                                                                             end
                                                                         end
                                                                         if _r11 ~= "None" then
-                                                                            if _r11 == "ï¿½$" then
+                                                                            if _r11 == "Ë$" then
                                                                             end
                                                                             _r12 = _r29
                                                                             _r13 = _r7
@@ -62001,7 +62001,7 @@
                                                                     end
                                                                     if _r2 then
                                                                         if _r2 ~= "None" then
-                                                                            if _r2 == "ï¿½f" then
+                                                                            if _r2 == "¥f" then
                                                                             end
                                                                         end
                                                                         if _r3 then
@@ -62293,7 +62293,7 @@
                                                                                                 _r5 = _r5.Quest
                                                                                                 _r5 = _r5.Value
                                                                                                 if not _r5 then
-                                                                                                    _r5 = "ï¿½\28"
+                                                                                                    _r5 = "·\28"
                                                                                                 end
                                                                                                 _r4 = _r4(_r5)
                                                                                                 _r6 = _r4
@@ -63129,7 +63129,7 @@
                                                                 return _r8
                                                             end
                                                             _r15["Defeat Diavolo"] = _r16
-                                                            if _r13 ~= "ï¿½$" then
+                                                            if _r13 ~= "Ë$" then
                                                                 local _r17 = _r13
                                                                 _r16 = _r13.find
                                                                 local _r18 = "5000"
@@ -63202,7 +63202,7 @@
                                                                                     _r17 = _r55
                                                                                     do return _r17() end
                                                                                 end
-                                                                                if _r13 ~= "ï¿½$" then
+                                                                                if _r13 ~= "Ë$" then
                                                                                     _r17 = _r15[_r13]
                                                                                     if _r17 then
                                                                                         _r17 = _r15[_r13]
@@ -63358,7 +63358,7 @@
                                                                                                 _r24 = _r24.PlayerStats
                                                                                                 _r24 = _r24.Quest
                                                                                                 _r24 = _r24.Value
-                                                                                                if _r24 ~= "ï¿½$" then
+                                                                                                if _r24 ~= "Ë$" then
                                                                                                     _r24 = _r7
                                                                                                     _r24 = _r24.PlayerStats
                                                                                                     _r24 = _r24.Quest
@@ -64963,7 +64963,7 @@
                                                         _r7 = _r6.Health
                                                         if _r7 <= 0 then
                                                             _r7 = pvpTargetName
-                                                            if _r7 == "ï¿½}" then
+                                                            if _r7 == "ä}" then
                                                                 _r7 = task
                                                                 _r7 = _r7.wait
                                                                 _r8 = 0.5
@@ -65121,7 +65121,7 @@
                             _r162 = function(_p1)
                                 local _r3 = _p1
                                 if _r3 then
-                                    _r3 = "\22ï¿½"
+                                    _r3 = "\22ì"
                                 end
                                 pvpTargetName = _r3
                                 return
@@ -65231,7 +65231,7 @@
                                 pvpSession = _r5
                                 if _p1 then
                                     _r5 = pvpTargetName
-                                    if _r5 == "ï¿½t" then
+                                    if _r5 == "t" then
                                         _r5 = _r110
                                         local _r6 = "PvP"
                                         local _r7 = "Select a target player first!"
@@ -66824,7 +66824,7 @@
                                             local _r17 = _r15
                                             _r16 = _r16(_r17)
                                             if _r16 == "string" then
-                                                if _r15 ~= "ï¿½ï¿½" then
+                                                if _r15 ~= "«û" then
                                                     _r16 = _r168
                                                     _r16[_r15] = true
                                                 end
@@ -66840,7 +66840,7 @@
                                                 _r17 = _r14
                                                 _r16 = _r16(_r17)
                                                 if _r16 == "string" then
-                                                    if _r14 ~= "ï¿½ï¿½" then
+                                                    if _r14 ~= "«û" then
                                                         _r16 = _r168
                                                         _r16[_r14] = true
                                                     end
@@ -67084,13 +67084,13 @@
                                 local _r11 = tostring
                                 local _r12 = _p1
                                 if _r12 then
-                                    _r12 = "ï¿½J"
+                                    _r12 = "þJ"
                                 end
                                 _r11 = _r11(_r12)
                                 _r12 = _r11
                                 _r11 = _r11.gsub
                                 local _r13 = "%D"
-                                local _r14 = "ï¿½J"
+                                local _r14 = "þJ"
                                 _r11 = _r11(_r12, _r13, _r14)
                                 _r12 = _r112
                                 _r12.UserId = _r11
@@ -67972,7 +67972,7 @@
                                 _r1 = game
                                 _r1 = _r1.JobId
                                 if _r1 then
-                                    if _r1 ~= "ï¿½[" then
+                                    if _r1 ~= "‰[" then
                                         _r2 = game
                                         _r3 = _r2
                                         _r2 = _r2.GetService
@@ -68076,10 +68076,10 @@
                                 return
                             end
                             _r160(_r161)
-                            -- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+                            -- =======================================================
                             -- YBA Farm Coordinator
                             -- Orchestrates all farming systems so they work together
-                            -- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+                            -- =======================================================
                             do
                                 local _coordLog = _r110
                                 local _coord = {}
@@ -68379,6 +68379,7 @@
                                     })
                                 end)
                             end
+
                             _r160 = _r110
                             _r161 = "YBA Script"
                             _r162 = "Script loaded successfully!"
