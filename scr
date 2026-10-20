@@ -2398,6 +2398,7 @@
             end
         end
         while true do
+            if not _r17 then break end
             if _r17 then
                 if _r17 ~= _r19 then
                     _r20 = game
@@ -4337,6 +4338,7 @@
                         _r11 = tick
                         _r11 = _r11()
                         while true do
+                            task.wait(0)
                             _r12 = game
                             _r13 = _r12
                             _r12 = _r12.IsLoaded
@@ -4395,6 +4397,7 @@
                     _r13 = tick
                     _r13 = _r13()
                     while true do
+                        if _r12 then break end
                         if not _r12 then
                             _r14 = tick
                             _r14 = _r14()
@@ -4481,6 +4484,7 @@
                         _r15 = false
                         _r16 = nil
                         while true do
+                            task.wait(0)
                             local _r17 = tick
                             _r17 = _r17()
                             _r17 = _r17 - _r14
@@ -4747,6 +4751,7 @@
                                 _r15 = tick
                                 _r15 = _r15()
                                 while true do
+                                    if not _r14 then break end
                                     if _r14 then
                                         _r16 = _r14.Enabled
                                         if _r16 then
@@ -4820,6 +4825,7 @@
                     _r15 = tick
                     _r15 = _r15()
                     while true do
+                        task.wait(0)
                         _r16 = tick
                         _r16 = _r16()
                         _r16 = _r16 - _r15
@@ -4904,9 +4910,13 @@
                     _r19 = "AutoPlay: progressing through menu buttons..."
                     _r18(_r19)
                     while true do
+                        task.wait(0)
                         while true do
+                            task.wait(0)
                             while true do
+                                task.wait(0)
                                 while true do
+                                    task.wait(0)
                                     if _r16 < _r17 then
                                         _r18 = _r23
                                         _r18 = _r18.AutoPlay
@@ -5037,6 +5047,7 @@
                             _r18 = tick
                             _r18 = _r18()
                             while true do
+                                task.wait(0)
                                 _r19 = tick
                                 _r19 = _r19()
                                 _r19 = _r19 - _r18
@@ -5162,6 +5173,7 @@
     _r78 = _r78.spawn
     _r79 = function()
         while true do
+            task.wait(0)
             local _r0 = _r65
             if _r0 then
                 _r0 = _r65
@@ -5187,11 +5199,11 @@
                 _r1 = 0.5
                 _r0(_r1)
             end
-            task.wait(0)
         end
         _r0 = tick
         _r0 = _r0()
         while true do
+            task.wait(0)
             _r1 = tick
             _r1 = _r1()
             _r1 = _r1 - _r0
@@ -5205,7 +5217,6 @@
                 _r1 = _r69
                 _r1()
             end
-            task.wait(0)
         end
         return
     end
@@ -5455,6 +5466,7 @@
     _r81 = _r81.spawn
     local _r82 = function()
         while true do
+            task.wait(0)
             local _r5 = task
             _r5 = _r5.wait
             local _r6 = 0.15
@@ -6329,6 +6341,7 @@
             end
         end
         while true do
+            task.wait(0)
             _r4 = _r89
             _r4 = _r4()
             if _r4 then
@@ -6337,7 +6350,6 @@
                 _r5 = 0.1
                 _r4(_r5)
             end
-            task.wait(0)
         end
         _r4 = false
         _r5 = os
@@ -8109,6 +8121,7 @@
                     _r8 = _r8.spawn
                     local _r9 = function()
                         while true do
+                            task.wait(0)
                             local _r15 = _r114
                             _r15 = #_r15
                             if 0 < _r15 then
@@ -9227,6 +9240,7 @@
                 _r137 = _r137.spawn
                 local _r138 = function()
                     while true do
+                        task.wait(0)
                         local _r2 = task
                         _r2 = _r2.wait
                         local _r3 = 10
@@ -12576,6 +12590,7 @@
                         _r17 = _r17.clock
                         _r17 = _r17()
                         while true do
+                            task.wait(0)
                             _r18 = _r88
                             if _r18 then
                                 _r18 = os
@@ -12590,7 +12605,6 @@
                                     _r18(_r19)
                                 end
                             end
-                            task.wait(0)
                         end
                         _r18 = _r88
                         if _r18 then
@@ -12619,6 +12633,7 @@
                             _r17 = _r17.clock
                             _r17 = _r17()
                             while true do
+                                task.wait(0)
                                 _r18 = _r87
                                 if not _r18 then
                                     _r18 = getgenv
@@ -12648,7 +12663,6 @@
                                         end
                                     end
                                 end
-                                task.wait(0)
                             end
                             _r18 = _r87
                             if not _r18 then
@@ -13359,6 +13373,7 @@
                             _r22 = _r22.clock
                             _r22 = _r22()
                             while true do
+                                task.wait(0)
                                 _r23 = _r13.Parent
                                 if _r23 ~= _r9 then
                                     _r23 = os
@@ -13373,7 +13388,6 @@
                                         _r23(_r24)
                                     end
                                 end
-                                task.wait(0)
                             end
                         end
                         _r22 = _r13.Parent
@@ -13584,6 +13598,7 @@
                             _r9 = _r9.clock
                             _r9 = _r9()
                             while true do
+                                task.wait(0)
                                 local _r10 = os
                                 _r10 = _r10.clock
                                 _r10 = _r10()
@@ -13755,6 +13770,7 @@
                                     _r4 = _r4.clock
                                     _r4 = _r4()
                                     while true do
+                                        task.wait(0)
                                         _r5 = _r13
                                         _r5 = _r5.Parent
                                         local _r6 = _r9
@@ -13771,7 +13787,6 @@
                                                 _r5(_r6)
                                             end
                                         end
-                                        task.wait(0)
                                     end
                                 end
                             end
@@ -15782,9 +15797,13 @@
                     _r12 = _r12.spawn
                     _r13 = function()
                         while true do
+                            task.wait(0)
                             while true do
+                                task.wait(0)
                                 while true do
+                                    task.wait(0)
                                     while true do
+                                        task.wait(0)
                                         local _r13 = task
                                         _r13 = _r13.wait
                                         local _r14 = 3
@@ -16850,7 +16869,9 @@
                         _r12 = _r12.spawn
                         _r13 = function()
                             while true do
+                                task.wait(0)
                                 while true do
+                                    task.wait(0)
                                     local _r12 = _r10
                                     _r12 = _r12.enabled
                                     if _r12 then
@@ -18271,6 +18292,7 @@
                     _r6 = _r6.spawn
                     _r7 = function()
                         while true do
+                            task.wait(0)
                             local _r12 = _r5
                             _r12 = _r12.enabled
                             if _r12 then
@@ -18281,7 +18303,6 @@
                                 local _r13 = 0.25
                                 _r12(_r13)
                             end
-                            task.wait(0)
                         end
                         return
                     end
@@ -18302,7 +18323,9 @@
                 _r159 = function()
                     local _r5 = false
                     while true do
+                        task.wait(0)
                         while true do
+                            task.wait(0)
                             local _r6 = getgenv
                             _r6 = _r6()
                             _r6 = _r6.HUDHealthEnabled
@@ -19927,6 +19950,7 @@
                     _r164 = _r164.spawn
                     _r165 = function()
                         while true do
+                            task.wait(0)
                             local _r4 = task
                             _r4 = _r4.wait
                             local _r5 = 2
@@ -21113,6 +21137,7 @@
                         _r8 = tick
                         _r8 = _r8()
                         while true do
+                            task.wait(0)
                             _r9 = tick
                             _r9 = _r9()
                             _r9 = _r9 - _r8
@@ -21246,6 +21271,7 @@
                         end
                         _r12(_r13)
                         while true do
+                            task.wait(0)
                             _r12 = tick
                             _r12 = _r12()
                             _r12 = _r12 - _r11
@@ -21257,7 +21283,6 @@
                                 _r13 = 0.3125
                                 _r12(_r13)
                             end
-                            task.wait(0)
                         end
                         return
                     end
@@ -21338,6 +21363,7 @@
                                 _r14 = tick
                                 _r14 = _r14()
                                 while true do
+                                    task.wait(0)
                                     _r15 = pcall
                                     _r16 = function()
                                         local _r12 = _p1
@@ -22405,6 +22431,7 @@
                         _r15 = tick
                         _r15 = _r15()
                         while true do
+                            task.wait(0)
                             _r16 = tick
                             _r16 = _r16()
                             _r16 = _r16 - _r15
@@ -24206,6 +24233,7 @@
                             _r22 = tick
                             _r22 = _r22()
                             while true do
+                                task.wait(0)
                                 local _r23 = tick
                                 _r23 = _r23()
                                 _r23 = _r23 - _r22
@@ -24241,7 +24269,6 @@
                                         _r23(_r24)
                                     end
                                 end
-                                task.wait(0)
                             end
                             if _r21 then
                                 _r23 = _r21.Enabled
@@ -24263,6 +24290,7 @@
                             _r24 = tick
                             _r24 = _r24()
                             while true do
+                                task.wait(0)
                                 _r25 = tick
                                 _r25 = _r25()
                                 _r25 = _r25 - _r24
@@ -24348,7 +24376,6 @@
                                         _r25(_r26)
                                     end
                                 end
-                                task.wait(0)
                             end
                             if not _r23 then
                                 if not _p1 then
@@ -24911,6 +24938,7 @@
                             _r25 = tick
                             _r25 = _r25()
                             while true do
+                                task.wait(0)
                                 local _r26 = tick
                                 _r26 = _r26()
                                 _r26 = _r26 - _r25
@@ -24946,7 +24974,6 @@
                                         _r26(_r27)
                                     end
                                 end
-                                task.wait(0)
                             end
                             if _r24 then
                                 _r26 = _r24.Enabled
@@ -24968,6 +24995,7 @@
                             _r27 = tick
                             _r27 = _r27()
                             while true do
+                                task.wait(0)
                                 _r28 = tick
                                 _r28 = _r28()
                                 _r28 = _r28 - _r27
@@ -25031,7 +25059,6 @@
                                         _r29(_r30)
                                     end
                                 end
-                                task.wait(0)
                             end
                             if not _r26 then
                                 if not _p1 then
@@ -25064,6 +25091,7 @@
                             _r29 = tick
                             _r29 = _r29()
                             while true do
+                                task.wait(0)
                                 _r30 = tick
                                 _r30 = _r30()
                                 _r30 = _r30 - _r29
@@ -25127,7 +25155,6 @@
                                         _r31(_r32)
                                     end
                                 end
-                                task.wait(0)
                             end
                             if not _r28 then
                                 if not _p1 then
@@ -25223,6 +25250,7 @@
                             _r33 = tick
                             _r33 = _r33()
                             while true do
+                                task.wait(0)
                                 _r34 = tick
                                 _r34 = _r34()
                                 _r34 = _r34 - _r33
@@ -25280,7 +25308,6 @@
                                         _r34(_r35)
                                     end
                                 end
-                                task.wait(0)
                             end
                             if not _r32 then
                                 if not _p1 then
@@ -25670,6 +25697,7 @@
                         _r179 = _r179.spawn
                         _r180 = function()
                             while true do
+                                task.wait(0)
                                 local _r7 = game
                                 _r7 = _r7.JobId
                                 if _r7 then
@@ -25707,7 +25735,6 @@
                                 _r7 = _r7.wait
                                 _r8 = 30
                                 _r7(_r8)
-                                task.wait(0)
                             end
                             return
                         end
@@ -26430,6 +26457,7 @@
                             _r11 = _r11()
                             local _r12 = false
                             while true do
+                                task.wait(0)
                                 if 0 < _r10 then
                                     local _r13 = tick
                                     _r13 = _r13()
@@ -26745,6 +26773,7 @@
                                                     _r12 = tick
                                                     _r12 = _r12()
                                                     while true do
+                                                        task.wait(0)
                                                         _r13 = normalFarmOn
                                                         if _r13 then
                                                             _r13 = tick
@@ -26769,7 +26798,6 @@
                                                                 end
                                                             end
                                                         end
-                                                        task.wait(0)
                                                     end
                                                 end
                                                 _r12 = function()
@@ -27455,8 +27483,11 @@
                         _r188 = _r188.spawn
                         _r189 = function()
                             while true do
+                                task.wait(0)
                                 while true do
+                                    task.wait(0)
                                     while true do
+                                        task.wait(0)
                                         local _r10 = task
                                         _r10 = _r10.wait
                                         local _r11 = 2
@@ -28496,6 +28527,7 @@
                             _r163 = _r163.spawn
                             _r164 = function()
                                 while true do
+                                    task.wait(0)
                                     local _r2 = task
                                     _r2 = _r2.wait
                                     local _r3 = 3
@@ -30321,6 +30353,7 @@
                                             _r11[1] = _r12
                                             _r11[2] = _r12
                                             while true do
+                                                task.wait(0)
                                                 _r12 = #_r11
                                                 if 0 < _r12 then
                                                     _r12 = table
@@ -30394,7 +30427,6 @@
                                                         _r18(_r19, _r20)
                                                     end
                                                 end
-                                                task.wait(0)
                                             end
                                         end
                                         return
@@ -31908,6 +31940,7 @@
                                             _r5 = _r5()
                                             local _r6 = nil
                                             while true do
+                                                task.wait(0)
                                                 local _r7 = tick
                                                 _r7 = _r7()
                                                 _r7 = _r7 - _r5
@@ -31935,7 +31968,6 @@
                                                         _r7(_r8)
                                                     end
                                                 end
-                                                task.wait(0)
                                             end
                                             if _r6 then
                                                 _r7 = _r6
@@ -32573,6 +32605,7 @@
                             _r158 = _r158.spawn
                             _r159 = function()
                                 while true do
+                                    task.wait(0)
                                     local _r5 = task
                                     _r5 = _r5.wait
                                     local _r6 = 1
@@ -37957,6 +37990,7 @@
                                                 _r13 = tick
                                                 _r13 = _r13()
                                                 while true do
+                                                    task.wait(0)
                                                     _r14 = tick
                                                     _r14 = _r14()
                                                     _r14 = _r14 - _r13
@@ -37975,7 +38009,6 @@
                                                             _r9 = _r14
                                                         end
                                                     end
-                                                    task.wait(0)
                                                 end
                                             end
                                         end
@@ -39161,8 +39194,11 @@
                                     _r8 = function()
                                         local _r12 = 0
                                         while true do
+                                            task.wait(0)
                                             while true do
+                                                task.wait(0)
                                                 while true do
+                                                    task.wait(0)
                                                     local _r13 = _r167
                                                     if _r13 then
                                                         _r13 = _r5
@@ -39300,6 +39336,7 @@
                                                                 _r22 = tick
                                                                 _r22 = _r22()
                                                                 while true do
+                                                                    task.wait(0)
                                                                     _r23 = tick
                                                                     _r23 = _r23()
                                                                     _r23 = _r23 - _r22
@@ -39348,7 +39385,6 @@
                                                                             end
                                                                         end
                                                                     end
-                                                                    task.wait(0)
                                                                 end
                                                             end
                                                             if not _r16 then
@@ -39359,7 +39395,6 @@
                                                             end
                                                         end
                                                     end
-                                                    task.wait(0)
                                                 end
                                                 _r19 = _r197
                                                 _r20 = _r15.enemy
@@ -39368,9 +39403,7 @@
                                                 _r19 = _r19.wait
                                                 _r20 = 0.05
                                                 _r19(_r20)
-                                                task.wait(0)
                                             end
-                                            task.wait(0)
                                         end
                                         _r13 = _r173
                                         _r14 = "quest"
@@ -39473,7 +39506,9 @@
                                     _r10 = _r10.spawn
                                     _r11 = function()
                                         while true do
+                                            task.wait(0)
                                             while true do
+                                                task.wait(0)
                                                 local _r4 = _r168
                                                 if _r4 then
                                                     _r4 = _r197
@@ -39490,9 +39525,7 @@
                                                 _r5 = _r5.wait
                                                 _r6 = 0.05
                                                 _r5(_r6)
-                                                task.wait(0)
                                             end
-                                            task.wait(0)
                                         end
                                         _r4 = _r173
                                         _r5 = "quest"
@@ -40577,6 +40610,7 @@
                                 _r15 = tick
                                 _r15 = _r15()
                                 while true do
+                                    task.wait(0)
                                     _r16 = tick
                                     _r16 = _r16()
                                     _r16 = _r16 - _r15
@@ -40697,6 +40731,7 @@
                                     _r4 = tick
                                     _r4 = _r4()
                                     while true do
+                                        task.wait(0)
                                         local _r5 = _p1
                                         if _r5 then
                                             _r5 = _p1
@@ -40816,7 +40851,6 @@
                                                 end
                                             end
                                         end
-                                        task.wait(0)
                                     end
                                     return
                                 end
@@ -41514,6 +41548,7 @@
                                 _r18 = tick
                                 _r18 = _r18()
                                 while true do
+                                    task.wait(0)
                                     local _r19 = tick
                                     _r19 = _r19()
                                     _r19 = _r19 - _r18
@@ -41539,7 +41574,6 @@
                                             _r19(_r20)
                                         end
                                     end
-                                    task.wait(0)
                                 end
                                 if _r17 then
                                     _r19 = _r17.Enabled
@@ -42156,8 +42190,11 @@
                                     end
                                     _r16 = 0
                                     while true do
+                                        task.wait(0)
                                         while true do
+                                            task.wait(0)
                                             while true do
+                                                task.wait(0)
                                                 local _r17 = _r152
                                                 _r17 = _r17.standFarmRunning
                                                 if _r17 then
@@ -42743,6 +42780,7 @@
                                         _r11 = tick
                                         _r11 = _r11()
                                         while true do
+                                            task.wait(0)
                                             _r12 = tick
                                             _r12 = _r12()
                                             _r12 = _r12 - _r11
@@ -42949,6 +42987,7 @@
                                                                                                         _r14 = tick
                                                                                                         _r14 = _r14()
                                                                                                         while true do
+                                                                                                            task.wait(0)
                                                                                                             _r15 = tick
                                                                                                             _r15 = _r15()
                                                                                                             _r15 = _r15 - _r14
@@ -42975,7 +43014,6 @@
                                                                                                                     end
                                                                                                                 end
                                                                                                             end
-                                                                                                            task.wait(0)
                                                                                                         end
                                                                                                         _r15 = pcall
                                                                                                         _r16 = function()
@@ -43079,6 +43117,7 @@
                                 end
                                 local _r12 = 0
                                 while true do
+                                    task.wait(0)
                                     if _r12 < _p1 then
                                         local _r13 = _r152
                                         _r13 = _r13.standFarmRunning
@@ -43120,6 +43159,7 @@
                                             _r15 = tick
                                             _r15 = _r15()
                                             while true do
+                                                task.wait(0)
                                                 _r16 = tick
                                                 _r16 = _r16()
                                                 _r16 = _r16 - _r15
@@ -43184,6 +43224,7 @@
                                                 _r17 = tick
                                                 _r17 = _r17()
                                                 while true do
+                                                    task.wait(0)
                                                     _r18 = tick
                                                     _r18 = _r18()
                                                     _r18 = _r18 - _r17
@@ -44034,6 +44075,7 @@
                                                 _r5 = tick
                                                 _r5 = _r5()
                                                 while true do
+                                                    task.wait(0)
                                                     _r6 = tick
                                                     _r6 = _r6()
                                                     _r6 = _r6 - _r5
@@ -44053,7 +44095,6 @@
                                                             end
                                                         end
                                                     end
-                                                    task.wait(0)
                                                 end
                                             end
                                         end
@@ -44101,6 +44142,7 @@
                                             _r22 = tick
                                             _r22 = _r22()
                                             while true do
+                                                task.wait(0)
                                                 local _r23 = tick
                                                 _r23 = _r23()
                                                 _r23 = _r23 - _r22
@@ -44119,7 +44161,6 @@
                                                         end
                                                     end
                                                 end
-                                                task.wait(0)
                                             end
                                             _r23 = _r152
                                             _r23 = _r23.standFarmRunning
@@ -44171,6 +44212,7 @@
                                             _r24 = tick
                                             _r24 = _r24()
                                             while true do
+                                                task.wait(0)
                                                 _r25 = tick
                                                 _r25 = _r25()
                                                 _r25 = _r25 - _r24
@@ -44193,7 +44235,6 @@
                                                         end
                                                     end
                                                 end
-                                                task.wait(0)
                                             end
                                             _r25 = _p8.Stand
                                             _r25 = _r25.Value
@@ -44309,6 +44350,7 @@
                                             _r22 = tick
                                             _r22 = _r22()
                                             while true do
+                                                task.wait(0)
                                                 _r23 = tick
                                                 _r23 = _r23()
                                                 _r23 = _r23 - _r22
@@ -44327,7 +44369,6 @@
                                                         end
                                                     end
                                                 end
-                                                task.wait(0)
                                             end
                                             _r23 = _p8.Stand
                                             _r23 = _r23.Value
@@ -44367,6 +44408,7 @@
                                             _r24 = tick
                                             _r24 = _r24()
                                             while true do
+                                                task.wait(0)
                                                 _r25 = tick
                                                 _r25 = _r25()
                                                 _r25 = _r25 - _r24
@@ -44385,7 +44427,6 @@
                                                         end
                                                     end
                                                 end
-                                                task.wait(0)
                                             end
                                             _r25 = _p8.Stand
                                             _r25 = _r25.Value
@@ -45521,6 +45562,7 @@
                                                                             _r11 = tick
                                                                             _r11 = _r11()
                                                                             while true do
+                                                                                task.wait(0)
                                                                                 _r12 = tick
                                                                                 _r12 = _r12()
                                                                                 _r12 = _r12 - _r11
@@ -45547,7 +45589,6 @@
                                                                                         end
                                                                                     end
                                                                                 end
-                                                                                task.wait(0)
                                                                             end
                                                                         end
                                                                     end
@@ -46994,6 +47035,7 @@
                                                                             _r27 = tick
                                                                             _r27 = _r27()
                                                                             while true do
+                                                                                task.wait(0)
                                                                                 _r28 = tick
                                                                                 _r28 = _r28()
                                                                                 _r28 = _r28 - _r27
@@ -47013,7 +47055,6 @@
                                                                                     end
                                                                                     -- goto [480]
                                                                                 end
-                                                                                task.wait(0)
                                                                             end
                                                                             if _r23 ~= "None" then
                                                                                 _r27 = _r157
@@ -47025,6 +47066,7 @@
                                                                                     _r27 = tick
                                                                                     _r27 = _r27()
                                                                                     while true do
+                                                                                        task.wait(0)
                                                                                         _r28 = tick
                                                                                         _r28 = _r28()
                                                                                         _r28 = _r28 - _r27
@@ -47044,7 +47086,6 @@
                                                                                             end
                                                                                             -- goto [480]
                                                                                         end
-                                                                                        task.wait(0)
                                                                                     end
                                                                                     if _r23 ~= "None" then
                                                                                         _r27 = _r157
@@ -50934,6 +50975,7 @@
                                                 end
                                             end
                                             while true do
+                                                task.wait(0)
                                                 _r9 = _r156
                                                 if _r9 then
                                                     _r9 = _p1
@@ -50952,7 +50994,6 @@
                                                         _r10()
                                                     end
                                                 end
-                                                task.wait(0)
                                             end
                                             return
                                         end
@@ -53498,6 +53539,7 @@
                                                                     do return end
                                                                 end
                                                                 while true do
+                                                                    task.wait(0)
                                                                     _r9 = _p1.Parent
                                                                     if _r9 then
                                                                         _r10 = _p1
@@ -53562,6 +53604,7 @@
                                                                                                         _r13 = tick
                                                                                                         _r13 = _r13()
                                                                                                         while true do
+                                                                                                            task.wait(0)
                                                                                                             local _r14 = _p1.Parent
                                                                                                             if _r14 then
                                                                                                                 local _r15 = _p1
@@ -53644,7 +53687,6 @@
                                                                                                             _r12 = task
                                                                                                             _r12 = _r12.wait
                                                                                                             _r12()
-                                                                                                            task.wait(0)
                                                                                                         end
                                                                                                     end
                                                                                                 end
@@ -55789,6 +55831,7 @@
                                                     _r11 = tick
                                                     _r11 = _r11()
                                                     while true do
+                                                        task.wait(0)
                                                         _r12 = pcall
                                                         _r13 = function()
                                                             local _r15 = _r9
@@ -55951,6 +55994,7 @@
                                                         _r10 = tick
                                                         _r10 = _r10()
                                                         while true do
+                                                            task.wait(0)
                                                             _r11 = _r9.PlaybackState
                                                             _r12 = Enum
                                                             _r12 = _r12.PlaybackState
@@ -55977,7 +56021,6 @@
                                                                     end
                                                                 end
                                                             end
-                                                            task.wait(0)
                                                         end
                                                         _r11 = pcall
                                                         _r12 = function()
@@ -56105,6 +56148,7 @@
                                                     _r3 = tick
                                                     _r3 = _r3()
                                                     while true do
+                                                        task.wait(0)
                                                         _r4 = tick
                                                         _r4 = _r4()
                                                         _r4 = _r4 - _r3
@@ -56122,7 +56166,6 @@
                                                                 end
                                                             end
                                                         end
-                                                        task.wait(0)
                                                     end
                                                     _r4 = _r7
                                                     _r4 = _r4.Character
@@ -56148,6 +56191,7 @@
                                                     _r4 = _r4()
                                                     _r3 = _r4
                                                     while true do
+                                                        task.wait(0)
                                                         _r4 = tick
                                                         _r4 = _r4()
                                                         _r4 = _r4 - _r3
@@ -56185,6 +56229,7 @@
                                                     end
                                                     local _r14 = 0
                                                     while true do
+                                                        task.wait(0)
                                                         if _r14 < _p1 then
                                                             local _r15 = _r3
                                                             _r15 = _r15()
@@ -56293,6 +56338,7 @@
                                                                 _r18 = tick
                                                                 _r18 = _r18()
                                                                 while true do
+                                                                    task.wait(0)
                                                                     _r19 = tick
                                                                     _r19 = _r19()
                                                                     _r19 = _r19 - _r18
@@ -56310,7 +56356,6 @@
                                                                             end
                                                                         end
                                                                     end
-                                                                    task.wait(0)
                                                                 end
                                                                 _r19 = _r7
                                                                 _r19 = _r19.Character
@@ -56538,6 +56583,7 @@
                                                                                     _r9 = tick
                                                                                     _r9 = _r9()
                                                                                     while true do
+                                                                                        task.wait(0)
                                                                                         _r10 = tick
                                                                                         _r10 = _r10()
                                                                                         _r10 = _r10 - _r9
@@ -56571,7 +56617,6 @@
                                                                                                 end
                                                                                             end
                                                                                         end
-                                                                                        task.wait(0)
                                                                                     end
                                                                                     _r10 = _r3
                                                                                     _r10 = _r10()
@@ -56664,6 +56709,7 @@
                                                     _r16 = _r16.spawn
                                                     _r17 = function()
                                                         while true do
+                                                            task.wait(0)
                                                             local _r3 = _r13
                                                             if not _r3 then
                                                                 _r3 = task
@@ -56797,6 +56843,7 @@
                                                                                     _r23 = tick
                                                                                     _r23 = _r23()
                                                                                     while true do
+                                                                                        task.wait(0)
                                                                                         _r24 = _r3
                                                                                         _r24 = _r24()
                                                                                         if not _r24 then
@@ -57018,6 +57065,7 @@
                                                         _r15 = tick
                                                         _r15 = _r15()
                                                         while true do
+                                                            task.wait(0)
                                                             _r16 = _r35
                                                             _r16 = _r16()
                                                             if _r16 then
@@ -57035,7 +57083,6 @@
                                                                     end
                                                                 end
                                                             end
-                                                            task.wait(0)
                                                         end
                                                         _r16 = task
                                                         _r16 = _r16.wait
@@ -59209,6 +59256,7 @@
                                                     _r15 = "stand"
                                                     _r14(_r15)
                                                     while true do
+                                                        task.wait(0)
                                                         _r14 = _r3
                                                         _r14 = _r14()
                                                         if _r14 then
@@ -59494,6 +59542,7 @@
                                                         end
                                                         _r7 = _r7 + _r8
                                                         while true do
+                                                            task.wait(0)
                                                             _r8 = tick
                                                             _r8 = _r8()
                                                             _r20 = _r8
@@ -61269,6 +61318,7 @@
                                                             _r13 = tick
                                                             _r13 = _r13()
                                                             while true do
+                                                                task.wait(0)
                                                                 _r14 = tick
                                                                 _r14 = _r14()
                                                                 _r14 = _r14 - _r13
@@ -61291,7 +61341,6 @@
                                                                         end
                                                                     end
                                                                 end
-                                                                task.wait(0)
                                                             end
                                                             _r14 = task
                                                             _r14 = _r14.wait
@@ -61317,6 +61366,7 @@
                                                         _r13 = tick
                                                         _r13 = _r13()
                                                         while true do
+                                                            task.wait(0)
                                                             _r14 = tick
                                                             _r14 = _r14()
                                                             _r14 = _r14 - _r13
@@ -61556,6 +61606,7 @@
                                                     _r4 = tick
                                                     _r4 = _r4()
                                                     while true do
+                                                        task.wait(0)
                                                         _r5 = tick
                                                         _r5 = _r5()
                                                         _r5 = _r5 - _r4
@@ -61766,8 +61817,11 @@
                                                     _r8 = _r8 .. _r9 .. _r10
                                                     _r6(_r7, _r8)
                                                     while true do
+                                                        task.wait(0)
                                                         while true do
+                                                            task.wait(0)
                                                             while true do
+                                                                task.wait(0)
                                                                 _r6 = _r3
                                                                 _r6 = _r6()
                                                                 if _r6 then
@@ -61998,6 +62052,7 @@
                                                                             local _r15 = "V"
                                                                             _r13(_r14, _r15)
                                                                             while true do
+                                                                                task.wait(0)
                                                                                 _r13 = task
                                                                                 _r13 = _r13.wait
                                                                                 _r13()
@@ -62015,7 +62070,6 @@
                                                                                     _r14 = 1
                                                                                     _r13(_r14)
                                                                                 end
-                                                                                task.wait(0)
                                                                             end
                                                                         end
                                                                     end
@@ -62472,6 +62526,7 @@
                                                                 _r12 = _r12()
                                                                 _r12 = _r12 + 30
                                                                 while true do
+                                                                    task.wait(0)
                                                                     _r13 = _r3
                                                                     _r13 = _r13()
                                                                     if _r13 then
@@ -63045,6 +63100,7 @@
                                                                 _r3 = _r3()
                                                                 _r3 = _r3 + 30
                                                                 while true do
+                                                                    task.wait(0)
                                                                     _r4 = _r3
                                                                     _r4 = _r4()
                                                                     if _r4 then
@@ -64970,6 +65026,7 @@
                                 _r22 = _r22.spawn
                                 _r23 = function()
                                     while true do
+                                        task.wait(0)
                                         local _r4 = _r10
                                         _r4 = _r4()
                                         if _r4 then
@@ -65059,6 +65116,7 @@
                                 end
                                 _r22(_r23)
                                 while true do
+                                    task.wait(0)
                                     _r22 = _r10
                                     _r22 = _r22()
                                     if _r22 then
@@ -65067,7 +65125,6 @@
                                         _r23 = 0.1
                                         _r22(_r23)
                                     end
-                                    task.wait(0)
                                 end
                                 _r23 = _r21
                                 _r22 = _r21.Disconnect
