@@ -18,7 +18,8 @@ Passes run in this order:
 3.  Targeted patches: namecall varargs, game-ready break, stand farm bridge, first-spawn loop,
     UI visibility restore loop.
 3b. Or-chains: `if a or b then REST end` printed as nested tests with an empty innermost if.
-4.  Broken if/else: moves dropped right operands (`x = x or v`) back inside their empty ifs.
+4.  Broken if/else: moves dropped right operands (`x = x or v`) and guarded call bodies
+    (`if not c then pcall(fn) end`) back inside their empty ifs.
 5.  Varargs passthrough: replaces register captures of ... with direct forwarding.
 6.  Timeout breaks: inserts missing break in `if NUMBER < _rN then end` patterns.
 7.  Branding: renames YBA Hub to YBA / YBA Script in user-facing strings.
@@ -31,7 +32,7 @@ Passes run in this order:
 12. Game-ready initial skip.
 13. Scope leaks: registers declared `local` inside a nested block but used outside it are
     hoisted to function scope; registers sharing a name with an upvalue (including a closure's
-    own call-frame temporaries) are renamed.
+    own call-frame temporaries, and copies of a register a call has clobbered) are renamed.
 13b. Closed upvalues: main-chunk registers reused after the closures that captured them get a
     new name for the captured range.
 14. Garbled empty strings: 2-byte garbage constants that stand for "".
@@ -534,8 +535,52 @@ def apply_targeted_patches(text):
 BARE_IF_RE = re.compile(r'^(\s*)if\s+(?:not\s+)?(_r\d+|_p\d+)\s+then\s*$')
 BARE_END_RE = re.compile(r'^(\s*)end\s*$')
 
+CALL_STMT_RE = re.compile(r'^(?:_r\d+(?:\s*,\s*_r\d+)*\s*=\s*)?_r(\d+)\(.*\)(?:\s*--.*)?$')
+BODY_END_RE = re.compile(r'^(?:do return\b.*\bend|return\b.*|break|-- goto \[\d+\])$')
+
+
+def _guarded_call_end(lines, start, ind, reg):
+    """`if not cond then pcall(fn) end` decompiles like `x = x or v`, but the code after the
+    empty if loads a function into the tested register and calls it:
+        if [not] X then / end / X = pcall / _rK = function() ... end / X(_rK)
+    Scan the statements that only touch registers >= X (assignments, closure definitions,
+    calls). Return the exclusive end of the guarded body (through the end of the run when it
+    reaches the enclosing block's end or a return/break, else through the last call of X),
+    or None when X is never called (a plain `x = x or v` operand)."""
+    xn = int(reg[2:])
+    j = start
+    last_call = None
+    while j < len(lines):
+        s = lines[j].rstrip('\r\n')
+        st = s.strip()
+        if st and _indent(s) < ind:
+            return j if last_call is not None else None      # enclosing block ends
+        if _indent(s) != ind:
+            break
+        m = ASSIGN_REG_RE.match(st)
+        if m and int(m.group(1)) >= xn:
+            if re.match(r'^function\s*\(', m.group(2)):
+                e = block_end(lines, j, ind)
+                if e is None:
+                    break
+                j = e + 1
+            else:
+                j += 1
+            continue
+        c = CALL_STMT_RE.match(st)
+        if c and int(c.group(1)) >= xn:
+            j += 1
+            if int(c.group(1)) == xn:
+                last_call = j
+            continue
+        if BODY_END_RE.match(st) and last_call is not None:
+            return j + 1
+        break
+    return last_call
+
+
 def fix_broken_if_else(lines):
-    """Move dropped right operands back inside their empty if blocks."""
+    """Move dropped right operands (or guarded call bodies) back inside their empty if blocks."""
     lines = list(lines)
     count = 0
     for i in range(len(lines) - 3, -1, -1):
@@ -551,6 +596,9 @@ def fix_broken_if_else(lines):
             continue
         if var.startswith('_r'):
             stop = operand_extent(lines, i + 2, len(indent), var)
+            body = _guarded_call_end(lines, i + 2, len(indent), var)
+            if body is not None and body > stop:
+                stop = body
         else:
             stop = i + 3
         if stop <= i + 2:
@@ -1399,6 +1447,21 @@ def find_leaks(funcs, toks=None):
                     [name, '=', name], ['local', name, '=', name]):
                 ent = out.setdefault(F, {}).setdefault(name, {'decls': set(), 'uses': []})
                 ent['uses'].append((line, tok, res))
+        # A copy from F's own register R while R is dead (clobbered as a call temporary) is a
+        # GETUPVAL of an enclosing variable sharing the name, even inside R's local scope.
+        copied = set()
+        for name, line, tok, res, _ in F.uses:
+            lt = lines_F.get(line)
+            if res == 'own' and name in by_name and name.startswith('_r') and lt and tok in lt \
+                    and classify_use(toks, lt, lt.index(tok)) == 'cread':
+                copied.add(name)
+        for name in copied:
+            if F in out and name in out[F]:
+                continue
+            first = min(d.tok for d in by_name[name])
+            dec, _ = classify_pair(F, name, toks, lines_F, False)
+            if any(v == 'up' and t > first for t, v in dec.items()):
+                out.setdefault(F, {}).setdefault(name, {'decls': set(), 'uses': []})
         # Closure references to call-frame temporaries of F bind to F only by name collision.
         for C, temps in closure_frames(F, toks, lines_F).items():
             for G in _subtree(C):

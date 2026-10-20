@@ -59,6 +59,7 @@ Never pipe the build through `tail`/`grep` without `set -o pipefail`: an asserti
 2. **TESTSET conditions are printed correctly.** A copy from the function's OWN register/param directly followed by a test (`_rX = _rY` / `if [not] _rX then`) is `x = y or ...` / `x = y and ...` and must not be flipped (392 sites). Rule 1 alone was wrong for these.
 3. **Scope leaks.** `local _rN` is emitted at the first assignment even inside a nested block; uses after the block resolve to a global or to an enclosing function's variable of the same name. Writes then clobber shared state (e.g. `pairs()`'s third value `nil` overwrote the main chunk's UserInputService; AutoPlay overwrote the `_r20` logger with a string).
 4. **Register/upvalue name collisions.** Upvalues are named after the parent's register, so a function can use `_r20` both as its own temp and as the main chunk's logger. Upvalues are only reachable through plain copies (`_rX = R` / `R = _rX`); `R = R` is always GETUPVAL into the own register. A closure passed straight to a call (`_rJ(_rJ+1, ..., _rN)`) cannot capture that call's temporaries `_rJ.._r(N-1)`; such names are outer upvalues (e.g. `Heartbeat:Connect(function() ... _r5.Character ...)` where `_r5` is LocalPlayer, not the signal).
+A copy `_rX = R` made after a call clobbered the function's own R (R was a call temporary) is also the upvalue, even inside R's `local` scope.
 4b. **Register reuse after CLOSE.** The main chunk reuses registers after a block's closures captured them (`_r150 = 30` captured by a Heartbeat callback, later `_r150 = {}` / a function). Pass 13b splits those names per captured range; nil forward declarations that the closure fills in itself count as closure state.
 5. **Or-chains.** `if a or b then BODY end` prints as nested tests with an empty innermost `if`, BODY at the end of the outer block or dropped after it. BODY must run iff `(not F1) or (not F2) or ... or C`.
 6. **Boolean materializations.** `x = (a == b)` loses `else x = true`, nesting the rest of the block (up to 59k lines) inside the if.
@@ -79,7 +80,7 @@ Never pipe the build through `tail`/`grep` without `set -o pipefail`: an asserti
 | 2b | Multi-return forwarding | 210 |
 | 3 | Targeted patches (namecall varargs, game-ready break, standfarm bridge, first-spawn loop, UI restore loop) | 8 |
 | 3b | Or-chains | 692 |
-| 4 | Dropped right operands (`x = x or v`), whole operand | 196 |
+| 4 | Dropped right operands (`x = x or v`) and guarded call bodies (`if not c then pcall(fn) end`) | 196 |
 | 5 | Varargs passthrough wrappers | 98 |
 | 6 | Timeout breaks | 5 |
 | 7 | Branding replacements | 39 |
@@ -90,12 +91,12 @@ Never pipe the build through `tail`/`grep` without `set -o pipefail`: an asserti
 | 10 | Players service upvalue fixes | 75 |
 | 11 | Dropped return-false (single tests; chains go to 3b) | 0 |
 | 12 | Game-ready initial skip | 1 |
-| 13 | Scope leaks (registers hoisted; 148 renamed for collisions) | 1,635 |
+| 13 | Scope leaks (registers hoisted; 180 renamed for collisions) | 1,666 |
 | 13b | Closed upvalues (main-chunk registers split per captured range) | 230 |
 | 14 | Garbled empty strings | 219 |
 
 ## Testing (tools/harness.lua)
-Runs `scr` under Lua 5.1 with mocked `game`/Instances/services, `task.*` scheduler, executor API, an in-memory filesystem and a fake MacLib. Prints the boot log (`_r20` writes `YBA/boot_log.txt`), every error swallowed by `pcall`, task errors, and infinite loops (instruction budget). Callbacks connected to RunService frame signals (Heartbeat, RenderStepped, ...) are fired every simulated frame, and common signals reject members other than Connect/Once/Wait, so per-frame errors like the F9 spam reproduce.
+Runs `scr` under Lua 5.1 with mocked `game`/Instances/services, `task.*` scheduler, executor API, an in-memory filesystem and a fake MacLib. Prints the boot log (`_r20` writes `YBA/boot_log.txt`), every error swallowed by `pcall`, task errors, and infinite loops (instruction budget). Callbacks connected to RunService frame signals (Heartbeat, RenderStepped, ...) are fired every simulated frame, common signals reject members other than Connect/Once/Wait, and only method-like members are callable (calling an Instance errors), so per-frame errors like the F9 spam reproduce.
 ```bash
 curl -sS -o maclib.lua https://raw.githubusercontent.com/AZX0OZ/maclib/refs/heads/main/maclib
 # in-game scenario (menu / loading GUIs absent):
@@ -109,6 +110,7 @@ Expected now: in-game `_r65()` is true on the first call, "FIRST SPAWN" logs onc
 - Default settings no longer auto-start item farm / stand farm or run Remove Map (or-chain fix).
 - First-spawn code no longer re-runs `_r73()` / `_r69()` every frame.
 - First Roblox test (build 8d707ab): UI showed for a moment, F9 spammed `Line 18283: arithmetic (mod) on number and function` and `Character is not a valid member of RBXScriptSignal Line 6553`. Causes: the UI visibility task hid the window and its restore never ran (fixed by patch 3f), and the two register bugs above (fixed by the frame-temp rule and Pass 13b). The harness reproduces both errors on 8d707ab and shows none on the current build.
+- Second Roblox test (build dbd97d4): UI loaded with no tabs, `Line 31431 attempt to call a Instance value` (`if not gui.Parent then pcall(fn) end` decompiled as an empty if followed by the call; Pass 4 moved only `X = pcall`). The main chunk died before building tabs. Fixed by the guarded-call extension in Pass 4; reproduced and cleared in the harness.
 
 ## Known Residual Issues
 - **Closure name collisions the liveness rule cannot resolve:** the HUD health loop (`_r159`, closure reads `_r5.PlayerGui` while the parent's own `_r5` is a boolean flag) and AutoPlay's stage-click log (`_r21 = _r20` copies the logger while the own `_r20` holds the stage). Both fail inside `pcall`.

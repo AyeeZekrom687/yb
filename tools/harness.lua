@@ -237,6 +237,12 @@ proxy_mt.__mod, proxy_mt.__pow, proxy_mt.__unm = arith, arith, arith
 proxy_mt.__lt = function() return false end
 proxy_mt.__le = function() return false end
 
+local function mock_typeof_early(v)
+    local d = PX[v]
+    if d and d.typ then return d.typ end
+    return "Instance"
+end
+
 local function set(list) local t = {} for _, k in ipairs(list) do t[k] = true end return t end
 local CHILD_METHODS = set{ "FindFirstChild", "WaitForChild", "FindFirstChildOfClass", "FindFirstChildWhichIsA",
     "FindFirstAncestor", "FindFirstAncestorOfClass", "FindFirstAncestorWhichIsA", "FindFirstDescendant" }
@@ -254,10 +260,41 @@ local FRAME_CONNS = {}
 local ABSENT = {}
 for nm in (os.getenv("ABSENT") or ""):gmatch("[^,]+") do ABSENT[nm] = true end
 
+-- Only members that look like methods/constructors are callable; calling an Instance,
+-- property or child errors as in Roblox.
+local METHOD_PREFIXES = { "Get", "Set", "Find", "Is", "Wait", "Connect", "Once", "Fire", "Invoke",
+    "Destroy", "Clone", "Play", "Stop", "Pause", "Resume", "Cancel", "Create", "new", "from", "Load",
+    "Remove", "Clear", "Move", "Pivot", "Apply", "Add", "Raycast", "To", "Lerp", "Kick", "Teleport",
+    "Capture", "Disconnect", "Http", "JSON", "Generate", "Url", "Request", "Change", "Equip", "Unequip",
+    "Take", "Activate", "Click", "Press", "Send", "Release", "Query", "Inverse", "Dot", "Cross", "Bind",
+    "Unbind", "Preload", "Compute", "Navigate", "Break", "Make", "Update", "Refresh", "Notify",
+    "Dialog", "Unload", "Show", "Hide", "Select", "Tween", "Emit", "Angles", "lookAt", "Fuzzy",
+    "Point", "Vector", "Components", "Abs", "Max", "Min", "Floor", "Ceil", "Sign", "Insert", "Has",
+    "Can", "Check", "Track", "Adjust", "Render", "Simulate", "Spawn", "Interrupt", "Delete", "Write",
+    "Read", "Open", "Close", "Toggle", "Lock", "Unlock", "Reset", "Start", "End", "Begin", "Next" }
+local function is_callable(d)
+    if d.name:sub(1, 6) == "MacLib" then return true end
+    local key = tostring(d.key)
+    for _, pre in ipairs(METHOD_PREFIXES) do
+        if key:sub(1, #pre) == pre then return true end
+    end
+    return false
+end
+
 proxy_mt.__call = function(p, ...)
     local d = PX[p]
     local key = tostring(d.key)
     local self = (...)
+    if not is_callable(d) then
+        local at, lvl = "", 2
+        while true do
+            local info = debug.getinfo(lvl, "Sl")
+            if not info then break end
+            if info.short_src == "SCR" then at = "SCR:" .. info.currentline .. ": " break end
+            lvl = lvl + 1
+        end
+        error(at .. "attempt to call a " .. mock_typeof_early(p) .. " value", 0)
+    end
     if CHILD_METHODS[key] then
         local name = select(2, ...)
         if ABSENT[tostring(name)] then return nil end
