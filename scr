@@ -449,9 +449,9 @@
             local _r14 = _r12
             _r13 = _r13(_r14)
             if _r13 ~= "string" then
+                _r13 = false
+                do return _r13 end
             end
-            _r13 = false
-            do return _r13 end
         end
         _r13 = pcall
         _r14 = writefile
@@ -2333,9 +2333,9 @@
                         _r20 = _r16.X
                         _r20 = _r20 + 100
                         if _r20 <= _r19 then
+                            _r19 = false
+                            do return _r19 end
                         end
-                        _r19 = false
-                        do return _r19 end
                     end
                     _r19 = _r17.Y
                     _r20 = _r18.Y
@@ -2345,9 +2345,9 @@
                         _r20 = _r16.Y
                         _r20 = _r20 + 100
                         if _r20 <= _r19 then
+                            _r19 = false
+                            do return _r19 end
                         end
-                        _r19 = false
-                        do return _r19 end
                     end
                 end
             end
@@ -3043,10 +3043,10 @@
             if _r7 then
                 _r7 = _r6.Enabled
                 if not _r7 then
+                    _r7 = false
+                    do return _r7 end
                 end
             end
-            _r7 = false
-            do return _r7 end
         end
         _r7 = workspace
         _r8 = _r7
@@ -3077,10 +3077,10 @@
                 local _r11 = workspace
                 _r9 = _r9(_r10, _r11)
                 if not _r9 then
+                    _r9 = false
+                    do return _r9 end
                 end
             end
-            _r9 = false
-            do return _r9 end
         end
         _r10 = _r8
         _r9 = _r8.FindFirstChildOfClass
@@ -3094,10 +3094,10 @@
             if _r10 then
                 _r11 = _r9.Health
                 if _r11 <= 0 then
+                    _r11 = false
+                    do return _r11 end
                 end
             end
-            _r11 = false
-            do return _r11 end
         end
         _r11 = true
         return _r11
@@ -11992,11 +11992,11 @@
                                     _r10 = _r152
                                     _r10 = _r10[_r9]
                                     if _r10 then
+                                        _r10 = false
+                                        do return _r10 end
                                     end
                                 end
                             end
-                            _r10 = false
-                            do return _r10 end
                         end
                         _r10 = _r150
                         _r10 = _r10[_r7]
@@ -14720,9 +14720,9 @@
                     if _r8 then
                         local _r9 = #_r8
                         if _r9 == 0 then
+                            _r9 = false
+                            do return _r9 end
                         end
-                        _r9 = false
-                        do return _r9 end
                     end
                     _r9 = _r146
                     if _r9 then
@@ -20101,10 +20101,10 @@
                                             if _r12 then
                                                 _r12 = _r11.Enabled
                                                 if _r12 == false then
+                                                    _r12 = false
+                                                    do return _r12 end
                                                 end
                                             end
-                                            _r12 = false
-                                            do return _r12 end
                                         end
                                     end
                                     _r13 = _p1
@@ -20558,10 +20558,10 @@
                                 local _r21 = workspace
                                 _r19 = _r19(_r20, _r21)
                                 if not _r19 then
+                                    _r19 = false
+                                    do return _r19 end
                                 end
                             end
-                            _r19 = false
-                            do return _r19 end
                         end
                         _r20 = _r18
                         _r19 = _r18.FindFirstChildOfClass
@@ -20570,9 +20570,9 @@
                         if _r19 then
                             _r20 = _r19.Health
                             if _r20 <= 0 then
+                                _r20 = false
+                                do return _r20 end
                             end
-                            _r20 = false
-                            do return _r20 end
                         end
                         _r21 = _r18
                         _r20 = _r18.FindFirstChild
@@ -21498,10 +21498,10 @@
                                 local _r8 = workspace
                                 _r6 = _r6(_r7, _r8)
                                 if not _r6 then
+                                    _r6 = false
+                                    do return _r6 end
                                 end
                             end
-                            _r6 = false
-                            do return _r6 end
                         end
                         _r7 = _r5
                         _r6 = _r5.FindFirstChildOfClass
@@ -21510,9 +21510,9 @@
                         if _r6 then
                             _r7 = _r6.Health
                             if _r7 <= 0 then
+                                _r7 = false
+                                do return _r7 end
                             end
-                            _r7 = false
-                            do return _r7 end
                         end
                         _r8 = _r5
                         _r7 = _r5.FindFirstChild
@@ -22155,10 +22155,10 @@
                                 _r9 = _r9()
                                 _r9 = _r9._YBA_SellingBusy
                                 if _r9 then
+                                    _r9 = false
+                                    do return _r9 end
                                 end
                             end
-                            _r9 = false
-                            do return _r9 end
                         end
                         _r9 = _r157
                         _r10 = _p1
@@ -22191,10 +22191,10 @@
                                 _r9 = _r9()
                                 _r9 = _r9._YBA_SellingBusy
                                 if _r9 then
+                                    _r9 = false
+                                    do return _r9 end
                                 end
                             end
-                            _r9 = false
-                            do return _r9 end
                         end
                         _r9 = os
                         _r9 = _r9.clock
@@ -22299,10 +22299,10 @@
                                 _r14 = _p1
                                 _r13 = _r13(_r14)
                                 if not _r13 then
+                                    _r13 = false
+                                    do return _r13 end
                                 end
                             end
-                            _r13 = false
-                            do return _r13 end
                         end
                         _r13 = _r85
                         _r14 = 0.35
@@ -26026,9 +26026,9 @@
                                 _r7 = _r181
                                 _r7 = _r6 - _r7
                                 if _r7 < 5 then
+                                    _r7 = false
+                                    do return _r7 end
                                 end
-                                _r7 = false
-                                do return _r7 end
                             end
                             _r7 = true
                             _r52 = _r7
@@ -36749,10 +36749,10 @@
                                         _r2 = _p1
                                         _r1 = _r1(_r2)
                                         if _r1 then
+                                            _r1 = false
+                                            do return _r1 end
                                         end
                                     end
-                                    _r1 = false
-                                    do return _r1 end
                                 end
                                 _r1 = tostring
                                 _r2 = _p1
@@ -37773,10 +37773,10 @@
                                     if _r6 then
                                         _r7 = _r6.Health
                                         if _r7 <= 0 then
+                                            _r7 = false
+                                            do return _r7 end
                                         end
                                     end
-                                    _r7 = false
-                                    do return _r7 end
                                 end
                                 _r8 = _r4
                                 _r7 = _r4.FindFirstChild
@@ -40514,9 +40514,9 @@
                                     local _r8 = _p1
                                     _r7 = _r7(_r8)
                                     if _r7 ~= "table" then
+                                        _r7 = false
+                                        do return _r7 end
                                     end
-                                    _r7 = false
-                                    do return _r7 end
                                 end
                                 _r7 = _r175
                                 _r8 = _p2
@@ -41017,9 +41017,9 @@
                                 if _r9 then
                                     _r10 = _r9.Health
                                     if _r10 <= 0 then
+                                        _r10 = false
+                                        do return _r10 end
                                     end
-                                    _r10 = false
-                                    do return _r10 end
                                 end
                                 _r11 = _r7
                                 _r10 = _r7.FindFirstChild
@@ -52027,9 +52027,9 @@
                                 if _r6 then
                                     _r7 = _r6.Value
                                     if _r7 ~= "The Hand" then
+                                        _r7 = false
+                                        do return _r7 end
                                     end
-                                    _r7 = false
-                                    do return _r7 end
                                 end
                                 _r7 = task
                                 _r7 = _r7.wait
@@ -58809,10 +58809,10 @@
                                                             _r18 = "леден"
                                                             _r16 = _r16(_r17, _r18)
                                                             if _r16 then
+                                                                _r16 = false
+                                                                do return _r16 end
                                                             end
                                                         end
-                                                        _r16 = false
-                                                        do return _r16 end
                                                     end
                                                     if _r13 then
                                                         _r16 = _r13.isSellableItem
@@ -58909,10 +58909,10 @@
                                                             _r11 = "леден"
                                                             _r9 = _r9(_r10, _r11)
                                                             if _r9 then
+                                                                _r9 = false
+                                                                do return _r9 end
                                                             end
                                                         end
-                                                        _r9 = false
-                                                        do return _r9 end
                                                     end
                                                     _r9 = _G
                                                     _r9 = _r9.YBAItemFarm
@@ -59478,10 +59478,10 @@
                                                                 local _r8 = "HumanoidRootPart"
                                                                 _r6 = _r6(_r7, _r8)
                                                                 if not _r6 then
+                                                                    _r6 = false
+                                                                    do return _r6 end
                                                                 end
                                                             end
-                                                            _r6 = false
-                                                            do return _r6 end
                                                         end
                                                         _r7 = _p1
                                                         _r6 = _p1.FindFirstChildOfClass
@@ -59490,9 +59490,9 @@
                                                         if _r6 then
                                                             _r7 = _r6.Health
                                                             if _r7 <= 0 then
+                                                                _r7 = false
+                                                                do return _r7 end
                                                             end
-                                                            _r7 = false
-                                                            do return _r7 end
                                                         end
                                                         _r8 = _p1
                                                         _r7 = _p1.FindFirstChild
@@ -68173,6 +68173,7 @@
                                 return
                             end
                             _r160(_r161)
+
                             -- =======================================================
                             -- YBA Farm Coordinator
                             -- Orchestrates all farming systems so they work together
