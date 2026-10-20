@@ -5,7 +5,16 @@ local BUDGET = tonumber(arg[2]) or 200000000   -- instructions per thread before
 local HOOK_EVERY = 100000
 
 local real_print = print
-local function log(tag, msg) real_print(string.format("[%s] %s", tag, tostring(msg))) end
+local LOG_COUNTS, LOG_AGG = {}, false   -- LOG_AGG: print each distinct line once, count repeats
+local function log(tag, msg)
+    local s = string.format("[%s] %s", tag, tostring(msg))
+    if LOG_AGG then
+        local c = (LOG_COUNTS[s] or 0) + 1
+        LOG_COUNTS[s] = c
+        if c > 1 then return end
+    end
+    real_print(s)
+end
 
 ------------------------------------------------------------------------
 -- Clock
@@ -204,7 +213,7 @@ local TRUE_PROPS = { Visible = true, Enabled = true, Anchored = false, CanCollid
 local SIGNALS = {}
 for nm in ("Heartbeat RenderStepped Stepped PreSimulation PostSimulation PreRender Changed Touched TouchEnded "
         .. "ChildAdded ChildRemoved DescendantAdded DescendantRemoving CharacterAdded CharacterRemoving "
-        .. "PlayerAdded PlayerRemoving Died HealthChanged InputBegan InputEnded InputChanged Idled "
+        .. "MessageOut PlayerAdded PlayerRemoving Died HealthChanged InputBegan InputEnded InputChanged Idled "
         .. "MouseButton1Click MouseButton1Down Activated Triggered AncestryChanged FocusLost"):gmatch("%S+") do
     SIGNALS[nm] = true
 end
@@ -365,6 +374,7 @@ end
 -- Fake MacLib: every call is a proxy; Window creation is logged
 ------------------------------------------------------------------------
 local UI_CALLS = {}
+local UI_ELEMS = {}   -- { kind, name, cb } for every MacLib element with a Callback
 local real_call = proxy_mt.__call
 proxy_mt.__call = function(p, ...)
     local d = PX[p]
@@ -372,6 +382,13 @@ proxy_mt.__call = function(p, ...)
         local key = tostring(d.key)
         UI_CALLS[key] = (UI_CALLS[key] or 0) + 1
         if key == "Window" then log("UI", "MacLib Window() called") end
+        for i = 1, select("#", ...) do
+            local a = select(i, ...)
+            if type(a) == "table" and not PX[a] and type(rawget(a, "Callback")) == "function" then
+                UI_ELEMS[#UI_ELEMS + 1] = { kind = key, cb = rawget(a, "Callback"),
+                    name = tostring(rawget(a, "Name") or rawget(a, "Title") or "?") }
+            end
+        end
     end
     return real_call(p, ...)
 end
@@ -524,6 +541,29 @@ for _ = 1, tonumber(os.getenv("DRAIN_STEPS")) or 100 do
     now = now + 0.5
     for _, fn in pairs(FRAME_CONNS) do spawn_now(fn, 0.016) end
     run_due()
+end
+-- FIRE=<pattern>: switch on matching toggles / press matching buttons (case-insensitive plain
+-- match on the element name, "*" = all), then run FIRE_STEPS half-second steps.
+local FIRE = os.getenv("FIRE")
+if FIRE then
+    LOG_AGG = true
+    local pat = FIRE:lower()
+    for _, el in ipairs(UI_ELEMS) do
+        if (pat == "*" or el.name:lower():find(pat, 1, true)) and (el.kind == "Toggle" or el.kind == "Button") then
+            log("FIRE", el.kind .. " '" .. el.name .. "'")
+            if el.kind == "Toggle" then spawn_now(el.cb, true) else spawn_now(el.cb) end
+        end
+    end
+    for _ = 1, tonumber(os.getenv("FIRE_STEPS")) or 120 do
+        now = now + 0.5
+        for _, fn in pairs(FRAME_CONNS) do spawn_now(fn, 0.016) end
+        run_due()
+    end
+    local rep = {}
+    for s, c in pairs(LOG_COUNTS) do if c > 1 then rep[#rep + 1] = string.format("%6d x %s", c, s) end end
+    table.sort(rep, function(a, b) return tonumber(a:match("%d+")) > tonumber(b:match("%d+")) end)
+    log("SUMMARY", #rep .. " repeated output lines after FIRE (count x line):")
+    for i = 1, math.min(#rep, 40) do real_print("   " .. rep[i]) end
 end
 local uc = {}
 for k, v in pairs(UI_CALLS) do uc[#uc + 1] = k .. "=" .. v end

@@ -6,20 +6,25 @@ Passes run in this order:
 0b. Structural repairs: four one-off blocks the decompiler left open to the end of the file
     (selectedFarmItems cleanup loop, anti-teleport bypass else, game-ready GameModes or-chain,
     outer `while true do` around the game-ready wait).
+0d. Lost gotos: `-- goto [N]` with an exact instruction-count join point become a flag set at
+    the goto and `if not flag then` around the skipped code (`if flag then break end` where
+    a loop is left).
+0c. Double while loops: `while true do / while true do ... end / end` is one loop; drop the
+    wrapper and move the post-loop code printed at the end of the body after the loop.
 0.  TESTSET restoration: `X = Y` / `if [not] X then` where Y is the function's own register
-    or param is printed with the correct sense; mark it so Pass 1 leaves it, and move its
-    right operand / lost ternary else into place.
+    or param and the body is empty or writes X first is printed with the correct sense; mark
+    it so Pass 1 leaves it, and move its right operand / lost ternary else into place.
 1.  Truthiness inversions: flips bare `if [not] VAR then` / `elseif [not] VAR then` (TEST).
     Does NOT touch == ~= < > <= >= comparisons (those aren't inverted by the decompiler).
 1b. Boolean materializations: `x = (a == b)` whose lost `else x = true` nested the rest of
     the block inside the if.
 2.  Setlist bugs: replaces `-- setlist _rN (batch=K)` comments with table packing.
 2b. Multi-return forwarding: `f(g())` printed with a fixed register range of stale values.
-3.  Targeted patches: namecall varargs, game-ready break, stand farm bridge, first-spawn loop,
-    UI visibility restore loop.
+3.  Targeted patches: namecall varargs, game-ready break, stand farm bridge, first-spawn loop.
 3b. Or-chains: `if a or b then REST end` printed as nested tests with an empty innermost if.
 4.  Broken if/else: moves dropped right operands (`x = x or v`) and guarded call bodies
-    (`if not c then pcall(fn) end`) back inside their empty ifs.
+    (`if not c then pcall(fn) end`, also with comparisons) back inside their empty ifs.
+4b. Constant ternaries: `x = c and K or D` (literal K) lost the path where c is false.
 5.  Varargs passthrough: replaces register captures of ... with direct forwarding.
 6.  Timeout breaks: inserts missing break in `if NUMBER < _rN then end` patterns.
 7.  Branding: renames YBA Hub to YBA / YBA Script in user-facing strings.
@@ -32,12 +37,17 @@ Passes run in this order:
 12. Game-ready initial skip.
 13. Scope leaks: registers declared `local` inside a nested block but used outside it are
     hoisted to function scope; registers sharing a name with an upvalue (including a closure's
-    own call-frame temporaries, and copies of a register a call has clobbered) are renamed.
+    own call-frame temporaries, copies of a register a call has clobbered, for-loop control
+    registers read in the body, copies indexed with a service-only member, and decompiler
+    locals that are dead or hold a scalar where a nested closure needs the outer value) are
+    renamed.
 13b. Closed upvalues: main-chunk registers reused after the closures that captured them get a
-    new name for the captured range.
+    new name for the captured range (evidence: kind change, a later call based at or below
+    the register, argument setup for such a call, object use followed by a scalar).
 14. Garbled empty strings: 2-byte garbage constants that stand for "".
 """
 
+import bisect
 import re
 import sys
 from collections import defaultdict
@@ -463,46 +473,6 @@ def _first_spawn_loop(text):
     return ''.join(lines), 1
 
 
-# 3f: UI visibility restore task. After hiding the window, the task waits up to 300 s for the
-# main game and then restores the saved UI_Open state:
-#   while tick() - start < 300 do task.wait(1) if _r65 and _r65() then break end end
-#   if _r65 and _r65() then <restore> end
-# The decompiler nested the loop in three `while true do` and put the restore inside it after
-# the break, so the break re-entered the loop forever and the window stayed hidden.
-def _ui_restore_loop(text):
-    lines = split_lines(text)
-    k = next((n for n, ln in enumerate(lines) if ln.strip() == 'if _r16 < 300 then'), None)
-    if k is None:
-        return text, 0
-    b = _indent(lines[k]) - 12
-    pad = ' ' * b
-    assert [ln.rstrip('\r\n') for ln in lines[k - 6:k - 3]] == \
-        [pad + 'while true do', pad + '    while true do', pad + '        while true do'], \
-        'ui restore loop: unexpected loop nesting'
-    assert lines[k - 1].strip() == '_r16 = _r16 - _r15', 'ui restore loop: elapsed'
-    e_if = block_end(lines, k, b + 12)
-    body = b + 16
-    c = k + 5                                   # after the 4 wait lines
-    assert lines[c].strip() == '_r16 = _r65' and lines[c + 1].strip() == 'if _r16 then'
-    c_end = block_end(lines, c + 1, body)
-    r = c_end + 1
-    assert lines[r].strip() == '_r16 = _r65' and lines[r + 1].strip() == 'if _r16 then'
-    r_end = block_end(lines, r + 1, body)
-    assert lines[r_end + 1].strip() == 'return' and r_end + 2 == e_if, 'ui restore loop: tail'
-    assert [ln.strip() for ln in lines[e_if + 1:e_if + 4]] == ['end'] * 3, 'ui restore loop: ends'
-    elapsed = lines[k - 3:k]
-    wait_check = lines[k + 1:c_end + 1]
-    restore = lines[r:r_end + 1]
-    _dedent(elapsed, 0, len(elapsed), 8)
-    _dedent(wait_check, 0, len(wait_check), 8)
-    _dedent(restore, 0, len(restore), 16)
-    new = ([pad + 'while true do\n'] + elapsed + [pad + '    if _r16 < 300 then\n'] + wait_check +
-           [pad + '    else\n', pad + '        break\n', pad + '    end\n', pad + 'end\n'] +
-           restore + [pad + 'return\n'])
-    lines[k - 6:e_if + 4] = new
-    return ''.join(lines), 1
-
-
 def apply_targeted_patches(text):
     """Apply targeted fixes for specific decompiler artifacts."""
     stats = {}
@@ -519,8 +489,6 @@ def apply_targeted_patches(text):
     text, n = _first_spawn_loop(text)
     stats['first_spawn_loop'] = n
 
-    text, n = _ui_restore_loop(text)
-    stats['ui_restore_loop'] = n
 
     return text, stats
 
@@ -536,7 +504,7 @@ BARE_IF_RE = re.compile(r'^(\s*)if\s+(?:not\s+)?(_r\d+|_p\d+)\s+then\s*$')
 BARE_END_RE = re.compile(r'^(\s*)end\s*$')
 
 CALL_STMT_RE = re.compile(r'^(?:_r\d+(?:\s*,\s*_r\d+)*\s*=\s*)?_r(\d+)\(.*\)(?:\s*--.*)?$')
-BODY_END_RE = re.compile(r'^(?:do return\b.*\bend|return\b.*|break|-- goto \[\d+\])$')
+BODY_END_RE = re.compile(r'^(?:do return\b.*\bend|return\b.*|break|-- goto \[\d+\]|_g\d+ = true)$')
 
 
 def _guarded_call_end(lines, start, ind, reg):
@@ -579,6 +547,9 @@ def _guarded_call_end(lines, start, ind, reg):
     return last_call
 
 
+CMP_GUARD_RE = re.compile(r'^(\s*)if (.+ (?:==|~=|<=|>=|<|>) .+) then$')
+
+
 def fix_broken_if_else(lines):
     """Move dropped right operands (or guarded call bodies) back inside their empty if blocks."""
     lines = list(lines)
@@ -586,6 +557,19 @@ def fix_broken_if_else(lines):
     for i in range(len(lines) - 3, -1, -1):
         m_if = BARE_IF_RE.match(lines[i].rstrip('\r\n'))
         if not m_if:
+            # `if x == K then end` + body: comparisons keep their polarity, so the body
+            # (a guarded call) goes inside as printed.
+            m_cmp = CMP_GUARD_RE.match(lines[i].rstrip('\r\n'))
+            if not m_cmp or lines[i + 1].rstrip('\r\n') != m_cmp.group(1) + 'end':
+                continue
+            nxt = ASSIGN_REG_RE.match(lines[i + 2].strip())
+            var = f'_r{nxt.group(1)}' if nxt else None
+            if var not in re.findall(r'_r\d+', m_cmp.group(2)):
+                continue
+            stop = _guarded_call_end(lines, i + 2, len(m_cmp.group(1)), var)
+            if stop is not None and stop > i + 2:
+                lines[i + 1:stop] = ['    ' + ln for ln in lines[i + 2:stop]] + [lines[i + 1]]
+                count += 1
             continue
         indent, var = m_if.group(1), m_if.group(2)
         m_end = BARE_END_RE.match(lines[i + 1].rstrip('\r\n'))
@@ -1403,7 +1387,127 @@ def _subtree(C):
     return out
 
 
-def find_leaks(funcs, toks=None):
+# Members that exist only on one service: a copy `X = R` indexed with one of them reads the
+# variable named R that holds that service, whatever F's own R holds.
+SERVICE_MEMBERS = {
+    'RunService': ('RenderStepped', 'Heartbeat', 'Stepped', 'PreRender', 'PreSimulation',
+                   'PostSimulation', 'BindToRenderStep', 'UnbindFromRenderStep'),
+    'Players': ('LocalPlayer', 'GetPlayers', 'GetPlayerFromCharacter', 'GetPlayerByUserId',
+                'PlayerAdded', 'PlayerRemoving'),
+}
+MEMBER_SERVICE = {m: s for s, ms in SERVICE_MEMBERS.items() for m in ms}
+SVC_CALL_RE = re.compile(r'^\s*(_r\d+) = \1\((_r\d+), (_r\d+)\)\s*$')
+
+
+def innermost_func(main, tok):
+    G = main
+    while True:
+        for C in G.children:
+            if C.header_tok <= tok <= C.end_tok:
+                G = C
+                break
+        else:
+            return G
+
+
+def service_writes(text, funcs, toks):
+    """{(func, R): {service}} for `R = game:GetService("S")` as decompiled:
+    `R = R.GetService`, `[local] B = "S"`, `R = R(A, B)` within a few lines."""
+    lines = text.split('\n')
+    first_tok = {}
+    for ti, t in enumerate(toks):
+        first_tok.setdefault(t[2], ti)
+    out = defaultdict(set)
+    for k, s in enumerate(lines):
+        m = SVC_CALL_RE.match(s)
+        if not m or k + 1 not in first_tok:
+            continue
+        R, B = m.group(1), m.group(3)
+        prev = lines[max(0, k - 4):k]
+        if not any(p.strip() == f'{R} = {R}.GetService' for p in prev):
+            continue
+        names = [x.group(1) for x in (re.match(r'^\s*(?:local\s+)?' + B + r' = "(\w+)"\s*$', p)
+                                      for p in prev) if x]
+        if names:
+            out[(innermost_func(funcs[0], first_tok[k + 1]), R)].add(names[-1])
+    return out
+
+
+BLOCK_OPEN = ('function', 'if', 'do', 'repeat')
+
+
+def _matching_end(toks, open_tok):
+    """Token index of the `end`/`until` closing the block opened at open_tok."""
+    depth = 0
+    for ti in range(open_tok, len(toks)):
+        kind, val = toks[ti][0], toks[ti][1]
+        if kind != 'kw':
+            continue
+        if val in BLOCK_OPEN:
+            depth += 1
+        elif val in ('end', 'until'):
+            depth -= 1
+            if depth == 0:
+                return ti
+    return len(toks) - 1
+
+
+def forced_upvalues(F, toks, lines_F, svc):
+    """{R: {tok}} of reads in F that must be the enclosing variable named R although F's own
+    R is in scope:
+    - for-loop control registers (`in _rG, _rS, _rC` / `= _rA, _rB, _rC`) read in the loop
+      body before any body write: source code cannot name them;
+    - a copy `X = R` followed by `X = X.M` where M exists only on service S, F's own R is not
+      that service, and the nearest enclosing function that owns R assigns it GetService(S)."""
+    out = defaultdict(set)
+    keys = sorted(lines_F)
+    for idx, line in enumerate(keys):
+        lt = lines_F[line]
+        vals = [toks[t][1] for t in lt]
+        if vals[0] == 'for' and vals[-1] == 'do':
+            q = vals.index('in') if 'in' in vals else vals.index('=')
+            open_ = {v for v in vals[q + 1:-1] if v != ',' and REG_NUM_RE.match(v or '')}
+            last_line = toks[_matching_end(toks, lt[-1])][2]
+            for line2 in keys[idx + 1:]:
+                if not open_ or line2 >= last_line:
+                    break
+                lt2 = lines_F[line2]
+                written = set()
+                for pos, ti in enumerate(lt2):
+                    v = toks[ti][1]
+                    if v not in open_ or toks[ti][0] != 'name' or toks[ti - 1][1] in ('.', ':'):
+                        continue
+                    if classify_use(toks, lt2, pos) in ('owrite', 'cwrite'):
+                        written.add(v)
+                    else:
+                        out[v].add(ti)
+                open_ -= written
+            continue
+        start = 1 if vals[0] == 'local' else 0
+        if len(vals) != start + 3 or vals[start + 1] != '=' or idx + 1 == len(keys) \
+                or keys[idx + 1] != line + 1:
+            continue
+        X, R = vals[start], vals[start + 2]
+        if not (REG_NUM_RE.match(X or '') and REG_NUM_RE.match(R or '')):
+            continue
+        nv = [toks[t][1] for t in lines_F[line + 1]]
+        if len(nv) != 5 or nv[:4] != [X, '=', X, '.'] or nv[4] not in MEMBER_SERVICE:
+            continue
+        S = MEMBER_SERVICE[nv[4]]
+        if S in svc.get((F, R), ()):
+            continue
+        G = F.parent
+        while G is not None:
+            if S in svc.get((G, R), ()):
+                out[R].add(lt[start + 2])
+                break
+            if any(d.name == R for d in G.decls):
+                break
+            G = G.parent
+    return out
+
+
+def find_leaks(funcs, toks=None, svc=None):
     """Return {func: {name: {'decls': set(Decl), 'uses': [(line, tok, res)]}}} for leaked registers.
 
     A use is a leak when it does not resolve to one of the function's own visible locals,
@@ -1429,6 +1533,10 @@ def find_leaks(funcs, toks=None):
         if toks is None or F.parent is None:
             continue
         lines_F = own_line_tokens(F, toks)
+        # Reads that must be the enclosing variable (for-loop control registers, service members).
+        for name, ftoks in forced_upvalues(F, toks, lines_F, svc or {}).items():
+            ent = out.setdefault(F, {}).setdefault(name, {'decls': set(), 'uses': []})
+            ent['forced'] = ftoks
         # Non-copy writes before a register's first declaration can only target F's own
         # register (an upvalue is written only by a plain copy).
         for name, line, tok, res, _ in F.uses:
@@ -1484,7 +1592,7 @@ def find_leaks(funcs, toks=None):
     return out
 
 
-def classify_pair(F, R, toks, lines_F, is_main):
+def classify_pair(F, R, toks, lines_F, is_main, forced=()):
     """Decide, for every occurrence of R in F's own body, whether it is F's own
     register ('own') or the enclosing variable of the same name ('up').
 
@@ -1524,6 +1632,9 @@ def classify_pair(F, R, toks, lines_F, is_main):
             continue
         for ti, k in occ:
             if k not in ('oread', 'cread'):
+                continue
+            if ti in forced:
+                decision[ti] = 'up'
                 continue
             if is_main or (ti > first_decl and (k == 'oread' or live)):
                 decision[ti] = 'own'
@@ -1582,13 +1693,14 @@ def fix_scope_leaks(text):
     """Hoist leaked registers to function scope. Returns (new_text, stats, warnings)."""
     toks = tokenize(text)
     funcs = analyze(toks)
-    leaks = find_leaks(funcs, toks)
+    leaks = find_leaks(funcs, toks, service_writes(text, funcs, toks))
     lines_of = {F: own_line_tokens(F, toks) for F in leaks}
     decisions = {}                      # (F, R) -> ({tok: 'own' | 'up'}, timeline)
     for F, names in leaks.items():
         for R in names:
             if R.startswith('_r'):
-                decisions[(F, R)] = classify_pair(F, R, toks, lines_of[F], F.parent is None)
+                decisions[(F, R)] = classify_pair(F, R, toks, lines_of[F], F.parent is None,
+                                                  names[R].get('forced', ()))
     depth = {}
     for F in funcs:                     # parents precede children in funcs
         depth[F] = 0 if F.parent is None else depth[F.parent] + 1
@@ -1599,6 +1711,29 @@ def fix_scope_leaks(text):
     claims = {}                         # (G, tok) -> claiming Func
     refs = defaultdict(list)            # R -> [(G, tok)] for every not-own reference
     frame_cache = {}
+    lazy = {}                           # (A, R) -> classify_pair for unleaked lexical owners
+    dead_bound = set()                  # (A, R) whose dead local a nested reference passes
+    lazy_claims = []                    # (G, tok, A, R) live-bound to such a local
+    tlines = text.split('\n')
+
+    def indexed_copy(tok):
+        """The reference is a plain copy `X = R` whose next line indexes X."""
+        ln = toks[tok][2]
+        m = re.match(r'^(?:local\s+)?(_r\d+)\s*=\s*' + re.escape(toks[tok][1]) + r'$', tlines[ln - 1].strip())
+        return bool(m) and ln < len(tlines) and re.match(
+            r'^' + m.group(1) + r'\s*=\s*' + m.group(1) + r'\s*[.:\[]', tlines[ln].strip()) is not None
+
+    def literal_before(A, name, tok):
+        """Literal kind of A's latest own write of name before token tok (None if not a literal)."""
+        kind = None
+        rx = re.compile(r'^\s*(?:local\s+)?' + name + r'\s*=\s*(.*)$')
+        for ln in sorted(lines_of[A]):
+            if ln >= toks[tok][2]:
+                break
+            m = rx.match(tlines[ln - 1])
+            if m:
+                kind = _value_kind(m.group(1))
+        return kind
 
     def frames_of(A):
         if A not in frame_cache:
@@ -1621,11 +1756,29 @@ def fix_scope_leaks(text):
                 if d is not None and d.block.func is A:
                     if (A, name) in decisions:
                         claims[(G, tok)] = A
-                    break
+                        break
+                    # The decompiler's local in A. Dead where C is created (a call clobbered it):
+                    # the name is an outer variable and A's register must be renamed.
+                    if (A, name) not in lazy:
+                        lines_of.setdefault(A, own_line_tokens(A, toks))
+                        lazy[(A, name)] = classify_pair(A, name, toks, lines_of[A], False)
+                    scalar = indexed_copy(tok) and literal_before(A, name, C.header_tok) in ('boolean', 'number')
+                    if not scalar and live_at(lazy[(A, name)][1], C.header_tok):
+                        lazy_claims.append((G, tok, A, name))
+                        break
+                    dead_bound.add((A, name))
+                    C, A = A, A.parent
+                    continue
                 if (A, name) in decisions and live_at(decisions[(A, name)][1], C.header_tok):
                     claims[(G, tok)] = A
                     break
                 C, A = A, A.parent
+    for A, name in dead_bound:
+        leaks.setdefault(A, {}).setdefault(name, {'decls': set(), 'uses': []})
+        decisions[(A, name)] = lazy[(A, name)]
+    for G, tok, A, name in lazy_claims:
+        if (A, name) in dead_bound:
+            claims[(G, tok)] = A
 
     def inside(X, F):
         """X is F or nested in F."""
@@ -1765,6 +1918,51 @@ def _value_kind(rhs):
     return None
 
 
+def _call_based(lines, ln, R):
+    """True if the write `R = f` at line ln is the base of a call (`R = R(...)`, a for-in
+    generator). A call result assigned to a live local is computed at the stack top and moved,
+    so a call based at R means the local previously held in R is dead."""
+    n = int(R[2:])
+    ind = _indent(lines[ln - 1])
+    call = re.compile(r'^(?:' + R + r'(?:\s*,\s*_r\d+)*\s*=\s*)?' + R + r'\(')
+    for j in range(ln, min(ln + MAX_OPERAND, len(lines))):
+        s = lines[j]
+        if _indent(s) != ind:
+            return False
+        st = s.strip()
+        if call.match(st):
+            return True
+        m = ASSIGN_REG_RE.match(st)
+        if not m or int(m.group(1)) <= n:
+            return False
+    return False
+
+
+def _call_arg(lines, ln, R):
+    """True if the write at line ln sets up an argument of a call based below R: the call sits
+    at the stack top, so R was free."""
+    n = int(R[2:])
+    ind = _indent(lines[ln - 1])
+    j, stop = ln, min(ln + 80, len(lines))
+    while j < stop:
+        st = lines[j].strip()
+        if _indent(lines[j]) != ind:
+            return False
+        c = CALL_STMT_RE.match(st)
+        if c:
+            return int(c.group(1)) < n and re.search(r'\b' + R + r'\b', st[st.index('('):]) is not None
+        # argument setup: register loads, stores into an argument table, callback closures
+        if not (ASSIGN_REG_RE.match(st) or re.match(r'^_r\d+(?:\.\w+|\[[^\]]+\])\s*=', st)):
+            return False
+        if FUNC_HEAD_RE.search(st):
+            e = _close_of(lines, j)
+            if e is None:
+                return False
+            j = e
+        j += 1
+    return False
+
+
 def fix_closed_upvalues(text):
     toks = tokenize(text)
     funcs = analyze(toks)
@@ -1780,6 +1978,30 @@ def fix_closed_upvalues(text):
                 src = lines[ln - 1]
                 single = re.match(r'^\s*(?:local\s+)?_r\d+\s*=\s*(.*)$', src)
                 writes[toks[ti][1]].append((ti, ln, _value_kind(single.group(1)) if single else None))
+    # A plain copy `R = S` carries the kind of S's latest write.
+    for R, ws in writes.items():
+        for n, (ti, ln, kind) in enumerate(ws):
+            m = re.match(r'^\s*(?:local\s+)?_r\d+\s*=\s*(_r\d+)\s*$', lines[ln - 1])
+            if kind is None and m and m.group(1) != R:
+                src = max((w for w in writes.get(m.group(1), ()) if w[0] < ti), default=None)
+                if src is not None and src[2] not in (None, 'nil'):
+                    ws[n] = (ti, ln, src[2])
+    # A call sits at the stack top, so a main-chunk call based at Q <= R means no local lives
+    # in R from there on: a closure created before it keeps a closed upvalue.
+    calls = [(lm[ln][0], int(c.group(1))) for ln in sorted(lm)
+             for c in [CALL_STMT_RE.match(lines[ln - 1].strip())] if c]
+    ctoks = [t for t, _ in calls]
+    table = [[q for _, q in calls]]             # sparse table: range minimum of call bases
+    while (1 << len(table)) <= len(calls):
+        prev, half = table[-1], 1 << (len(table) - 1)
+        table.append([min(prev[i], prev[i + half]) for i in range(len(prev) - half)])
+
+    def min_call_base(a, b):
+        lo, hi = bisect.bisect_right(ctoks, a), bisect.bisect_left(ctoks, b)
+        if lo >= hi:
+            return None
+        k = (hi - lo).bit_length() - 1
+        return min(table[k][lo], table[k][hi - (1 << k)])
 
     def captures(C):
         """{R: [tok]} for main-chunk registers used inside C, plus the set C writes."""
@@ -1796,10 +2018,46 @@ def fix_closed_upvalues(text):
                         written.add(name)
         return out, written
 
+    # Range minimum of line indents (blank lines and string continuations ignored), for
+    # same_block in O(1).
+    big = 1 << 30
+    ind_tab = [[big] + [big if not ln.strip() or (q > 0 and lines[q - 1].endswith('\\')) else _indent(ln)
+                        for q, ln in enumerate(lines)]]
+    while (1 << len(ind_tab)) <= len(ind_tab[0]):
+        prev_row, half = ind_tab[-1], 1 << (len(ind_tab) - 1)
+        ind_tab.append([min(prev_row[i], prev_row[i + half]) for i in range(len(prev_row) - half)])
+
     def same_block(a, b):
+        """Line a (1-based) is in the block of line b: same indent, nothing shallower between."""
         ind = _indent(lines[b - 1])
-        return _indent(lines[a - 1]) == ind and all(
-            not lines[q - 1].strip() or _indent(lines[q - 1]) >= ind for q in range(a, b))
+        if _indent(lines[a - 1]) != ind:
+            return False
+        if b <= a:
+            return True
+        k = (b - a).bit_length() - 1
+        return min(ind_tab[k][a], ind_tab[k][b - (1 << k)]) >= ind
+
+    obj_cache = {}
+
+    def used_as_object(C, R):
+        """C (or a nested closure) indexes R directly or through a plain copy."""
+        key = (C, R)
+        if key not in obj_cache:
+            a, b = toks[C.header_tok][2], toks[C.end_tok][2]
+            direct = re.compile(r'(?<![\w.])' + R + r'\s*[.:\[]')
+            copy = re.compile(r'^\s*(?:local\s+)?(_r\d+\w*)\s*=\s*' + R + r'\s*$')
+            hit = False
+            for q in range(a - 1, b):
+                if direct.search(lines[q]):
+                    hit = True
+                    break
+                m = copy.match(lines[q])
+                if m and q + 1 < b and re.match(r'^\s*' + re.escape(m.group(1)) + r'\s*=\s*'
+                                                 + re.escape(m.group(1)) + r'\s*[.:\[]', lines[q + 1]):
+                    hit = True
+                    break
+            obj_cache[key] = hit
+        return obj_cache[key]
 
     caps = {}
     written_by = {}
@@ -1812,9 +2070,11 @@ def fix_closed_upvalues(text):
         reused = []
         for R in names:
             ws = writes.get(R, [])
-            prev = max((w for w in ws if w[0] < C.header_tok), default=None)
+            # The latest write in the closure's own block dominates its creation; writes nested
+            # in between (`x = f and f(k) or d` printed as ifs) belong to the same range.
+            prev = max((w for w in ws if w[0] < C.header_tok and same_block(w[1], hline)), default=None)
             nxt = min((w for w in ws if w[0] > C.end_tok), default=None)
-            if prev is None or nxt is None or not same_block(prev[1], hline):
+            if prev is None or nxt is None:
                 continue
             # A nil the closure itself fills in is closure state; a nil it only reads is a
             # forward reference to a later main-chunk assignment and stays shared.
@@ -1822,7 +2082,15 @@ def fix_closed_upvalues(text):
             if prev[2] == 'nil' and not own_state:
                 continue
             local[R] = (prev, nxt)
-            if own_state or (prev[2] and nxt[2] and prev[2] != nxt[2]):
+            mb = min_call_base(C.end_tok, nxt[0])
+            # A value the closure indexes as an object cannot later be a string/number/boolean.
+            pk = prev[2] or ('object' if used_as_object(C, R) else None)
+            # A new function value replacing a function is a new local in the reused register
+            # (helpers redefined per section), not a reassignment.
+            if own_state or (pk and nxt[2] and (pk != nxt[2] or pk == 'function')
+                             and not (pk == 'object' and nxt[2] in ('table', 'function', 'nil'))) \
+                    or _call_based(lines, nxt[1], R) or _call_arg(lines, nxt[1], R) \
+                    or (mb is not None and mb <= int(R[2:])):
                 reused.append(int(R[2:]))
         if reused:
             # The closed block's locals sit at or above its lowest register; lower registers
@@ -1841,17 +2109,22 @@ def fix_closed_upvalues(text):
                         and toks[ti - 1][1] not in ('.', ':'):
                     edits.append((toks[ti][3], toks[ti][3] + len(R), new))
         # Closures created while R was still nil (forward references) see the next write.
+        # A nil that is closure state has its own split.
         before = max((w for w in writes[R] if w[0] < prev[0]), default=None)
-        start = before[0] if before is not None and before[2] == 'nil' else prev[0]
+        fwd = before is not None and before[2] == 'nil' and (R, before[0]) not in splits
+        start = before[0] if fwd else prev[0]
         if before is None:
             start = -1
         for C, names in caps.items():
             if start < C.header_tok < nxt[0]:
                 for ti in names.get(R, ()):
                     edits.append((toks[ti][3], toks[ti][3] + len(R), new))
+    edits = sorted(set(edits))
+    for a, b in zip(edits, edits[1:]):
+        assert a[1] <= b[0], f'conflicting closed-upvalue renames {a} {b}'
     out = []
     pos = 0
-    for start, end, new in sorted(set(edits)):
+    for start, end, new in edits:
         out.append(text[pos:start])
         out.append(new)
         pos = end
@@ -1930,8 +2203,8 @@ def operand_extent(lines, start, ind, reg):
 # upvalues (GETUPVAL + TEST) are inverted like every other TEST.
 
 TS_MARK = ' --[[TS]]'
-COPY_RE = re.compile(r'^(\s*)(?:local\s+)?(_r\d+) = (_r\d+|_p\d+)\s*$')
-TEST_RE = re.compile(r'^(\s*)if (not )?(_r\d+) then\s*$')
+COPY_RE = re.compile(r'^(\s*)(?:local\s+)?(_r\d+|_p\d+) = (_r\d+|_p\d+)\s*$')
+TEST_RE = re.compile(r'^(\s*)if (not )?(_r\d+|_p\d+) then\s*$')
 
 
 def _is_own_source(F, Y, tok, res, toks, cache):
@@ -1944,6 +2217,27 @@ def _is_own_source(F, Y, tok, res, toks, cache):
     if key not in cache:
         cache[key] = classify_pair(F, Y, toks, own_line_tokens(F, toks), F.parent is None)[0]
     return cache[key].get(tok) == 'own'
+
+
+LHS_RE = re.compile(r'^(?:local\s+)?((?:_r\d+|_p\d+)(?:\s*,\s*(?:_r\d+|_p\d+))*)\s*=\s*(.*)$')
+
+
+def _operand_body(lines, i, ind, reg):
+    """True if the if-body at lines[i] can be a TESTSET right operand: empty, or its first
+    mention of reg is a write (`R = R` is GETUPVAL, also a write). A body that reads reg first
+    (`x:Destroy()`) or never mentions it (`return true`) belongs to a plain MOVE + TEST."""
+    e = block_end(lines, i, ind)
+    if e is None or e == i + 1:
+        return True
+    tok = re.compile(r'\b' + reg + r'\b')
+    for j in range(i + 1, e):
+        st = lines[j].strip()
+        if not tok.search(st):
+            continue
+        m = LHS_RE.match(st)
+        return bool(m and tok.search(m.group(1))
+                    and (m.group(2) == reg or not tok.search(m.group(2))))
+    return False
 
 
 def fix_testsets(lines):
@@ -1972,7 +2266,8 @@ def fix_testsets(lines):
         if not ytoks or ytoks[-1] not in use_info:
             continue
         F, res = use_info[ytoks[-1]]
-        if _is_own_source(F, Y, ytoks[-1], res, toks, cache):
+        if (_is_own_source(F, Y, ytoks[-1], res, toks, cache)
+                and _operand_body(lines, i, len(f.group(1)), f.group(3))):
             targets.append(i)
 
     stats = {'marked': 0, 'operand_moved': 0, 'ternary_else': 0}
@@ -2118,6 +2413,438 @@ def fix_structural_repairs(lines):
     stats['outer_while'] = 1
 
     return lines, stats
+
+
+# --- UNRESOLVED GOTOS (Pass 0d) ---
+# The decompiler prints jumps it could not structure as `-- goto [N]` and falls through, so
+# skipped code runs (lost else branches, `continue`s, joins after if/elseif chains). N is the
+# 1-based index of the target instruction in the function. Each decompiled line is one
+# instruction except: `if` = 2 (test + jump), `else` = 1, the `end` of a loop = 1 (back-jump),
+# other `end`s and `while true do` = 0, a closure = 1 (its body is a separate function).
+# Dropped instructions (lost boolean loads) make the count drift. The target must be one of the
+# structurally possible join points (later statements of the enclosing blocks, block ends) whose
+# count equals N, common to all gotos with that N; within GOTO_TOLERANCE only a join that tests
+# the flag set right before the goto (`x = true` ... `if x then break end`) is accepted. Gotos
+# without such a target stay as comments (fall through, as before).
+# Rewrite: `F = true` at the goto, the code between it and the target wrapped in
+# `if not F then`, `if F then break end` where a loop is left.
+
+GOTO_RE = re.compile(r'^(\s*)-- goto \[(\d+)\]\s*$')
+FUNC_HEAD_RE = re.compile(r'function\s*\([^)]*\)\s*$')
+BLOCK_HEAD_RE = re.compile(r'^(?:if .* then|while .* do|for .* do|do|repeat)$')
+LOOP_HEAD_RE = re.compile(r'^(?:while .* do|for .* do|repeat)$')
+FLAG_SET_RE = re.compile(r'^(_r\d+|_p\d+) = (?:true|false)$')
+GOTO_TOLERANCE = 4
+
+
+def _opens_block(st):
+    st = st.replace(TS_MARK, '')
+    return bool(BLOCK_HEAD_RE.match(st) or FUNC_HEAD_RE.search(st))
+
+
+def _close_of(lines, k):
+    """Index of the line closing the block opened at k (`end` / `until` at the same indent)."""
+    ind = _indent(lines[k])
+    for j in range(k + 1, len(lines)):
+        s = lines[j]
+        st = s.strip()
+        if not st:
+            continue
+        d = _indent(s)
+        if d == ind and (st == 'end' or st.startswith('until')):
+            return j
+        if d < ind:
+            return None
+    return None
+
+
+def _stmt_last(lines, k):
+    return _close_of(lines, k) if _opens_block(lines[k].strip()) else k
+
+
+def _count_function(lines, h):
+    """{line index: instruction index of the first instruction at or after it} for the own
+    lines of the function whose header is lines[h], and the index of its closing `end`."""
+    ind0 = _indent(lines[h])
+    opener = {}
+    seq = []                                   # (line, instruction index or None)
+    idx = 0
+    i = h + 1
+    while i < len(lines):
+        s = lines[i]
+        st = s.strip()
+        ind = _indent(s)
+        if st == 'end' and ind == ind0:
+            break
+        n = 0
+        if not st or (st.startswith('--') and not GOTO_RE.match(s)):
+            n = 0
+        elif FUNC_HEAD_RE.search(st):
+            e = _close_of(lines, i)
+            seq.append((i, idx + 1))
+            idx += 1
+            i = (e if e is not None else i) + 1
+            continue
+        elif re.match(r'^(if|elseif) .* then$', st):
+            n = 2
+            opener[ind] = 'if'
+        elif st == 'while true do':
+            opener[ind] = 'loop'
+        elif re.match(r'^while .* do$', st):
+            n = 2
+            opener[ind] = 'loop'
+        elif re.match(r'^for .* do$', st):
+            n = 1
+            opener[ind] = 'loop'
+        elif st == 'end':
+            n = 1 if opener.get(ind) == 'loop' else 0
+        else:
+            n = 1
+        seq.append((i, idx + 1 if n else None))
+        idx += n
+        i += 1
+    cnt = {}
+    nxt = idx + 1
+    for line, k in reversed(seq):
+        if k is not None:
+            nxt = k
+        cnt[line] = nxt
+    cnt[i] = idx + 1
+    return cnt, i
+
+
+def _body_of(lines, k):
+    """(header, first body line, closing line, is_loop) of the innermost block whose body
+    holds line k; None at function level."""
+    ind = _indent(lines[k])
+    for j in range(k - 1, -1, -1):
+        s = lines[j]
+        st = s.strip()
+        if not st or _indent(s) >= ind:
+            continue
+        if st == 'else':
+            hd = j - 1
+            while hd >= 0 and not (_indent(lines[hd]) == _indent(s) and lines[hd].strip().startswith('if ')):
+                hd -= 1
+            return hd, j + 1, _close_of(lines, hd), False
+        if not _opens_block(st) or FUNC_HEAD_RE.search(st):
+            return None
+        close = _close_of(lines, j)
+        if st.startswith('if '):
+            els = next((q for q in range(j + 1, close) if lines[q].strip() == 'else'
+                        and _indent(lines[q]) == _indent(s)), None)
+            if els is not None and els < k:
+                return None                    # handled by the else case above
+            if els is not None:
+                close = els
+        return j, j + 1, close, bool(LOOP_HEAD_RE.match(st.replace(TS_MARK, '')))
+    return None
+
+
+def _goto_candidates(lines, g, cnt, h):
+    """Join points the goto at g can reach: {line: count} over the later statements and block
+    ends of the enclosing blocks, plus the register assigned just before the goto (flag or
+    value carried to the target). None if the goto is unreachable."""
+    p = g - 1
+    while p > h and not lines[p].strip():
+        p -= 1
+    carried = None
+    if _indent(lines[p]) == _indent(lines[g]):
+        if re.match(r'^(?:break|return\b|do return\b)', lines[p].strip()) or GOTO_RE.match(lines[p]):
+            return None                        # unreachable: follows a break/return/goto
+        m = ASSIGN_REG_RE.match(lines[p].strip())
+        if m and not _opens_block(lines[p].strip()):
+            carried = f'_r{m.group(1)}'
+    cands = {}
+    pos = g
+    while True:
+        body = _body_of(lines, pos)
+        close = body[2] if body else _count_function(lines, h)[1]
+        bind = _indent(lines[pos])
+        j = _stmt_last(lines, pos)
+        if close is None or j is None:
+            break
+        for q in range(j + 1, close):
+            st = lines[q].strip()
+            if st and _indent(lines[q]) == bind and st not in ('end', 'else') and not st.startswith('--'):
+                cands[q] = cnt.get(q)
+        cands[close] = cnt.get(close)
+        if body is None:
+            break
+        pos = body[0]
+    return carried, cands
+
+
+def _splits_chain(lines, q, carried):
+    """Target q reads the register written by the plain statement just before it (the middle
+    of an expression), and not every goto carries that register."""
+    p = q - 1
+    while p >= 0 and not lines[p].strip():
+        p -= 1
+    if _indent(lines[p]) != _indent(lines[q]) or _opens_block(lines[p].strip()):
+        return False
+    m = ASSIGN_REG_RE.match(lines[p].strip())
+    if not m:
+        return False
+    R = f'_r{m.group(1)}'
+    st = lines[q].strip()
+    a = LHS_RE.match(st)
+    reads = re.search(r'\b' + R + r'\b', a.group(2) if a else st)
+    return bool(reads) and any(c != R for c in carried)
+
+
+def _choose_goto_target(lines, group):
+    """One target for gotos that jump to the same instruction: the common candidate nearest N.
+    group: [(g, N, carried, cands)]."""
+    N = group[0][1]
+    common = set(group[0][3])
+    for _, _, _, cands in group[1:]:
+        common &= set(cands)
+    carried = [c for _, _, c, _ in group]
+    best = None
+    for q in common:
+        c = group[0][3][q]
+        if c is None or abs(c - N) > GOTO_TOLERANCE or _splits_chain(lines, q, carried):
+            continue
+        flag_test = any(r and re.match(r'^if (?:not )?' + r + r' then$', lines[q].strip())
+                        and FLAG_SET_RE.match(lines[g - 1].strip() if lines[g - 1].strip() else '')
+                        for g, _, r, _ in group)
+        if c != N and not flag_test:
+            continue                           # off-by-k picks can skip a needed assignment
+        key = (0 if flag_test else 1, abs(c - N), c > N, -q)
+        if best is None or key < best[0]:
+            best = (key, q)
+    return best[1] if best else None
+
+
+def fix_gotos(lines):
+    lines = [ln.rstrip('\r\n') for ln in lines]
+    heads = [i for i, s in enumerate(lines) if FUNC_HEAD_RE.search(s.strip())]
+    owner = {}
+    for h in heads:                            # innermost function wins (later headers are nested)
+        e = _close_of(lines, h)
+        for q in range(h + 1, e if e is not None else h + 1):
+            if GOTO_RE.match(lines[q]):
+                owner[q] = h
+    targets = {}                               # goto line -> target line
+    for h in sorted(set(owner.values())):
+        cnt, _ = _count_function(lines, h)
+        groups = defaultdict(list)
+        for g in sorted(q for q, o in owner.items() if o == h):
+            c = _goto_candidates(lines, g, cnt, h)
+            if c is not None:
+                groups[int(GOTO_RE.match(lines[g]).group(2))].append((g,) + (0,) + c)
+        for N, group in groups.items():
+            group = [(g, N, carried, cands) for g, _, carried, cands in group]
+            t = _choose_goto_target(lines, group)
+            if t is not None:
+                for g, _, _, _ in group:
+                    targets[g] = t
+    # Markers keep positions stable while the rewrites insert lines.
+    flag_of = {}
+    for g, t in sorted(targets.items()):
+        flag_of.setdefault(t, f'_g{len(flag_of) + 1}')
+    marked = []
+    tmark = {t: f'--@T{flag_of[t]}' for t in flag_of}
+    for k, s in enumerate(lines):
+        if k in tmark:
+            pad = ' ' * (_indent(lines[k]) + (4 if lines[k].strip() in ('end', 'else')
+                                                 or lines[k].strip().startswith('until') else 0))
+            marked.append(pad + tmark[k])
+        if k in targets:
+            marked.append(' ' * _indent(s) + f'--@G{flag_of[targets[k]]} {GOTO_RE.match(s).group(2)}')
+        else:
+            marked.append(s)
+    lines = marked
+    declared = set()
+    total = sum(1 for s in lines if GOTO_RE.match(s) or s.strip().startswith('--@G'))
+    stats = {'resolved': len(targets), 'unresolved': total - len(targets)}
+    for F in sorted(set(flag_of.values()), key=lambda f: int(f[2:])):
+        while True:
+            g = next((k for k, s in enumerate(lines) if s.strip().startswith(f'--@G{F} ')), None)
+            if g is None:
+                break
+            n_orig = lines[g].split()[-1]
+            t = next(k for k, s in enumerate(lines) if s.strip() == f'--@T{F}')
+            tind = _indent(lines[t])
+            ind = _indent(lines[g])
+            pos = g
+            edits = []                         # (insert index, line) applied bottom-up
+            while True:
+                body = _body_of(lines, pos)
+                bind = _indent(lines[pos])
+                j = _stmt_last(lines, pos)
+                if j is not None and bind == tind:
+                    edits.append(('wrap', j + 1, t, bind))
+                    break
+                if body is None or body[2] is None or j is None:
+                    edits = None
+                    break
+                if body[3]:
+                    edits.append(('ins', j + 1, ' ' * bind + f'if {F} then break end' + TS_MARK))
+                else:
+                    edits.append(('wrap', j + 1, body[2], bind))
+                pos = body[0]
+            if edits is None:
+                lines[g] = ' ' * ind + f'-- goto [{n_orig}]'
+                stats['resolved'] -= 1
+                stats['unresolved'] += 1
+                continue
+            lines[g] = ' ' * ind + f'{F} = true'
+            if F not in declared:
+                declared.add(F)
+                edits.append(('ins', pos, ' ' * tind + f'local {F} = false'))
+            for e in sorted(edits, key=lambda e: e[1], reverse=True):
+                if e[0] == 'ins':
+                    lines.insert(e[1], e[2])
+                    continue
+                _, a, b, d = e
+                region = [q for q in range(a, b) if lines[q].strip() and not lines[q].strip().startswith('--@')]
+                if not region:
+                    continue
+                for q in range(a, b):
+                    if lines[q].strip() and not lines[q - 1].endswith('\\'):
+                        lines[q] = '    ' + lines[q]
+                lines.insert(b, ' ' * d + 'end')
+                lines.insert(a, ' ' * d + f'if not {F} then' + TS_MARK)
+    lines = [s for s in lines if not s.strip().startswith('--@T')]
+    return [s + '\n' for s in lines], stats
+
+
+# --- DOUBLE WHILE LOOPS (Pass 0c) ---
+# `while true do / while true do BODY end / end` with nothing else in the outer loop is one
+# loop printed twice: the outer wrapper has no back-jump of its own, so `break` in BODY must
+# exit (as printed it restarts BODY: the number formatter spins on any value below 1000), and
+# the code after the loop is printed at the end of BODY (a trailing `return`, reached through
+# the chain of last statements / else branches), which makes the loop run once.
+# Fix: drop the wrapper and move that return after the loop.
+
+def _last_stmt(lines, a, b, ind):
+    for k in range(b - 1, a - 1, -1):
+        st = lines[k].strip()
+        if st and _indent(lines[k]) == ind and st not in ('end', 'else') and not st.startswith('--'):
+            return k
+    return None
+
+
+def _trailing_return(lines, a, b, ind):
+    """(index, block start, block indent) of the return ending the chain of last statements of
+    lines[a:b] (indent ind), following if bodies and their else branches."""
+    k = _last_stmt(lines, a, b, ind)
+    if k is None:
+        return None
+    st = lines[k].strip()
+    if st.startswith('return') or st.startswith('do return'):
+        return k, a, ind
+    if st.startswith('if ') and st.replace(TS_MARK, '').endswith(' then'):
+        e = block_end(lines, k, ind)
+        if e is None:
+            return None
+        els = [q for q in range(k + 1, e) if lines[q].strip() == 'else' and _indent(lines[q]) == ind]
+        return _trailing_return(lines, (els[-1] if els else k) + 1, e, ind + 4)
+    return None
+
+
+LOOP_OPEN_RE = re.compile(r'^(?:while .* do|for .* do|repeat|.*\bfunction\s*\(.*\)\s*)$')
+
+
+def _has_break(lines, a, b):
+    """lines[a:b] contain a `break` outside nested loops and functions."""
+    k = a
+    while k < b:
+        st = lines[k].strip()
+        if st == 'break':
+            return True
+        if LOOP_OPEN_RE.match(st) and not st.endswith('end'):
+            e = block_end(lines, k, _indent(lines[k]))
+            k = (e if e is not None else b) + 1
+            continue
+        k += 1
+    return False
+
+
+def _post_loop_start(lines, a, r, ind):
+    """First line of the post-loop code in the block lines[a:r] (indent ind) ending at return r:
+    the statement after the last one that contains a break, or r itself."""
+    starts = [k for k in range(a, r) if lines[k].strip() and _indent(lines[k]) == ind
+              and lines[k].strip() not in ('end', 'else') and not lines[k].strip().startswith('--')]
+    bounds = starts + [r]
+    for q in range(len(starts) - 1, -1, -1):
+        if _has_break(lines, starts[q], bounds[q + 1]):
+            return bounds[q + 1]
+    return r
+
+
+def fix_double_whiles(lines):
+    lines = list(lines)
+    stats = {'collapsed': 0, 'returns_moved': 0}
+    i = 0
+    while i < len(lines) - 1:
+        s0, s1 = lines[i].rstrip('\r\n'), lines[i + 1].rstrip('\r\n')
+        ind = _indent(s0)
+        if s0.strip() != 'while true do' or s1.strip() != 'while true do' or _indent(s1) != ind + 4:
+            i += 1
+            continue
+        ei = block_end(lines, i + 1, ind + 4)
+        eo = block_end(lines, i, ind)
+        if ei is None or eo != ei + 1:
+            i += 1
+            continue
+        tr = _trailing_return(lines, i + 2, ei, ind + 8)
+        post = []
+        if tr is not None:
+            r, blk, bind = tr
+            p = _post_loop_start(lines, blk, r, bind)
+            post = lines[p:r + 1]
+            _dedent(post, 0, len(post), bind - ind)
+            del lines[p:r + 1]
+            ei -= r + 1 - p
+            eo -= r + 1 - p
+        del lines[eo]
+        del lines[i]
+        ei -= 1
+        _dedent(lines, i, ei + 1)
+        if post:
+            lines[ei + 1:ei + 1] = post
+            stats['returns_moved'] += 1
+        stats['collapsed'] += 1
+    return lines, stats
+
+
+# --- CONSTANT TERNARIES (Pass 4b) ---
+# `x = cond and K1 or K2` with a literal K1 decompiles without the path where cond is false
+# (that path jumps straight to the K2 operand), leaving x nil:
+#   if cond then / x = K1 / if not x then / <K2 operand> / end / end
+# A literal load followed by `if not x` is never hand-written, so the shape is unambiguous.
+# Fix: add `else / <K2 operand>` to the outer if.
+
+TERN_IF_RE = re.compile(r'^(\s*)if .+ then$')
+TERN_LOAD_RE = re.compile(r'^(\s*)(?:local )?(_r\d+|_p\d+) = (?:-?\d+(?:\.\d+)?|0x[0-9a-fA-F]+|"(?:\\.|[^"\\])*"|true)$')
+
+
+def fix_const_ternaries(lines):
+    lines = list(lines)
+    count = 0
+    i = 0
+    while i < len(lines) - 3:
+        m = TERN_IF_RE.match(lines[i].rstrip('\r\n'))
+        a = m and TERN_LOAD_RE.match(lines[i + 1].rstrip('\r\n'))
+        ind = len(m.group(1)) if m else 0
+        if not a or len(a.group(1)) != ind + 4 \
+                or lines[i + 2].rstrip('\r\n') != ' ' * (ind + 4) + f'if not {a.group(2)} then':
+            i += 1
+            continue
+        j = block_end(lines, i + 2, ind + 4)
+        if j is None or j + 1 >= len(lines) or lines[j + 1].rstrip('\r\n') != ' ' * ind + 'end':
+            i += 1
+            continue
+        ending = lines[i][len(lines[i].rstrip('\r\n')):]
+        operand = lines[i + 3:j]
+        _dedent(operand, 0, len(operand))
+        lines[j + 1:j + 1] = [' ' * ind + 'else' + ending] + operand
+        count += 1
+        i = j + 2 + len(operand)
+    return lines, count
 
 
 # --- BOOLEAN MATERIALIZATION (Pass 1b) ---
@@ -2638,6 +3365,15 @@ def main():
     sr_total = sum(sr_stats.values())
     print(f"Pass 0b: {sr_total} structural repairs: " + ', '.join(f'{k}={v}' for k, v in sr_stats.items()))
 
+    # Pass 0d: Unresolved gotos (before 0c: instruction counts need the printed structure)
+    lines, gt_stats = fix_gotos(lines)
+    print(f"Pass 0d: Resolved {gt_stats['resolved']} gotos, {gt_stats['unresolved']} left as comments")
+
+    # Pass 0c: Double while loops (one loop printed with a wrapper)
+    lines, dw_stats = fix_double_whiles(lines)
+    print(f"Pass 0c: Collapsed {dw_stats['collapsed']} double while loops, "
+          f"moved {dw_stats['returns_moved']} post-loop returns")
+
     # Pass 0: TESTSET restoration (marks tests Pass 1 must not flip)
     lines, ts_stats = fix_testsets(lines)
     ts_total = ts_stats['marked'] + ts_stats['operand_moved'] + ts_stats['ternary_else']
@@ -2685,6 +3421,10 @@ def main():
     # Pass 4: Fix broken if/else reconstruction
     fixed_lines, ie_count = fix_broken_if_else(fixed_lines)
     print(f"Pass 4: Fixed {ie_count} broken if/else blocks")
+
+    # Pass 4b: Constant ternaries missing their else path (needs Pass 4's moved operands)
+    fixed_lines, ct_count = fix_const_ternaries(fixed_lines)
+    print(f"Pass 4b: Restored {ct_count} constant-ternary else branches")
 
     # Pass 5: Fix varargs passthrough wrappers
     fixed_lines, va_count = fix_varargs_passthrough(fixed_lines)

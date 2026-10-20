@@ -8,51 +8,26 @@ Deobfuscating a Roblox YBA (Your Bizarre Adventure) exploit script. A Python deo
 - Load URL: `loadstring(game:HttpGet("https://raw.githubusercontent.com/AyeeZekrom687/yb/main/scr?t=" .. tostring(tick())))()`
 
 ## Files
-- `yba_hub_deobfuscated.lua` — Original decompiler output (READ-ONLY reference, latin-1 encoding, 67,383 lines)
-- `fix_deob.py` — Deobfuscator (passes listed below; the docstring at the top documents each one)
-- `coordinator_block.lua` — Farm Coordinator module (has U+2550 chars that MUST be replaced with `=` for latin-1 compat)
-- `scr` — Final output file (deob output + coordinator inserted), loaded by Roblox
-- `tools/harness.lua` — Lua 5.1 mock Roblox/executor environment for tracing `scr` (see "Testing")
+- `yba_hub_deobfuscated.lua` - Original decompiler output (READ-ONLY reference, latin-1 encoding, 67,383 lines)
+- `fix_deob.py` - Deobfuscator (passes listed below; each pass has a comment block explaining the bug it fixes)
+- `coordinator_block.lua` - Farm Coordinator module (U+2550 box characters are replaced with `=` by the build)
+- `console_logger.lua` - Mirrors the client console (LogService.MessageOut + history) to `YBA/console_log.txt`; prepended to `scr` by the build (user request)
+- `tools/build.py` - Assembles `scr`: logger on top, deobfuscated script, coordinator after the `_r160(_r161)` call
+- `scr` - Final output file, loaded by Roblox. Its line numbers are `yba_fixed.lua` line + 115 (the logger block)
+- `tools/harness.lua` - Lua 5.1 mock Roblox/executor environment for tracing `scr` (see "Testing")
 
 ## Build Process (MUST follow every time)
 ```bash
-# 1. Run deobfuscator
+set -o pipefail
 python3 fix_deob.py yba_hub_deobfuscated.lua yba_fixed.lua
-
-# 2. Verify syntax
 luac -p yba_fixed.lua
-
-# 3. Insert coordinator block (Python script handles latin-1 + box-drawing replacement)
-python3 -I -c "
-import re
-with open('yba_fixed.lua', 'r', encoding='latin-1') as f:
-    content = f.read()
-with open('coordinator_block.lua', 'r', encoding='utf-8') as f:
-    coord = f.read()
-coord = coord.replace('═', '=')
-lines = content.split('\n')
-insert_idx = None
-for i in range(len(lines) - 1, -1, -1):
-    if '_r160(_r161)' in lines[i]:
-        insert_idx = i + 1
-        break
-lines.insert(insert_idx, '')
-lines.insert(insert_idx + 1, coord)
-result = '\n'.join(lines)
-with open('scr', 'w', encoding='latin-1') as f:
-    f.write(result)
-print(f'Written ({result.count(chr(10)) + 1} lines)')
-"
-
-# 4. Final verify
+python3 -I tools/build.py yba_fixed.lua coordinator_block.lua console_logger.lua scr
 luac -p scr
 grep -cP '\xEF\xBF\xBD' scr   # MUST be 0
-luau-compile --null scr        # optional: real Luau compiler (github.com/luau-lang/luau releases)
-
-# 5. Push
-git add scr && git commit -m "description" && git push -u origin main
+luau-compile --null scr        # real Luau compiler (github.com/luau-lang/luau releases)
+git add scr fix_deob.py && git commit -m "description" && git push -u origin main
 ```
-Never pipe the build through `tail`/`grep` without `set -o pipefail`: an assertion in a pass would be hidden and an old `yba_fixed.lua` would be used.
+Never pipe the build through `tail`/`grep` without `set -o pipefail`: an assertion in a pass would be hidden and an old `yba_fixed.lua` would be used. A full run of `fix_deob.py` takes about 17 s.
 
 ## Decompiler Bug Rules (corrected)
 1. **TEST conditions are printed inverted** (`if _r5 then` means `if not _r5 then`). This covers bare tests on a register computed in place and copies from a true upvalue (GETUPVAL + TEST). Comparisons are NOT inverted.
@@ -67,55 +42,67 @@ A copy `_rX = R` made after a call clobbered the function's own R (R was a call 
 8. **Multi-return forwarding.** `f(g())` prints with a fixed range of stale registers as extra arguments (e.g. `tonumber(v, "IESPSize")`).
 9. **Setlist packing.** Table constructors pack the final values of registers t+1..L (L = register of the last assignment before the setlist); temporaries are not elements.
 10. **Garbled empty strings.** `""` decodes to a different 2-byte garbage constant per function.
-11. **Latin-1 encoding.** Read/write as latin-1. Split lines on `\n` only (`split_lines`), never `str.splitlines()`: the file contains 0x85 inside strings.
+11. **Latin-1 encoding.** Read/write as latin-1. Split lines on `\n` only (`split_lines`), never `str.splitlines()`: the file contains 0x85 inside strings. Multi-line strings continue at column 0 (previous line ends in `\`): indentation-based scans must skip those lines.
+12. **TESTSET needs an operand body.** Rule 2 applies only when the if-body is empty or its first mention of X writes X. A body that reads X first (`x:Destroy()`, `x:IsA(...)`) or never mentions it (`return true`) is a plain MOVE + TEST and is flipped. TESTSET targets can be parameters (`p = tonumber(p) or 0.45`).
+13. **Constant ternaries.** `x = c and K or D` with a literal K prints as `if c then x = K; if not x then D end end`: the path where c is false (straight to D) is lost and x stays nil (81 sites: every English UI/webhook string, `ON`/`OFF`, speeds).
+14. **Lost gotos.** Jumps the decompiler could not structure print as `-- goto [N]` (N = 1-based instruction index in the function) and fall through. Counting: one instruction per line, `if` = 2, `else` = 1, loop `end` = 1, other `end`/`while true do` = 0, closure = 1. Dropped instructions make the count drift, so only exact matches against structural join points are used.
+15. **Double while loops.** `while true do / while true do BODY end / end` (outer body = inner loop) is one loop: as printed, `break` restarts it (the number formatter spun forever below 1000), and the code after the loop is printed at the end of BODY (a trailing return, e.g. `return formatted`), so the loop ran once.
+16. **Unnameable registers.** For-loop control registers (`in _rG, _rS, _rC` / `= _rA, _rB, _rC`) read in the loop body, and copies indexed with a member that exists only on one service (`.RenderStepped`, `.GetPlayerFromCharacter`, ...), are the enclosing variable of that name. A decompiler local that is dead where a nested closure is created (a call clobbered it), or holds a boolean/number literal while the copy is indexed, is passed through to the next owner.
+17. **Register reuse evidence (13b).** A main-chunk register R captured by a closure is reused when its next write changes the value kind (copies take their source's kind; a function replacing a function counts), when a later call is based at or below R (calls sit at the stack top), when the next write sets up an argument of a call based below R, or when the closure indexes R as an object and R later gets a string/number/boolean. The split range starts at the latest write in the closure's own block, so conditional writes in between stay consistent.
 
 ## Passes in fix_deob.py (current counts)
 | Pass | What | Count |
 |------|------|-------|
 | 0b | Structural repairs (loop end, bypass else, GameModes or-chain, outer game-ready while) | 4 |
-| 0 | TESTSET restoration (marked / operands moved / ternary else) | 392 / 32 / 11 |
-| 1 | Truthiness inversions (TEST) | 5,392 |
-| 1b | Boolean materializations | 53 |
+| 0d | Lost gotos: `F = true` at the goto, skipped code wrapped in `if not F then`, `if F then break end` where a loop is left | 30 resolved, 141 left |
+| 0c | Double while loops collapsed / post-loop code moved out | 49 / 22 |
+| 0 | TESTSET restoration (marked / operands moved / ternary else) | 394 / 32 / 11 |
+| 1 | Truthiness inversions (TEST) | 5,390 |
+| 1b | Boolean materializations | 52 |
 | 2 | Setlist bugs | 198 fixed, 66 skipped |
 | 2b | Multi-return forwarding | 210 |
-| 3 | Targeted patches (namecall varargs, game-ready break, standfarm bridge, first-spawn loop, UI restore loop) | 8 |
-| 3b | Or-chains | 692 |
-| 4 | Dropped right operands (`x = x or v`) and guarded call bodies (`if not c then pcall(fn) end`) | 196 |
+| 3 | Targeted patches (namecall varargs, game-ready break, standfarm bridge, first-spawn loop) | 10 |
+| 3b | Or-chains | 689 |
+| 4 | Dropped right operands and guarded call bodies (register tests and comparisons) | 198 |
+| 4b | Constant ternaries (else restored) | 81 |
 | 5 | Varargs passthrough wrappers | 98 |
 | 6 | Timeout breaks | 5 |
-| 7 | Branding replacements | 39 |
+| 7 | Branding replacements | 48 |
 | 8 | Key system stubs | 1 |
-| 8b | While-condition chains | 97 |
-| 8c | Loop tail exits (yields moved / success breaks) | 37 / 32 |
-| 9 | Remaining while-true guard breaks + safety yields | 2 + 24 |
+| 8b | While-condition chains | 106 |
+| 8c | Loop tail exits (yields moved / success breaks) | 39 / 32 |
+| 9 | Remaining while-true guard breaks + safety yields | 2 + 16 |
 | 10 | Players service upvalue fixes | 75 |
-| 11 | Dropped return-false (single tests; chains go to 3b) | 0 |
-| 12 | Game-ready initial skip | 1 |
-| 13 | Scope leaks (registers hoisted; 180 renamed for collisions) | 1,666 |
-| 13b | Closed upvalues (main-chunk registers split per captured range) | 230 |
-| 14 | Garbled empty strings | 219 |
+| 11 | Dropped return-false | 0 |
+| 12 | Game-ready initial skip (structure already correct after 0c/0d) | 0 |
+| 13 | Scope leaks (202 renamed for collisions, incl. forced upvalues and dead lexical owners) | 1,694 |
+| 13b | Closed upvalues (main-chunk registers split per captured range) | 306 |
+| 14 | Garbled empty strings | 220 |
+
+Patch 3f (UI restore loop) was removed: Pass 0c produces the same structure generically.
 
 ## Testing (tools/harness.lua)
-Runs `scr` under Lua 5.1 with mocked `game`/Instances/services, `task.*` scheduler, executor API, an in-memory filesystem and a fake MacLib. Prints the boot log (`_r20` writes `YBA/boot_log.txt`), every error swallowed by `pcall`, task errors, and infinite loops (instruction budget). Callbacks connected to RunService frame signals (Heartbeat, RenderStepped, ...) are fired every simulated frame, common signals reject members other than Connect/Once/Wait, and only method-like members are callable (calling an Instance errors), so per-frame errors like the F9 spam reproduce.
+Runs `scr` under Lua 5.1 with mocked `game`/Instances/services, `task.*` scheduler, executor API, an in-memory filesystem and a fake MacLib. Prints the boot log (`_r20` writes `YBA/boot_log.txt`), every error swallowed by `pcall`, task errors, and infinite loops (instruction budget). Callbacks connected to RunService frame signals are fired every simulated frame, common signals reject members other than Connect/Once/Wait, and only method-like members are callable (calling an Instance errors).
 ```bash
 curl -sS -o maclib.lua https://raw.githubusercontent.com/AZX0OZ/maclib/refs/heads/main/maclib
 # in-game scenario (menu / loading GUIs absent):
 MACLIB_PATH=maclib.lua ABSENT="LoadingScreen1,LoadingScreen,BlackScreen,Main Menu" lua5.1 tools/harness.lua scr 50000000
 # main-menu scenario: same without ABSENT
+# switch on toggles / press buttons after boot (case-insensitive name match, "*" = all), 200 x 0.5 s:
+FIRE="Enable farming" FIRE_STEPS=200 MACLIB_PATH=... ABSENT=... lua5.1 tools/harness.lua scr 50000000
 ```
-Expected now: in-game `_r65()` is true on the first call, "FIRST SPAWN" logs once, the window, tab group, 8 tabs, 22 sections, 62 toggles, 16 dropdowns, 9 sliders, 15 buttons are built, and `main chunk returned normally`. Mock limitations: every child exists unless listed in ABSENT, `.X` returns a number (so `UDim2.X.Scale` errors at ~30300), MacLib is a stub.
+With FIRE set, repeated output lines are counted (log spam shows as `N x line`). Mock limitations: every child exists unless listed in ABSENT, numeric properties (`.X`, `.Value`) return numbers (so `UDim2.X.Scale` errors at scr:30519 and `PlayerStats.Quest.Value` is a number at scr:37049), MacLib is a stub, the world has no items.
 
 ## Current Status
-- Previous blockers (each confirmed in the harness): main chunk crashed at `normalizeItemName` (scope leak), at the settings loader (TESTSET), and looped back into the game-ready wait (outer `while true` + materialization nesting); none occur now.
-- Default settings no longer auto-start item farm / stand farm or run Remove Map (or-chain fix).
-- First-spawn code no longer re-runs `_r73()` / `_r69()` every frame.
-- First Roblox test (build 8d707ab): UI showed for a moment, F9 spammed `Line 18283: arithmetic (mod) on number and function` and `Character is not a valid member of RBXScriptSignal Line 6553`. Causes: the UI visibility task hid the window and its restore never ran (fixed by patch 3f), and the two register bugs above (fixed by the frame-temp rule and Pass 13b). The harness reproduces both errors on 8d707ab and shows none on the current build.
-- Second Roblox test (build dbd97d4): UI loaded with no tabs, `Line 31431 attempt to call a Instance value` (`if not gui.Parent then pcall(fn) end` decompiled as an empty if followed by the call; Pass 4 moved only `X = pcall`). The main chunk died before building tabs. Fixed by the guarded-call extension in Pass 4; reproduced and cleared in the harness.
+- Builds 8d707ab, dbd97d4, 253ad8a: see git log; their reported errors are reproduced and cleared in the harness.
+- Round 3 report (253ad8a): watermark `RenderStepped` on a ScreenGui (32513), `GetPlayerFromCharacter` nil (41841/41924), `Destroy` on nil (52419/52503), repeating `number < function` (56130). Causes: service-member collision, for-loop control register read, TESTSET false positive, main register 160 reused as an `ipairs` generator. All fixed (rules 12, 16, 17).
+- Item farm toggle ("spams logs and does not work"): the watchdog's `if status == "dead"` lost its body, so every 2 s it warned and spawned another farm thread; the farm loop itself hit a nil multiplier (lost ternary), spun without yielding (double while), and had 7 lost gotos. All fixed; in the harness the farm runs with no errors and a constant task count.
+- Harness, current build: in-game and main-menu boot complete (8 tabs, 62 toggles); firing all 77 toggles/buttons leaves only the mock artifacts and the AutoPlay log collision below.
 
 ## Known Residual Issues
-- **Closure name collisions the liveness rule cannot resolve:** the HUD health loop (`_r159`, closure reads `_r5.PlayerGui` while the parent's own `_r5` is a boolean flag) and AutoPlay's stage-click log (`_r21 = _r20` copies the logger while the own `_r20` holds the stage). Both fail inside `pcall`.
+- **141 lost gotos still fall through** (no exact join point). Most are in long if/elseif chains (item-name normalizer: a later match can overwrite the result) and in the server-hop page loop.
+- **AutoPlay stage-click log** (scr:5430, main menu only, inside pcall): `_r21 = _r20` copies the main logger while the function's own `_r20` holds the stage from a multi-return call; no literal evidence to separate them.
 - `isSellableItem` / `isCandyItem` / `isProtectedItem` / `sellableItems` are read as globals in a few places but only defined as `_r142` fields (pre-existing in the original).
-- `_r65` indexes the character after the parent check; this matches the decompiled structure.
 - 66 setlists are still skipped (nested table constructors).
 
 ## Key Code Sections (search by string; line numbers shift between builds)
