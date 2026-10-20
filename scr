@@ -2986,14 +2986,14 @@
                                 _r9 = _r6
                                 _r8 = _r8(_r9)
                                 if not _r8 then
-                                end
-                                if _r7 then
-                                    _r8 = _r62
-                                    _r9 = _r7
-                                    _r8 = _r8(_r9)
-                                    if _r8 then
-                                        _r8 = false
+                                    if _r7 then
+                                        _r8 = _r62
+                                        _r9 = _r7
+                                        _r8 = _r8(_r9)
                                     end
+                                end
+                                if _r8 then
+                                    _r8 = false
                                     do return _r8 end
                                 end
                             end
@@ -7172,7 +7172,6 @@
         _r99 = tick
         _r99 = _r99()
         end
-        while true do
             while true do
                 if _r65 then
                     _r100 = _r65
@@ -7950,6 +7949,7 @@
             _r113 = _r113(_r114, _r115)
             if _r113 == false then
                 _r113 = false
+            end
                 _r112.NotifyMilestone = _r113
                 _r113 = function()
                     local _r12 = _r112
@@ -11976,9 +11976,9 @@
                             _r10 = _r153
                             _r11 = _r9
                             _r10 = _r10(_r11)
-                            if _r10 then
-                                _r10 = false
-                            end
+                        end
+                        if _r10 then
+                            _r10 = false
                             do return _r10 end
                         end
                         _r10 = _r152
@@ -19268,6 +19268,7 @@
                 if _r150 ~= _r153 then
                     _r153 = false
                     _r151[_r152] = _r153
+                end
                     _r151 = nil
                     _r152 = 425
                     _r153 = function(_p1)
@@ -22856,6 +22857,7 @@
                                 end
                             end
                         end
+                    end
                         if _r172 then
                             _r173 = pcall
                             _r174 = function()
@@ -28233,6 +28235,8 @@
                                     _r151[_r152] = _r153
                                     -- goto [3055]
                                 end
+                            end
+                        else
                                 _r150 = _r110
                                 _r151 = "YBA Script"
                                 _r152 = "Bypass failed - using Tween movement to avoid server kick"
@@ -36588,9 +36592,9 @@
                                     _r13 = 1
                                     _r14 = true
                                     _r10 = _r10(_r11, _r12, _r13, _r14)
-                                    if _r10 then
-                                        _r10 = false
-                                    end
+                                end
+                                if _r10 then
+                                    _r10 = false
                                     do return _r10 end
                                 end
                                 if _r9 ~= "jotaro kujo" then
@@ -36801,9 +36805,9 @@
                                     _r10 = _r185
                                     _r11 = _p1
                                     _r10 = _r10(_r11)
-                                    if _r10 then
-                                        _r10 = false
-                                    end
+                                end
+                                if _r10 then
+                                    _r10 = false
                                     do return _r10 end
                                 end
                                 _r10 = tostring
@@ -42851,9 +42855,9 @@
                                     _r11 = getgenv
                                     _r11 = _r11()
                                     _r11 = _r11._YBA_SellingBusy
-                                    if _r11 then
-                                        _r11 = false
-                                    end
+                                end
+                                if _r11 then
+                                    _r11 = false
                                     do return _r11 end
                                 end
                                 _r11 = 0
@@ -52412,9 +52416,9 @@
                                     _r9 = _r9.find
                                     _r11 = "SPBullet"
                                     _r9 = _r9(_r10, _r11)
-                                    if _r9 then
-                                        _r9 = false
-                                    end
+                                end
+                                if _r9 then
+                                    _r9 = false
                                     do return _r9 end
                                 end
                                 _r10 = _p1
@@ -68484,9 +68488,4 @@
                             _r162 = "Script loaded successfully!"
                             _r160(_r161, _r162)
                             return
-                        end
-                    end
-                end
-            end
-        end
     end
