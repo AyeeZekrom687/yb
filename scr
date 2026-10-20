@@ -7166,7 +7166,7 @@
         _r99 = _r99()
         if not _r99 then
             _r99 = _r20
-        end
+
         _r100 = "Waiting for strict main game before initializing YBA UI & features..."
         _r99(_r100)
         _r99 = tick
@@ -7195,6 +7195,7 @@
                     end
                 end
             end
+        end
             _r99 = _r20
             _r100 = "In main game! Proceeding with MacLib & UI init..."
             _r99(_r100)
