@@ -5135,11 +5135,9 @@
                             if _r19 then
                                 _r19 = _r65
                                 _r19 = _r19()
-                                if _r19 then
-
-                                    break
+                                if not _r19 then
+                                    _r19 = false
                                 end
-                                _r19 = false
                             end
                             return _r19
                         end
@@ -5297,11 +5295,9 @@
         if _r1 then
             _r1 = _r65
             _r1 = _r1()
-            if _r1 then
-
-                break
+            if not _r1 then
+                _r1 = false
             end
-            _r1 = false
             do return _r1 end
         end
         _r1 = isAutoFarming
@@ -7163,11 +7159,9 @@
     if _r65 then
         _r99 = _r65
         _r99 = _r99()
-        if _r99 then
-
-            break
+        if not _r99 then
+            _r99 = _r20
         end
-        _r99 = _r20
         _r100 = "Waiting for strict main game before initializing YBA UI & features..."
         _r99(_r100)
         _r99 = tick
@@ -17160,7 +17154,6 @@
                     _r1 = _r1 / _r3
                     if 0.08 >= _r1 then
                         if 2 < _r2 then
-                            break
                         end
                         _r3 = false
                         do return _r3 end
@@ -20759,7 +20752,6 @@
                         if _r14 ~= nil then
                             if _r14 > 0 then
                                 if 1 < _r14 then
-                                    break
                                 end
                             end
                             _r14 = _p1.HoldDuration
@@ -21094,11 +21086,9 @@
                         if _r8 then
                             _r8 = _r65
                             _r8 = _r8()
-                            if _r8 then
-
-                                break
+                            if not _r8 then
+                                _r8 = task
                             end
-                            _r8 = task
                             _r8 = _r8.spawn
                             local _r9 = function()
                                 local _r7 = pcall
@@ -21379,7 +21369,6 @@
                                             _r15 = _r15()
                                             _r15 = _r15 - _r14
                                             if 3.5 < _r15 then
-                                                break
                                             end
                                         end
                                         _r15 = true
@@ -22223,7 +22212,6 @@
                                 _r10 = _r10()
                                 _r10 = _r10._lastItemTargetAttempts
                                 if 5 < _r10 then
-                                    break
                                 end
                                 _r10 = warn
                                 _r11 = "[Farm] Stuck on item for 8s / 5 attempts. Temporarily ignoring for 15s..."
@@ -26500,11 +26488,9 @@
                                 if _r6 then
                                     _r6 = _r65
                                     _r6 = _r6()
-                                    if _r6 then
-
-                                        break
+                                    if not _r6 then
+                                        _r6 = false
                                     end
-                                    _r6 = false
                                     normalFarmOn = _r6
                                     do return end
                                 end
@@ -27341,11 +27327,9 @@
                                     if _r10 then
                                         _r10 = _r65
                                         _r10 = _r10()
-                                        if _r10 then
-
-                                            break
+                                        if not _r10 then
+                                            _r10 = task
                                         end
-                                        _r10 = task
                                         _r10 = _r10.spawn
                                         local _r11 = function()
                                             local _r13 = tick
@@ -29143,7 +29127,7 @@
                                 _r9 = nil
                                 return _r9
                             end
-                                                        _r165 = function(_p1)
+                            _r165 = function(_p1)
                                 return true
                             end
                             _r166 = function()
@@ -29154,448 +29138,6 @@
                             end
                             _r168 = function()
                                 return "Lifetime", "Active (Paid Lifetime)", false, nil, "paid", "paid"
-                            end
-                                _r8 = _r161
-                                local _r9 = "JD_EXPIRES_AT"
-                                _r8 = _r8(_r9)
-                                if not _r8 then
-                                    _r9 = type
-                                    local _r10 = _r7
-                                    _r9 = _r9(_r10)
-                                    if _r9 == "table" then
-                                        _r9 = _r164
-                                        _r10 = _r7
-                                        local _r11 = {}
-                                        local _r12 = "expires_at"
-                                        local _r13 = "expiresAt"
-                                        local _r14 = "expire_at"
-                                        local _r15 = "expireAt"
-                                        local _r16 = "expiration"
-                                        local _r17 = "expires"
-                                        local _r18 = "valid_until"
-                                        local _r19 = "validUntil"
-                                        local _r20 = "expiry"
-                                        local _r21 = "expire_date"
-                                        local _r22 = "expireDate"
-                                        local _r23 = "expiration_date"
-                                        _r11[1] = _r12
-                                        _r11[2] = _r13
-                                        _r11[3] = _r14
-                                        _r11[4] = _r15
-                                        _r11[5] = _r16
-                                        _r11[6] = _r17
-                                        _r11[7] = _r18
-                                        _r11[8] = _r19
-                                        _r11[9] = _r20
-                                        _r11[10] = _r21
-                                        _r11[11] = _r22
-                                        _r11[12] = _r23
-                                        _r9 = _r9(_r10, _r11)
-                                        _r8 = _r9
-                                    end
-                                end
-                                if not _r8 then
-                                    _r9 = getgenv
-                                    if _r9 then
-                                        _r9 = getgenv
-                                        _r9 = _r9()
-                                        _r9 = _r9.__RAIL_session
-                                        if not _r9 then
-                                            _r9 = _G
-                                        end
-                                        _r9 = _r9.__RAIL_session
-                                        if not _r9 then
-                                            _r9 = shared
-                                            if _r9 then
-                                                _r9 = shared
-                                                _r9 = _r9.__RAIL_session
-                                            end
-                                        end
-                                    end
-                                    _r10 = type
-                                    _r11 = _r9
-                                    _r10 = _r10(_r11)
-                                    if _r10 == "table" then
-                                        _r10 = type
-                                        _r11 = _r9.data
-                                        _r10 = _r10(_r11)
-                                        if _r10 == "table" then
-                                            _r10 = _r9.data
-                                            _r10 = _r10.expires_at
-                                            if _r10 then
-                                                _r10 = _r9.data
-                                                _r8 = _r10.expires_at
-                                            end
-                                        end
-                                    end
-                                end
-                                if not _r8 then
-                                    _r9 = _r167
-                                    _r9 = _r9()
-                                    if _r9 then
-                                        _r10 = _r9.expires_at
-                                        if _r10 then
-                                            _r8 = _r9.expires_at
-                                        end
-                                    end
-                                end
-                                _r9 = _r163
-                                _r10 = _r8
-                                _r9 = _r9(_r10)
-                                _r10 = _r161
-                                _r11 = "JD_FOLDER_NAME"
-                                _r10 = _r10(_r11)
-                                if not _r10 then
-                                    _r10 = _r161
-                                    _r11 = "JD_FOLDER"
-                                    _r10 = _r10(_r11)
-                                    if not _r10 then
-                                        _r10 = _r161
-                                        _r11 = "JD_KEY_FOLDER"
-                                        _r10 = _r10(_r11)
-                                        if not _r10 then
-                                            _r10 = _r161
-                                            _r11 = "folder_name"
-                                            _r10 = _r10(_r11)
-                                        end
-                                    end
-                                end
-                                if not _r10 then
-                                    _r11 = type
-                                    _r12 = _r7
-                                    _r11 = _r11(_r12)
-                                    if _r11 == "table" then
-                                        _r11 = _r164
-                                        _r12 = _r7
-                                        _r13 = {}
-                                        _r14 = "folder_name"
-                                        _r15 = "folderName"
-                                        _r16 = "folder"
-                                        _r17 = "folder_title"
-                                        _r18 = "folderTitle"
-                                        _r19 = "folder_id"
-                                        _r20 = "folderId"
-                                        _r21 = "group"
-                                        _r22 = "tier"
-                                        _r13[1] = _r14
-                                        _r13[2] = _r15
-                                        _r13[3] = _r16
-                                        _r13[4] = _r17
-                                        _r13[5] = _r18
-                                        _r13[6] = _r19
-                                        _r13[7] = _r20
-                                        _r13[8] = _r21
-                                        _r13[9] = _r22
-                                        _r11 = _r11(_r12, _r13)
-                                        _r10 = _r11
-                                    end
-                                end
-                                if not _r10 then
-                                    _r11 = getgenv
-                                    if _r11 then
-                                        _r11 = getgenv
-                                        _r11 = _r11()
-                                        _r11 = _r11.__RAIL_session
-                                        if not _r11 then
-                                            _r11 = _G
-                                        end
-                                        _r11 = _r11.__RAIL_session
-                                        if not _r11 then
-                                            _r11 = shared
-                                            if _r11 then
-                                                _r11 = shared
-                                                _r11 = _r11.__RAIL_session
-                                            end
-                                        end
-                                    end
-                                    _r12 = type
-                                    _r13 = _r11
-                                    _r12 = _r12(_r13)
-                                    if _r12 == "table" then
-                                        _r12 = type
-                                        _r13 = _r11.data
-                                        _r12 = _r12(_r13)
-                                        if _r12 == "table" then
-                                            _r12 = _r11.data
-                                            _r12 = _r12.folder_name
-                                            if _r12 then
-                                                _r12 = _r11.data
-                                                _r10 = _r12.folder_name
-                                            end
-                                        end
-                                    end
-                                end
-                                if not _r10 then
-                                    _r11 = _r167
-                                    _r11 = _r11()
-                                    if _r11 then
-                                        _r12 = _r11.folder_name
-                                        if _r12 then
-                                            _r10 = _r11.folder_name
-                                        end
-                                    end
-                                end
-                                if _r10 then
-                                    _r11 = tostring
-                                    _r12 = _r10
-                                    _r11 = _r11(_r12)
-                                    _r12 = _r11
-                                    _r11 = _r11.lower
-                                    _r11 = _r11(_r12)
-                                    if not _r11 then
-                                        _r11 = "|1"
-                                    end
-                                end
-                                _r12 = "free"
-                                if _r11 ~= "paid" then
-                                    _r14 = _r11
-                                    _r13 = _r11.find
-                                    _r15 = "paid"
-                                    _r16 = 1
-                                    _r17 = true
-                                    _r13 = _r13(_r14, _r15, _r16, _r17)
-                                    if _r13 then
-                                    end
-                                    _r12 = "paid"
-                                else
-                                    if _r11 ~= "giveaway" then
-                                        _r14 = _r11
-                                        _r13 = _r11.find
-                                        _r15 = "giveaway"
-                                        _r16 = 1
-                                        _r17 = true
-                                        _r13 = _r13(_r14, _r15, _r16, _r17)
-                                        if _r13 then
-                                        end
-                                        _r12 = "giveaway"
-                                        -- goto [237]
-                                    end
-                                    if _r11 ~= "premium" then
-                                        _r14 = _r11
-                                        _r13 = _r11.find
-                                        _r15 = "premium"
-                                        _r16 = 1
-                                        _r17 = true
-                                        _r13 = _r13(_r14, _r15, _r16, _r17)
-                                        if not _r13 then
-                                            _r13 = _r161
-                                            _r14 = "JD_IS_PREMIUM"
-                                            _r13 = _r13(_r14)
-                                            if _r13 == true then
-                                            end
-                                        end
-                                        _r12 = "paid"
-                                        -- goto [237]
-                                    end
-                                    if _r10 then
-                                        _r13 = tostring
-                                        _r14 = _r10
-                                        _r13 = _r13(_r14)
-                                        if _r13 ~= "|1" then
-                                            _r13 = tostring
-                                            _r14 = _r10
-                                            _r13 = _r13(_r14)
-                                            _r14 = _r13
-                                            _r13 = _r13.lower
-                                            _r13 = _r13(_r14)
-                                            _r12 = _r13
-                                            -- goto [237]
-                                        end
-                                    end
-                                    _r12 = "free"
-                                end
-                                _r13 = false
-                                _r14 = _r165
-                                _r15 = _r10
-                                _r14 = _r14(_r15)
-                                if _r14 then
-                                    _r13 = true
-                                end
-                                _r14 = type
-                                _r15 = _r7
-                                _r14 = _r14(_r15)
-                                if _r14 == "table" then
-                                    _r14 = _r7.is_lifetime
-                                    if _r14 ~= true then
-                                        _r14 = _r7.lifetime
-                                        if _r14 ~= true then
-                                            _r14 = _r7.permanent
-                                            if _r14 ~= true then
-                                                _r14 = _r7.isLifetime
-                                                if _r14 == true then
-                                                end
-                                            end
-                                        end
-                                        _r13 = true
-                                    end
-                                end
-                                _r14 = _r161
-                                _r15 = "JD_IS_LIFETIME"
-                                _r14 = _r14(_r15)
-                                if _r14 ~= true then
-                                    _r14 = _r161
-                                    _r15 = "JD_LIFETIME"
-                                    _r14 = _r14(_r15)
-                                    if _r14 ~= true then
-                                        _r14 = _r161
-                                        _r15 = "IS_LIFETIME"
-                                        _r14 = _r14(_r15)
-                                        if _r14 == true then
-                                        end
-                                    end
-                                    _r13 = true
-                                end
-                                _r14 = _r167
-                                _r14 = _r14()
-                                _r15 = type
-                                _r16 = _r14
-                                _r15 = _r15(_r16)
-                                if _r15 == "table" then
-                                    _r15 = _r14.is_lifetime
-                                    if _r15 ~= true then
-                                        _r15 = _r14.lifetime
-                                        if _r15 ~= true then
-                                            _r15 = _r14.permanent
-                                            if _r15 ~= true then
-                                                _r15 = _r14.isLifetime
-                                                if _r15 == true then
-                                                end
-                                            end
-                                        end
-                                        _r13 = true
-                                    end
-                                end
-                                _r15 = _r161
-                                _r16 = "JD_DISCORD_USERNAME"
-                                _r15 = _r15(_r16)
-                                if not _r15 then
-                                    _r16 = type
-                                    _r17 = _r7
-                                    _r16 = _r16(_r17)
-                                    if _r16 == "table" then
-                                        _r16 = _r164
-                                        _r17 = _r7
-                                        _r18 = {}
-                                        _r19 = "discord_username"
-                                        _r20 = "discordUsername"
-                                        _r21 = "discord_name"
-                                        _r22 = "username"
-                                        _r23 = "discord"
-                                        _r18[1] = _r19
-                                        _r18[2] = _r20
-                                        _r18[3] = _r21
-                                        _r18[4] = _r22
-                                        _r18[5] = _r23
-                                        _r16 = _r16(_r17, _r18)
-                                        _r15 = _r16
-                                    end
-                                end
-                                _r17 = _r12
-                                _r16 = _r12.sub
-                                _r18 = 1
-                                _r19 = 1
-                                _r16 = _r16(_r17, _r18, _r19)
-                                _r17 = _r16
-                                _r16 = _r16.upper
-                                _r16 = _r16(_r17)
-                                _r18 = _r12
-                                _r17 = _r12.sub
-                                _r19 = 2
-                                _r17 = _r17(_r18, _r19)
-                                _r16 = _r16 .. _r17
-                                _r17 = "Lifetime"
-                                _r18 = "Active"
-                                _r19 = false
-                                if _r13 then
-                                    _r17 = "Lifetime"
-                                    _r20 = "Active ("
-                                    _r21 = _r16
-                                    _r22 = " Lifetime)"
-                                    _r18 = _r20 .. _r21 .. _r22
-                                    _r19 = false
-                                else
-                                    if _r6 == "KEYLESS" then
-                                        _r17 = "Keyless"
-                                        _r18 = "Keyless"
-                                        _r19 = false
-                                        -- goto [395]
-                                    end
-                                    if _r9 then
-                                        if 0 < _r9 then
-                                            _r20 = math
-                                            _r20 = _r20.floor
-                                            _r21 = os
-                                            _r21 = _r21.time
-                                            _r21 = _r21()
-                                            _r21 = _r9 - _r21
-                                            _r20 = _r20(_r21)
-                                            if _r20 <= 0 then
-                                                _r17 = "Expired"
-                                                _r18 = "Expired"
-                                                _r19 = true
-                                                -- goto [395]
-                                            end
-                                            _r21 = _r162
-                                            _r22 = _r20
-                                            _r21 = _r21(_r22)
-                                            _r17 = _r21
-                                            _r21 = "Active ("
-                                            _r22 = _r16
-                                            _r23 = ")"
-                                            _r18 = _r21 .. _r22 .. _r23
-                                            _r19 = false
-                                            -- goto [395]
-                                        end
-                                    end
-                                    _r20 = 86400
-                                    _r21 = pcall
-                                    _r22 = function()
-                                        local _r9 = _r167
-                                        _r9 = _r9()
-                                        if _r9 then
-                                            local _r10 = _r9.expires_at
-                                            if _r10 then
-                                                _r10 = _r163
-                                                local _r11 = _r9.expires_at
-                                                _r10 = _r10(_r11)
-                                                if _r10 then
-                                                    if 0 < _r10 then
-                                                        _r11 = math
-                                                        _r11 = _r11.floor
-                                                        local _r12 = os
-                                                        _r12 = _r12.time
-                                                        _r12 = _r12()
-                                                        _r12 = _r10 - _r12
-                                                        _r11 = _r11(_r12)
-                                                        _r20 = _r11
-                                                    end
-                                                end
-                                            end
-                                        end
-                                        return
-                                    end
-                                    _r21(_r22)
-                                    if 0 < _r20 then
-                                        _r21 = _r162
-                                        _r22 = _r20
-                                        _r21 = _r21(_r22)
-                                        _r17 = _r21
-                                    else
-                                        _r17 = "Active"
-                                    end
-                                    _r21 = "Active ("
-                                    _r22 = _r16
-                                    _r23 = ")"
-                                    _r18 = _r21 .. _r22 .. _r23
-                                    _r19 = false
-                                end
-                                _r20 = _r17
-                                _r21 = _r18
-                                _r22 = _r19
-                                _r23 = _r15
-                                local _r24 = _r10
-                                local _r25 = _r12
-                                return _r20, _r21, _r22, _r23, _r24, _r25
                             end
                             _r169 = nil
                             _r170 = nil
@@ -43391,7 +42933,6 @@
                                                                                                                         _r15 = _r15(_r16)
                                                                                                                         _r15 = #_r15
                                                                                                                         if 0 < _r15 then
-                                                                                                                            break
                                                                                                                         end
                                                                                                                     else
                                                                                                                         _r15 = task
@@ -45714,11 +45255,9 @@
                                 if _r5 then
                                     _r5 = _r65
                                     _r5 = _r5()
-                                    if _r5 then
-
-                                        break
+                                    if not _r5 then
+                                        _r5 = tick
                                     end
-                                    _r5 = tick
                                     _r5 = _r5()
                                     while true do
                                         while true do
@@ -45747,11 +45286,9 @@
                                                     if _r6 then
                                                         _r6 = _r65
                                                         _r6 = _r6()
-                                                        if _r6 then
-
-                                                            break
+                                                        if not _r6 then
+                                                            _r6 = _r152
                                                         end
-                                                        _r6 = _r152
                                                         _r6.standFarmRunning = false
                                                         do return end
                                                     end
@@ -45789,9 +45326,7 @@
                                                     if _r15 then
                                                         _r15 = _r65
                                                         _r15 = _r15()
-                                                        if _r15 then
-
-                                                            break
+                                                        if not _r15 then
                                                         end
                                                         do return end
                                                     end
@@ -45964,7 +45499,6 @@
                                                                                             _r12 = _r12(_r13)
                                                                                             _r12 = #_r12
                                                                                             if 0 < _r12 then
-                                                                                                break
                                                                                             end
                                                                                         else
                                                                                             _r12 = task
@@ -46630,11 +46164,9 @@
                                 if _r1 then
                                     _r1 = _r65
                                     _r1 = _r1()
-                                    if _r1 then
-
-                                        break
+                                    if not _r1 then
+                                        _r1 = task
                                     end
-                                    _r1 = task
                                     _r1 = _r1.spawn
                                     local _r2 = function()
                                         local _r0 = tick
@@ -46996,11 +46528,9 @@
                                 if _r12 then
                                     _r12 = _r65
                                     _r12 = _r12()
-                                    if _r12 then
-
-                                        break
+                                    if not _r12 then
+                                        _r12 = tick
                                     end
-                                    _r12 = tick
                                     _r12 = _r12()
                                     while true do
                                         while true do
@@ -47029,11 +46559,9 @@
                                                     if _r13 then
                                                         _r13 = _r65
                                                         _r13 = _r13()
-                                                        if _r13 then
-
-                                                            break
+                                                        if not _r13 then
+                                                            _r13 = _r152
                                                         end
-                                                        _r13 = _r152
                                                         _r13.ribFarmRunning = false
                                                         do return end
                                                     end
@@ -47096,9 +46624,7 @@
                                                     if _r1 then
                                                         _r1 = _r65
                                                         _r1 = _r1()
-                                                        if _r1 then
-
-                                                            break
+                                                        if not _r1 then
                                                         end
                                                         do return end
                                                     end
@@ -47583,11 +47109,9 @@
                                 if _r9 then
                                     _r9 = _r65
                                     _r9 = _r9()
-                                    if _r9 then
-
-                                        break
+                                    if not _r9 then
+                                        _r9 = task
                                     end
-                                    _r9 = task
                                     _r9 = _r9.spawn
                                     local _r10 = function()
                                         local _r12 = tick
@@ -47878,11 +47402,9 @@
                                 if _r7 then
                                     _r7 = _r65
                                     _r7 = _r7()
-                                    if _r7 then
-
-                                        break
+                                    if not _r7 then
+                                        _r7 = tick
                                     end
-                                    _r7 = tick
                                     _r7 = _r7()
                                     while true do
                                         while true do
@@ -47911,11 +47433,9 @@
                                                     if _r8 then
                                                         _r8 = _r65
                                                         _r8 = _r8()
-                                                        if _r8 then
-
-                                                            break
+                                                        if not _r8 then
+                                                            _r8 = _r152
                                                         end
-                                                        _r8 = _r152
                                                         _r8.shinyFarmRunning = false
                                                         do return end
                                                     end
@@ -47978,9 +47498,7 @@
                                                     if _r2 then
                                                         _r2 = _r65
                                                         _r2 = _r2()
-                                                        if _r2 then
-
-                                                            break
+                                                        if not _r2 then
                                                         end
                                                         do return end
                                                     end
@@ -48264,11 +47782,9 @@
                                 if _r5 then
                                     _r5 = _r65
                                     _r5 = _r5()
-                                    if _r5 then
-
-                                        break
+                                    if not _r5 then
+                                        _r5 = task
                                     end
-                                    _r5 = task
                                     _r5 = _r5.spawn
                                     _r6 = function()
                                         local _r3 = tick
@@ -55726,7 +55242,6 @@
                                                 _r10 = _r10()
                                                 _r10 = _r10 - _r9
                                                 if 30 < _r10 then
-                                                    break
                                                 end
                                                 if _r8 then
                                                     _r10 = _r8.Parent
@@ -56254,7 +55769,6 @@
                                                             _r12 = _r12()
                                                             _r12 = _r12 - _r11
                                                             if 3 < _r12 then
-                                                                break
                                                             end
                                                             _r12 = _r7
                                                             _r12 = _r12.PlayerGui
@@ -57288,7 +56802,6 @@
                                                                                                 _r24 = _r24()
                                                                                                 _r24 = _r24 - _r23
                                                                                                 if 10 < _r24 then
-                                                                                                    break
                                                                                                 end
                                                                                             end
                                                                                         end
@@ -67981,11 +67494,9 @@
                                     if _r14 then
                                         _r14 = _r65
                                         _r14 = _r14()
-                                        if _r14 then
-
-                                            break
+                                        if not _r14 then
+                                            _r14 = task
                                         end
-                                        _r14 = task
                                         _r14 = _r14.spawn
                                         _r15 = function()
                                             local _r5 = pcall
