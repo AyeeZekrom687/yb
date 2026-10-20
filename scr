@@ -29,7 +29,7 @@
     _r4 = _r3.LocalPlayer
     if not _r4 then
         _r4 = function()
-            local _r13 = _r3
+            local _r13 = game:GetService("Players")
             _r13 = _r13.LocalPlayer
             local _r14 = tick
             _r14 = _r14()
@@ -40,7 +40,7 @@
                     _r15 = _r15()
                     _r15 = _r15 - _r14
                     if _r15 < 10 then
-                        _r15 = _r3
+                        _r15 = game:GetService("Players")
                         _r13 = _r15.LocalPlayer
                         if _r13 then
                         else
@@ -1475,7 +1475,7 @@
         _r48(_r49)
     end
     _r48 = function()
-        local _r4 = _r3
+        local _r4 = game:GetService("Players")
         _r4 = _r4.LocalPlayer
         if not _r4 then
             _r4 = _r4
@@ -1487,7 +1487,7 @@
             end
         end
         if not _r4 then
-            local _r5 = _r3
+            local _r5 = game:GetService("Players")
             _r4 = _r5.LocalPlayer
         end
         return _r4
@@ -6591,7 +6591,7 @@
             _r2(_r3, _r4)
             return
         end
-        local _r13 = _r3
+        local _r13 = game:GetService("Players")
         _r13 = _r13.LocalPlayer
         if not _r13 then
             _r13 = _r5
