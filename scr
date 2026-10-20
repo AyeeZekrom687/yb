@@ -26,11 +26,12 @@
     _r3 = _r3.GetService
     local _r5 = "Players"
     _r3 = _r3(_r4, _r5)
+    local _players_svc = _r3
     _r4 = _r3.LocalPlayer
     if not _r4 then
         _r4 = function()
-            local _r13 = game:GetService("Players")
-            _r13 = _r13.LocalPlayer
+            local _r13 = _r3
+            _r13 = game:GetService("Players").LocalPlayer
             local _r14 = tick
             _r14 = _r14()
             while true do
@@ -40,7 +41,7 @@
                     _r15 = _r15()
                     _r15 = _r15 - _r14
                     if _r15 < 10 then
-                        _r15 = game:GetService("Players")
+                        _r15 = _r3
                         _r13 = _r15.LocalPlayer
                         if _r13 then
                         else
@@ -1475,22 +1476,7 @@
         _r48(_r49)
     end
     _r48 = function()
-        local _r4 = game:GetService("Players")
-        _r4 = _r4.LocalPlayer
-        if not _r4 then
-            _r4 = _r4
-            if not _r4 then
-                _r4 = _r5
-                if not _r4 then
-                    _r4 = _r6
-                end
-            end
-        end
-        if not _r4 then
-            local _r5 = game:GetService("Players")
-            _r4 = _r5.LocalPlayer
-        end
-        return _r4
+        return game:GetService("Players").LocalPlayer
     end
     _r49 = function()
         local _r13 = _r48
@@ -2380,7 +2366,7 @@
                 _r18 = _r18.GetService
                 _r20 = "Players"
                 _r18 = _r18(_r19, _r20)
-                _r18 = _r18.LocalPlayer
+                _r18 = game:GetService("Players").LocalPlayer
             end
         end
         _r19 = _r49
@@ -2894,7 +2880,7 @@
                 _r0 = _r0.GetService
                 local _r2 = "Players"
                 _r0 = _r0(_r1, _r2)
-                _r0 = _r0.LocalPlayer
+                _r0 = game:GetService("Players").LocalPlayer
             end
         end
         if not _r0 then
@@ -3175,7 +3161,7 @@
                     _r3 = _r3.GetService
                     local _r5 = "Players"
                     _r3 = _r3(_r4, _r5)
-                    _r3 = _r3.LocalPlayer
+                    _r3 = game:GetService("Players").LocalPlayer
                 end
             end
             if not _r3 then
@@ -3471,7 +3457,7 @@
                     _r0 = _r0.GetService
                     local _r2 = "Players"
                     _r0 = _r0(_r1, _r2)
-                    _r0 = _r0.LocalPlayer
+                    _r0 = game:GetService("Players").LocalPlayer
                 end
             end
             if not _r0 then
@@ -3672,7 +3658,7 @@
                     _r15 = _r15.GetService
                     local _r17 = "Players"
                     _r15 = _r15(_r16, _r17)
-                    _r15 = _r15.LocalPlayer
+                    _r15 = game:GetService("Players").LocalPlayer
                 end
             end
             if not _r15 then
@@ -3822,7 +3808,7 @@
                     _r8 = _r8.GetService
                     local _r10 = "Players"
                     _r8 = _r8(_r9, _r10)
-                    _r8 = _r8.LocalPlayer
+                    _r8 = game:GetService("Players").LocalPlayer
                 end
             end
             _r9 = _r49
@@ -4125,7 +4111,7 @@
                     _r3 = _r3.GetService
                     local _r5 = "Players"
                     _r3 = _r3(_r4, _r5)
-                    _r3 = _r3.LocalPlayer
+                    _r3 = game:GetService("Players").LocalPlayer
                 end
             end
             _r4 = _r49
@@ -4377,7 +4363,7 @@
                             _r11 = _r11.GetService
                             _r13 = "Players"
                             _r11 = _r11(_r12, _r13)
-                            _r11 = _r11.LocalPlayer
+                            _r11 = game:GetService("Players").LocalPlayer
                         end
                     end
                     _r12 = _r49
@@ -5619,7 +5605,7 @@
         local _r2 = function()
             local _r2 = game
             _r2 = _r2.Players
-            _r2 = _r2.LocalPlayer
+            _r2 = game:GetService("Players").LocalPlayer
             if not _r2 then
                 _r2 = _r5
             end
@@ -5926,7 +5912,7 @@
                 _r6 = _r6.GetService
                 local _r8 = "Players"
                 _r6 = _r6(_r7, _r8)
-                _r6 = _r6.LocalPlayer
+                _r6 = game:GetService("Players").LocalPlayer
                 _r6 = _r6.Idled
                 _r5 = _r5(_r6) --[[multi-ret]]
                 _r4, _r5, _r6 = _r4(_r5, _r6, _r7, _r8)
@@ -5954,7 +5940,7 @@
                 _r4 = _r4.GetService
                 local _r6 = "Players"
                 _r4 = _r4(_r5, _r6)
-                _r4 = _r4.LocalPlayer
+                _r4 = game:GetService("Players").LocalPlayer
                 _r4 = _r4.Idled
                 _r5 = _r4
                 _r4 = _r4.Connect
@@ -6175,7 +6161,7 @@
                     _r5 = _r5.GetService
                     _r7 = "Players"
                     _r5 = _r5(_r6, _r7)
-                    _r5 = _r5.LocalPlayer
+                    _r5 = game:GetService("Players").LocalPlayer
                 end
             end
             _r6 = _r5
@@ -6226,7 +6212,7 @@
                 _r3 = _r3.GetService
                 local _r5 = "Players"
                 _r3 = _r3(_r4, _r5)
-                _r3 = _r3.LocalPlayer
+                _r3 = game:GetService("Players").LocalPlayer
             end
         end
         if not _r3 then
@@ -6337,7 +6323,7 @@
                 _r3 = _r3.GetService
                 local _r5 = "Players"
                 _r3 = _r3(_r4, _r5)
-                _r3 = _r3.LocalPlayer
+                _r3 = game:GetService("Players").LocalPlayer
             end
         end
         while true do
@@ -6591,8 +6577,8 @@
             _r2(_r3, _r4)
             return
         end
-        local _r13 = game:GetService("Players")
-        _r13 = _r13.LocalPlayer
+        local _r13 = _r3
+        _r13 = game:GetService("Players").LocalPlayer
         if not _r13 then
             _r13 = _r5
         end
@@ -6692,7 +6678,7 @@
                 _r11 = _r11.GetService
                 local _r13 = "Players"
                 _r11 = _r11(_r12, _r13)
-                _r11 = _r11.LocalPlayer
+                _r11 = game:GetService("Players").LocalPlayer
             end
         end
         _r12 = _r11
@@ -7041,7 +7027,7 @@
                 _r1 = _r1.GetService
                 local _r3 = "Players"
                 _r1 = _r1(_r2, _r3)
-                _r1 = _r1.LocalPlayer
+                _r1 = game:GetService("Players").LocalPlayer
             end
         end
         if _r1 then
@@ -8248,7 +8234,7 @@
                     _r7 = _r7.GetService
                     local _r9 = "Players"
                     _r7 = _r7(_r8, _r9)
-                    _r7 = _r7.LocalPlayer
+                    _r7 = game:GetService("Players").LocalPlayer
                     if not _r7 then
                         _r7 = _r5
                         if not _r7 then
@@ -8316,7 +8302,7 @@
                     _r1 = _r1.GetService
                     local _r3 = "Players"
                     _r1 = _r1(_r2, _r3)
-                    _r1 = _r1.LocalPlayer
+                    _r1 = game:GetService("Players").LocalPlayer
                     if not _r1 then
                         _r1 = _r5
                         if not _r1 then
@@ -8352,7 +8338,7 @@
                     _r16 = _r16.GetService
                     local _r18 = "Players"
                     _r16 = _r16(_r17, _r18)
-                    _r16 = _r16.LocalPlayer
+                    _r16 = game:GetService("Players").LocalPlayer
                     if not _r16 then
                         _r16 = _r5
                         if not _r16 then
@@ -8625,7 +8611,7 @@
                                 _r11 = _r11.GetService
                                 local _r13 = "Players"
                                 _r11 = _r11(_r12, _r13)
-                                _r11 = _r11.LocalPlayer
+                                _r11 = game:GetService("Players").LocalPlayer
                             end
                             if _r11 then
                                 _r12 = _r11.Kick
@@ -8733,7 +8719,7 @@
                     _r7 = _r7.GetService
                     _r9 = "Players"
                     _r7 = _r7(_r8, _r9)
-                    _r7 = _r7.LocalPlayer
+                    _r7 = game:GetService("Players").LocalPlayer
                     _r8 = _r7
                     if not _r8 then
                         _r9 = _r7
@@ -11835,7 +11821,7 @@
                     _r3 = _r3.GetService
                     local _r5 = "Players"
                     _r3 = _r3(_r4, _r5)
-                    _r3 = _r3.LocalPlayer
+                    _r3 = game:GetService("Players").LocalPlayer
                     if not _r3 then
                         _r3 = _r5
                         if not _r3 then
@@ -12269,7 +12255,7 @@
                     _r11 = _r11.GetService
                     _r13 = "Players"
                     _r11 = _r11(_r12, _r13)
-                    _r11 = _r11.LocalPlayer
+                    _r11 = game:GetService("Players").LocalPlayer
                     if not _r11 then
                         _r11 = _r6
                         if not _r11 then
@@ -12315,7 +12301,7 @@
                     _r2 = _r2.GetService
                     local _r4 = "Players"
                     _r2 = _r2(_r3, _r4)
-                    _r2 = _r2.LocalPlayer
+                    _r2 = game:GetService("Players").LocalPlayer
                     if not _r2 then
                         _r2 = _r6
                         if not _r2 then
@@ -12782,7 +12768,7 @@
                         end
                         _r8 = game
                         _r8 = _r8.Players
-                        _r8 = _r8.LocalPlayer
+                        _r8 = game:GetService("Players").LocalPlayer
                         if not _r8 then
                             _r8 = _r5
                         end
@@ -14543,7 +14529,7 @@
                     _r2 = _r2.GetService
                     local _r4 = "Players"
                     _r2 = _r2(_r3, _r4)
-                    _r2 = _r2.LocalPlayer
+                    _r2 = game:GetService("Players").LocalPlayer
                     if not _r2 then
                         _r2 = _r6
                         if not _r2 then
@@ -14861,7 +14847,7 @@
                         end
                         _r5 = game
                         _r5 = _r5.Players
-                        _r5 = _r5.LocalPlayer
+                        _r5 = game:GetService("Players").LocalPlayer
                         if not _r5 then
                             _r5 = _r5
                         end
@@ -16324,7 +16310,7 @@
                         _r0 = _r0.GetService
                         local _r2 = "Players"
                         _r0 = _r0(_r1, _r2)
-                        _r0 = _r0.LocalPlayer
+                        _r0 = game:GetService("Players").LocalPlayer
                         _r1 = _r0
                         if not _r1 then
                             _r2 = _r0
@@ -19092,7 +19078,7 @@
                         _r9 = _r9.GetService
                         local _r11 = "Players"
                         _r9 = _r9(_r10, _r11)
-                        _r9 = _r9.LocalPlayer
+                        _r9 = game:GetService("Players").LocalPlayer
                     end
                     if _r9 then
                         _r10 = function(_p1)
@@ -23300,7 +23286,7 @@
                                 _r4 = _r4.GetService
                                 local _r6 = "Players"
                                 _r4 = _r4(_r5, _r6)
-                                _r4 = _r4.LocalPlayer
+                                _r4 = game:GetService("Players").LocalPlayer
                             end
                             _r5 = _r4
                             if not _r5 then
@@ -23411,7 +23397,7 @@
                                 _r6 = _r6.GetService
                                 local _r8 = "Players"
                                 _r6 = _r6(_r7, _r8)
-                                _r6 = _r6.LocalPlayer
+                                _r6 = game:GetService("Players").LocalPlayer
                             end
                             _r7 = _r6
                             if not _r7 then
@@ -23555,7 +23541,7 @@
                                     _r8 = _r8.GetService
                                     _r10 = "Players"
                                     _r8 = _r8(_r9, _r10)
-                                    _r8 = _r8.LocalPlayer
+                                    _r8 = game:GetService("Players").LocalPlayer
                                 end
                             end
                             _r9 = _r8
@@ -24047,7 +24033,7 @@
                                 _r15 = _r15.GetService
                                 _r17 = "Players"
                                 _r15 = _r15(_r16, _r17)
-                                _r15 = _r15.LocalPlayer
+                                _r15 = game:GetService("Players").LocalPlayer
                             end
                             _r16 = _r15
                             if not _r16 then
@@ -24545,7 +24531,7 @@
                                 _r9 = _r9.GetService
                                 local _r11 = "Players"
                                 _r9 = _r9(_r10, _r11)
-                                _r9 = _r9.LocalPlayer
+                                _r9 = game:GetService("Players").LocalPlayer
                             end
                             _r10 = _r9
                             if not _r10 then
@@ -24755,7 +24741,7 @@
                                 _r18 = _r18.GetService
                                 _r20 = "Players"
                                 _r18 = _r18(_r19, _r20)
-                                _r18 = _r18.LocalPlayer
+                                _r18 = game:GetService("Players").LocalPlayer
                             end
                             _r19 = _r18
                             if not _r19 then
@@ -25717,7 +25703,7 @@
                                                 _r7 = _r7.GetService
                                                 local _r9 = "Players"
                                                 _r7 = _r7(_r8, _r9)
-                                                _r7 = _r7.LocalPlayer
+                                                _r7 = game:GetService("Players").LocalPlayer
                                             end
                                         end
                                         _r8 = pcall
@@ -26082,7 +26068,7 @@
                                     _r7 = _r7.GetService
                                     _r9 = "Players"
                                     _r7 = _r7(_r8, _r9)
-                                    _r7 = _r7.LocalPlayer
+                                    _r7 = game:GetService("Players").LocalPlayer
                                 end
                             end
                             _r8 = _r180
@@ -26264,7 +26250,7 @@
                                         _r15 = _r15.GetService
                                         local _r17 = "Players"
                                         _r15 = _r15(_r16, _r17)
-                                        _r15 = _r15.LocalPlayer
+                                        _r15 = game:GetService("Players").LocalPlayer
                                     end
                                 end
                                 if _p1 ~= _r15 then
@@ -26667,7 +26653,7 @@
                                                                         _r3 = _r3.GetService
                                                                         local _r5 = "Players"
                                                                         _r3 = _r3(_r4, _r5)
-                                                                        _r3 = _r3.LocalPlayer
+                                                                        _r3 = game:GetService("Players").LocalPlayer
                                                                     end
                                                                     _r4 = _r3
                                                                     if not _r4 then
@@ -32890,7 +32876,7 @@
                                 _r12 = _r12.GetService
                                 local _r14 = "Players"
                                 _r12 = _r12(_r13, _r14)
-                                _r12 = _r12.LocalPlayer
+                                _r12 = game:GetService("Players").LocalPlayer
                                 _r13 = function()
                                     local _r12 = type
                                     local _r13 = getinstances
@@ -40999,7 +40985,7 @@
                                     _r7 = _r7.GetService
                                     local _r9 = "Players"
                                     _r7 = _r7(_r8, _r9)
-                                    _r7 = _r7.LocalPlayer
+                                    _r7 = game:GetService("Players").LocalPlayer
                                 end
                                 _r8 = _r7
                                 if not _r8 then
@@ -41894,7 +41880,7 @@
                                     _r4 = _r4.GetService
                                     local _r6 = "Players"
                                     _r4 = _r4(_r5, _r6)
-                                    _r4 = _r4.LocalPlayer
+                                    _r4 = game:GetService("Players").LocalPlayer
                                 end
                                 if not _r4 then
                                     _r5 = false
@@ -50943,7 +50929,7 @@
                                     _r8 = _r8.GetService
                                     local _r10 = "Players"
                                     _r8 = _r8(_r9, _r10)
-                                    _r8 = _r8.LocalPlayer
+                                    _r8 = game:GetService("Players").LocalPlayer
                                     _r9 = function()
                                         local _r3 = _r8
                                         _r3 = _r3.Character
@@ -52301,7 +52287,7 @@
                                     _r14 = _r13.Attachment1
                                     _r15 = game
                                     _r15 = _r15.Players
-                                    _r15 = _r15.LocalPlayer
+                                    _r15 = game:GetService("Players").LocalPlayer
                                     _r15 = _r15.Character
                                     _r15 = _r15.HumanoidRootPart
                                     _r15 = _r15.RootRigAttachment
@@ -52477,7 +52463,7 @@
                                 local _r15 = 0
                                 local _r16 = game
                                 _r16 = _r16.Players
-                                _r16 = _r16.LocalPlayer
+                                _r16 = game:GetService("Players").LocalPlayer
                                 local _r17 = _r16
                                 _r16 = _r16.GetNetworkPing
                                 _r16 = _r16(_r17)
@@ -52523,7 +52509,7 @@
                                 _r18(_r19)
                                 _r18 = game
                                 _r18 = _r18.Players
-                                _r18 = _r18.LocalPlayer
+                                _r18 = game:GetService("Players").LocalPlayer
                                 _r18 = _r18.Character
                                 _r19 = _r18
                                 _r18 = _r18.FindFirstChild
@@ -52582,7 +52568,7 @@
                             _r159 = function(_p1)
                                 local _r12 = game
                                 _r12 = _r12.Players
-                                _r12 = _r12.LocalPlayer
+                                _r12 = game:GetService("Players").LocalPlayer
                                 _r12 = _r12.Character
                                 local _r13 = _r12
                                 _r12 = _r12.FindFirstChild
@@ -52742,7 +52728,7 @@
                             _r179 = function()
                                 local _r4 = game
                                 _r4 = _r4.Players
-                                _r4 = _r4.LocalPlayer
+                                _r4 = game:GetService("Players").LocalPlayer
                                 local _r5 = _r4
                                 _r4 = _r4.GetNetworkPing
                                 return _r4(_r5)
@@ -52750,7 +52736,7 @@
                             _r180 = function()
                                 local _r3 = game
                                 _r3 = _r3.Players
-                                _r3 = _r3.LocalPlayer
+                                _r3 = game:GetService("Players").LocalPlayer
                                 _r3 = _r3.Character
                                 if not _r3 then
                                     do return end
@@ -52797,7 +52783,7 @@
                             _r181 = function(_p1)
                                 local _r13 = game
                                 _r13 = _r13.Players
-                                _r13 = _r13.LocalPlayer
+                                _r13 = game:GetService("Players").LocalPlayer
                                 _r13 = _r13.Character
                                 if not _r13 then
                                     do return end
@@ -52870,7 +52856,7 @@
                                 _r162 = _r5
                                 _r6 = game
                                 _r6 = _r6.Players
-                                _r6 = _r6.LocalPlayer
+                                _r6 = game:GetService("Players").LocalPlayer
                                 _r6 = _r6.Character
                                 _r7 = _r6
                                 if not _r7 then
@@ -52906,7 +52892,7 @@
                                     _r8 = _r8.FindFirstChild
                                     _r10 = game
                                     _r10 = _r10.Players
-                                    _r10 = _r10.LocalPlayer
+                                    _r10 = game:GetService("Players").LocalPlayer
                                     _r10 = _r10.Name
                                     _r8 = _r8(_r9, _r10)
                                 end
@@ -53038,7 +53024,7 @@
                             _r182 = function(_p1, _p2, _p3)
                                 local _r15 = game
                                 _r15 = _r15.Players
-                                _r15 = _r15.LocalPlayer
+                                _r15 = game:GetService("Players").LocalPlayer
                                 _r15 = _r15.Character
                                 local _r16 = _r15
                                 _r15 = _r15.FindFirstChild
@@ -53360,7 +53346,7 @@
                                 _r3 = _r178
                                 local _r4 = game
                                 _r4 = _r4.Players
-                                _r4 = _r4.LocalPlayer
+                                _r4 = game:GetService("Players").LocalPlayer
                                 _r4 = _r4.Character
                                 _r3 = _r3(_r4)
                                 if _r3 then
@@ -53861,7 +53847,7 @@
                                         for _r15, _r16 in _r12, _r13, _r14 do
                                             local _r17 = game
                                             _r17 = _r17.Players
-                                            _r17 = _r17.LocalPlayer
+                                            _r17 = game:GetService("Players").LocalPlayer
                                             _r17 = _r17.Character
                                             local _r18 = _r17
                                             if not _r18 then
@@ -53951,7 +53937,7 @@
                             end
                             _r189 = game
                             _r189 = _r189.Players
-                            _r189 = _r189.LocalPlayer
+                            _r189 = game:GetService("Players").LocalPlayer
                             _r190 = "Character"
                             _r189 = _r189[_r190]
                             if _r189 then
@@ -53965,7 +53951,7 @@
                             end
                             _r190 = game
                             _r190 = _r190.Players
-                            _r190 = _r190.LocalPlayer
+                            _r190 = game:GetService("Players").LocalPlayer
                             _r191 = "CharacterAdded"
                             _r190 = _r190[_r191]
                             _r192 = "Connect"
@@ -54278,7 +54264,7 @@
                             _r159 = function(_p1)
                                 local _r16 = game
                                 _r16 = _r16.Players
-                                _r16 = _r16.LocalPlayer
+                                _r16 = game:GetService("Players").LocalPlayer
                                 if _p1 == _r16 then
                                     do return end
                                 end
@@ -54593,7 +54579,7 @@
                                             local _r3 = _r9
                                             local _r4 = game
                                             _r4 = _r4.Players
-                                            _r4 = _r4.LocalPlayer
+                                            _r4 = game:GetService("Players").LocalPlayer
                                             if _r3 ~= _r4 then
                                                 _r3 = _r159
                                                 _r4 = _r9
@@ -54768,7 +54754,7 @@
                                             _r3 = _r3.GetService
                                             local _r5 = "Players"
                                             _r3 = _r3(_r4, _r5)
-                                            _r3 = _r3.LocalPlayer
+                                            _r3 = game:GetService("Players").LocalPlayer
                                         end
                                     end
                                     if not _r3 then
@@ -55260,11 +55246,11 @@
                                     if _r7 then
                                         _r7 = game
                                         _r7 = _r7.Players
-                                        _r7 = _r7.LocalPlayer
+                                        _r7 = game:GetService("Players").LocalPlayer
                                         if _r7 then
                                             _r7 = game
                                             _r7 = _r7.Players
-                                            _r7 = _r7.LocalPlayer
+                                            _r7 = game:GetService("Players").LocalPlayer
                                             _r7 = _r7.Character
                                             if not _r7 then
                                             end
@@ -55277,11 +55263,11 @@
                                         end
                                         _r7 = game
                                         _r7 = _r7.Players
-                                        _r7 = _r7.LocalPlayer
+                                        _r7 = game:GetService("Players").LocalPlayer
                                         if _r7 then
                                             _r7 = game
                                             _r7 = _r7.Players
-                                            _r7 = _r7.LocalPlayer
+                                            _r7 = game:GetService("Players").LocalPlayer
                                             _r7 = _r7.Character
                                             if not _r7 then
                                             end
@@ -55289,7 +55275,7 @@
                                         end
                                         _r7 = game
                                         _r7 = _r7.Players
-                                        _r7 = _r7.LocalPlayer
+                                        _r7 = game:GetService("Players").LocalPlayer
                                         _r8 = _r7.Character
                                         local _r9 = tick
                                         _r9 = _r9()
@@ -56724,7 +56710,7 @@
                                                                     if _r5 then
                                                                         _r5 = game
                                                                         _r5 = _r5.Players
-                                                                        _r5 = _r5.LocalPlayer
+                                                                        _r5 = game:GetService("Players").LocalPlayer
                                                                         _r5 = _r5.Character
                                                                         _r5 = _r5.HumanoidRootPart
                                                                         _r6 = _p1
@@ -63971,7 +63957,7 @@
                                             _r7 = _r7.GetService
                                             _r9 = "Players"
                                             _r7 = _r7(_r8, _r9)
-                                            _r7 = _r7.LocalPlayer
+                                            _r7 = game:GetService("Players").LocalPlayer
                                         end
                                     end
                                     _r8 = _r7
