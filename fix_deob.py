@@ -15,7 +15,8 @@ Passes run in this order:
     the block inside the if.
 2.  Setlist bugs: replaces `-- setlist _rN (batch=K)` comments with table packing.
 2b. Multi-return forwarding: `f(g())` printed with a fixed register range of stale values.
-3.  Targeted patches: namecall varargs, game-ready break, stand farm bridge, first-spawn loop.
+3.  Targeted patches: namecall varargs, game-ready break, stand farm bridge, first-spawn loop,
+    UI visibility restore loop.
 3b. Or-chains: `if a or b then REST end` printed as nested tests with an empty innermost if.
 4.  Broken if/else: moves dropped right operands (`x = x or v`) back inside their empty ifs.
 5.  Varargs passthrough: replaces register captures of ... with direct forwarding.
@@ -29,7 +30,10 @@ Passes run in this order:
 11. Dropped return-false blocks (single tests; chains are handled by 3b).
 12. Game-ready initial skip.
 13. Scope leaks: registers declared `local` inside a nested block but used outside it are
-    hoisted to function scope; registers sharing a name with an upvalue are renamed.
+    hoisted to function scope; registers sharing a name with an upvalue (including a closure's
+    own call-frame temporaries) are renamed.
+13b. Closed upvalues: main-chunk registers reused after the closures that captured them get a
+    new name for the captured range.
 14. Garbled empty strings: 2-byte garbage constants that stand for "".
 """
 
@@ -458,6 +462,46 @@ def _first_spawn_loop(text):
     return ''.join(lines), 1
 
 
+# 3f: UI visibility restore task. After hiding the window, the task waits up to 300 s for the
+# main game and then restores the saved UI_Open state:
+#   while tick() - start < 300 do task.wait(1) if _r65 and _r65() then break end end
+#   if _r65 and _r65() then <restore> end
+# The decompiler nested the loop in three `while true do` and put the restore inside it after
+# the break, so the break re-entered the loop forever and the window stayed hidden.
+def _ui_restore_loop(text):
+    lines = split_lines(text)
+    k = next((n for n, ln in enumerate(lines) if ln.strip() == 'if _r16 < 300 then'), None)
+    if k is None:
+        return text, 0
+    b = _indent(lines[k]) - 12
+    pad = ' ' * b
+    assert [ln.rstrip('\r\n') for ln in lines[k - 6:k - 3]] == \
+        [pad + 'while true do', pad + '    while true do', pad + '        while true do'], \
+        'ui restore loop: unexpected loop nesting'
+    assert lines[k - 1].strip() == '_r16 = _r16 - _r15', 'ui restore loop: elapsed'
+    e_if = block_end(lines, k, b + 12)
+    body = b + 16
+    c = k + 5                                   # after the 4 wait lines
+    assert lines[c].strip() == '_r16 = _r65' and lines[c + 1].strip() == 'if _r16 then'
+    c_end = block_end(lines, c + 1, body)
+    r = c_end + 1
+    assert lines[r].strip() == '_r16 = _r65' and lines[r + 1].strip() == 'if _r16 then'
+    r_end = block_end(lines, r + 1, body)
+    assert lines[r_end + 1].strip() == 'return' and r_end + 2 == e_if, 'ui restore loop: tail'
+    assert [ln.strip() for ln in lines[e_if + 1:e_if + 4]] == ['end'] * 3, 'ui restore loop: ends'
+    elapsed = lines[k - 3:k]
+    wait_check = lines[k + 1:c_end + 1]
+    restore = lines[r:r_end + 1]
+    _dedent(elapsed, 0, len(elapsed), 8)
+    _dedent(wait_check, 0, len(wait_check), 8)
+    _dedent(restore, 0, len(restore), 16)
+    new = ([pad + 'while true do\n'] + elapsed + [pad + '    if _r16 < 300 then\n'] + wait_check +
+           [pad + '    else\n', pad + '        break\n', pad + '    end\n', pad + 'end\n'] +
+           restore + [pad + 'return\n'])
+    lines[k - 6:e_if + 4] = new
+    return ''.join(lines), 1
+
+
 def apply_targeted_patches(text):
     """Apply targeted fixes for specific decompiler artifacts."""
     stats = {}
@@ -473,6 +517,9 @@ def apply_targeted_patches(text):
 
     text, n = _first_spawn_loop(text)
     stats['first_spawn_loop'] = n
+
+    text, n = _ui_restore_loop(text)
+    stats['ui_restore_loop'] = n
 
     return text, stats
 
@@ -1266,6 +1313,48 @@ def call_kill_threshold(toks, lt):
                 return int(m.group(1)) + nres if q == len(lt) - 1 else None
     return None
 
+def closure_frames(F, toks, lines_F):
+    """{child Func: set of register names} for closures created as `[local] _rN = function`
+    and passed straight to a call `[...=] _rJ(_rJ+1, ..., _rN, ...)` on the next line.
+    Registers J..N-1 hold that call's callee and earlier arguments: temporaries a closure
+    cannot capture, so a closure reference to those names is an outer upvalue."""
+    out = {}
+    for C in F.children:
+        lt = lines_F.get(toks[C.header_tok][2], [])
+        names = [toks[t][1] for t in lt]
+        if names[:1] == ['local']:
+            names = names[1:]
+        if len(names) != 2 or names[1] != '=' or not REG_NUM_RE.match(names[0] or ''):
+            continue
+        n = int(names[0][2:])
+        end_line = toks[C.end_tok][2]
+        nxt = min((ln for ln in lines_F if ln > end_line), default=None)
+        if nxt is None:
+            continue
+        vals = [toks[t][1] for t in lines_F[nxt]]
+        if '(' not in vals or vals[-1] != ')':
+            continue
+        p = vals.index('(')
+        m = REG_NUM_RE.match(vals[p - 1] or '')
+        args = [v for v in vals[p + 1:-1] if v != ',']
+        if not m or not args or names[0] not in args:
+            continue
+        j = int(m.group(1))
+        if [a for a in args] != [f'_r{x}' for x in range(j + 1, j + 1 + len(args))]:
+            continue
+        out[C] = {f'_r{x}' for x in range(j, n)}
+    return out
+
+
+def _subtree(C):
+    out, stack = [], [C]
+    while stack:
+        G = stack.pop()
+        out.append(G)
+        stack.extend(G.children)
+    return out
+
+
 def find_leaks(funcs, toks=None):
     """Return {func: {name: {'decls': set(Decl), 'uses': [(line, tok, res)]}}} for leaked registers.
 
@@ -1310,6 +1399,12 @@ def find_leaks(funcs, toks=None):
                     [name, '=', name], ['local', name, '=', name]):
                 ent = out.setdefault(F, {}).setdefault(name, {'decls': set(), 'uses': []})
                 ent['uses'].append((line, tok, res))
+        # Closure references to call-frame temporaries of F bind to F only by name collision.
+        for C, temps in closure_frames(F, toks, lines_F).items():
+            for G in _subtree(C):
+                for name, line, tok, res, d in G.uses:
+                    if name in temps and res != 'own' and d is not None and d.block.func is F:
+                        out.setdefault(F, {}).setdefault(name, {'decls': set(), 'uses': []})
         declared = set(by_name)
         cands = [u for u in F.uses if u[3] != 'own' and u[0] not in declared and u[0].startswith('_r')]
         if not cands:
@@ -1440,6 +1535,13 @@ def fix_scope_leaks(text):
     # upvalue and the next ancestor is checked). Main-chunk registers are globals: no claim.
     claims = {}                         # (G, tok) -> claiming Func
     refs = defaultdict(list)            # R -> [(G, tok)] for every not-own reference
+    frame_cache = {}
+
+    def frames_of(A):
+        if A not in frame_cache:
+            frame_cache[A] = closure_frames(A, toks, lines_of.get(A) or own_line_tokens(A, toks)) \
+                if A.children else {}
+        return frame_cache[A]
     for G in funcs:
         for name, _, tok, res, d in G.uses:
             if not name.startswith('_r'):
@@ -1450,6 +1552,9 @@ def fix_scope_leaks(text):
             refs[name].append((G, tok))
             C, A = G, G.parent
             while A is not None and A.parent is not None:
+                if name in frames_of(A).get(C, ()):
+                    C, A = A, A.parent      # a call-frame temporary of A: not capturable
+                    continue
                 if d is not None and d.block.func is A:
                     if (A, name) in decisions:
                         claims[(G, tok)] = A
@@ -1570,6 +1675,125 @@ def fix_scope_leaks(text):
         pos = end
     out.append(text[pos:])
     return ''.join(out), stats, warnings
+
+
+# --- CLOSED UPVALUES IN THE MAIN CHUNK (Pass 13b) ---
+# A closure keeps a captured local after its scope ends (CLOSE); the VM may then reuse the
+# register. The main chunk's registers are plain names here, so later reuse (e.g. 30 -> {} ->
+# a function) leaks into earlier closures ("arithmetic on number and function").
+# A closure is treated as closed when a captured register's next main-chunk write assigns a
+# different kind of value than the one it captured; its captured registers then get a new
+# name for the [captured write, next write) range.
+
+def _value_kind(rhs):
+    rhs = rhs.strip()
+    if re.match(r'^-?\d', rhs):
+        return 'number'
+    if rhs[:1] in ('"', "'") or rhs.startswith('[['):
+        return 'string'
+    if rhs in ('true', 'false'):
+        return 'boolean'
+    if rhs == 'nil':
+        return 'nil'
+    if rhs.startswith('{'):
+        return 'table'
+    if rhs.startswith('function'):
+        return 'function'
+    return None
+
+
+def fix_closed_upvalues(text):
+    toks = tokenize(text)
+    funcs = analyze(toks)
+    main = funcs[0]
+    lines = text.split('\n')
+    lm = own_line_tokens(main, toks)
+    writes = defaultdict(list)                  # R -> [(tok, line, kind)]
+    for ln in sorted(lm):
+        lt = lm[ln]
+        for pos, ti in enumerate(lt):
+            if toks[ti][0] == 'name' and REG_NUM_RE.match(toks[ti][1]) and \
+                    classify_use(toks, lt, pos) in ('owrite', 'cwrite'):
+                src = lines[ln - 1]
+                single = re.match(r'^\s*(?:local\s+)?_r\d+\s*=\s*(.*)$', src)
+                writes[toks[ti][1]].append((ti, ln, _value_kind(single.group(1)) if single else None))
+
+    def captures(C):
+        """{R: [tok]} for main-chunk registers used inside C, plus the set C writes."""
+        out = defaultdict(list)
+        written = set()
+        for G in _subtree(C):
+            lg = None
+            for name, line, tok, res, d in G.uses:
+                if REG_NUM_RE.match(name) and res != 'own' and (d is None or d.block.func is main):
+                    out[name].append(tok)
+                    lg = lg or own_line_tokens(G, toks)
+                    lt = lg.get(line, [])
+                    if tok in lt and classify_use(toks, lt, lt.index(tok)) in ('owrite', 'cwrite'):
+                        written.add(name)
+        return out, written
+
+    def same_block(a, b):
+        ind = _indent(lines[b - 1])
+        return _indent(lines[a - 1]) == ind and all(
+            not lines[q - 1].strip() or _indent(lines[q - 1]) >= ind for q in range(a, b))
+
+    caps = {}
+    written_by = {}
+    for C in main.children:
+        caps[C], written_by[C] = captures(C)
+    splits = {}                                  # (R, prev tok) -> (prev, next)
+    for C, names in caps.items():
+        hline = toks[C.header_tok][2]
+        local = {}
+        reused = []
+        for R in names:
+            ws = writes.get(R, [])
+            prev = max((w for w in ws if w[0] < C.header_tok), default=None)
+            nxt = min((w for w in ws if w[0] > C.end_tok), default=None)
+            if prev is None or nxt is None or not same_block(prev[1], hline):
+                continue
+            # A nil the closure itself fills in is closure state; a nil it only reads is a
+            # forward reference to a later main-chunk assignment and stays shared.
+            own_state = prev[2] == 'nil' and R in written_by[C]
+            if prev[2] == 'nil' and not own_state:
+                continue
+            local[R] = (prev, nxt)
+            if own_state or (prev[2] and nxt[2] and prev[2] != nxt[2]):
+                reused.append(int(R[2:]))
+        if reused:
+            # The closed block's locals sit at or above its lowest register; lower registers
+            # are outer locals that stay shared.
+            low = min(reused)
+            for R, pn in local.items():
+                if int(R[2:]) >= low:
+                    splits[(R, pn[0][0])] = pn
+    edits = []
+    for (R, _), (prev, nxt) in splits.items():
+        new = f'{R}v{prev[1]}'
+        after = lm[prev[1]][-1]                  # the captured write's RHS keeps the old value
+        for ln in lm:
+            for ti in lm[ln]:
+                if toks[ti][1] == R and (ti == prev[0] or after < ti < nxt[0]) \
+                        and toks[ti - 1][1] not in ('.', ':'):
+                    edits.append((toks[ti][3], toks[ti][3] + len(R), new))
+        # Closures created while R was still nil (forward references) see the next write.
+        before = max((w for w in writes[R] if w[0] < prev[0]), default=None)
+        start = before[0] if before is not None and before[2] == 'nil' else prev[0]
+        if before is None:
+            start = -1
+        for C, names in caps.items():
+            if start < C.header_tok < nxt[0]:
+                for ti in names.get(R, ()):
+                    edits.append((toks[ti][3], toks[ti][3] + len(R), new))
+    out = []
+    pos = 0
+    for start, end, new in sorted(set(edits)):
+        out.append(text[pos:start])
+        out.append(new)
+        pos = end
+    out.append(text[pos:])
+    return ''.join(out), len(splits)
 
 
 # --- OPERAND EXTENT ---
@@ -1843,6 +2067,8 @@ def fix_structural_repairs(lines):
 
 CMP_IF_RE = re.compile(r'^(\s*)if (.+ (?:==|~=|<=|>=|<|>) .+) then$')
 BOOL_LOAD_RE = re.compile(r'^(\s*)(_r\d+) = (true|false)$')
+# `if type(x) == "function" then flag = true ...` is a guard whose body needs the condition.
+TYPE_GUARD_RE = re.compile(r'[=~]= "(?:nil|boolean|number|string|table|function|userdata|thread|Instance)"')
 
 
 def fix_bool_materialization(lines):
@@ -1857,7 +2083,8 @@ def fix_bool_materialization(lines):
             continue
         ind = len(m.group(1))
         X, val = b.group(2), b.group(3)
-        if len(b.group(1)) != ind + 4 or not re.search(r'\b' + re.escape(X) + r'\b', m.group(2)):
+        if len(b.group(1)) != ind + 4 or not re.search(r'\b' + re.escape(X) + r'\b', m.group(2)) \
+                or TYPE_GUARD_RE.search(m.group(2)):
             i += 1
             continue
         e = block_end(lines, i, ind)
@@ -2116,11 +2343,14 @@ def fix_while_chains(lines):
             if any(YIELD_RE.search(ln) for ln in after):
                 continue
             chain = _while_chain(lines, k, w + 4, first_end=elses[0])
-            moved = list(after)
-            _dedent(moved, 0, len(moved), 8)
-            lines[elses[0] + 1:e - 1] = [pad + '    break\n']
-            e = block_end(lines, i, w)
-            lines[e + 1:e + 1] = moved
+            if [ln.strip() for ln in after if ln.strip()] != ['break']:
+                moved = list(after)
+                _dedent(moved, 0, len(moved), 8)
+                lines[elses[0] + 1:e - 1] = [pad + '    break\n']
+                e = block_end(lines, i, w)
+                lines[e + 1:e + 1] = moved
+            elif len(chain) < 2:
+                continue                 # already `while A do`, nothing deeper to fix
             chain = chain[1:]
         else:
             chain = _while_chain(lines, k, w + 4)
@@ -2447,6 +2677,10 @@ def main():
     print(f"Pass 13: Fixed {sc_stats['pairs']} leaked registers ({sc_stats['converted']} declarations "
           f"widened, {sc_stats['renamed']} renamed for upvalue collisions, {sc_stats['kept']} kept local)")
 
+    # Pass 13b: Closed upvalues in the main chunk (registers reused after a closure's scope)
+    full_text, cu_count = fix_closed_upvalues(full_text)
+    print(f"Pass 13b: Split {cu_count} reused main-chunk registers captured by closures")
+
     # Pass 14: Garbled empty strings
     full_text, gs_count = fix_garbled_strings(full_text)
     print(f"Pass 14: Replaced {gs_count} garbled empty-string constants")
@@ -2457,7 +2691,7 @@ def main():
     with open(output_file, 'w', encoding='latin-1') as f:
         f.writelines(fixed_lines)
 
-    total = sr_total + ts_total + inv_count + bm_count + sl_stats['fixed'] + mr_count + oc_count + wc_count + lt_stats['yield_moved'] + lt_stats['success_break'] + tp_total + ie_count + va_count + tb_count + br_count + ks_count + gb_count + sy_count + pu_count + dr_count + gis_count + sc_stats['pairs'] + gs_count
+    total = sr_total + ts_total + inv_count + bm_count + sl_stats['fixed'] + mr_count + oc_count + wc_count + lt_stats['yield_moved'] + lt_stats['success_break'] + tp_total + ie_count + va_count + tb_count + br_count + ks_count + gb_count + sy_count + pu_count + dr_count + gis_count + sc_stats['pairs'] + cu_count + gs_count
     print(f"\nTotal: {total} fixes applied")
     print(f"Output written to {output_file} ({len(fixed_lines)} lines)")
 

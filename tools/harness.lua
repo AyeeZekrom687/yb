@@ -36,11 +36,16 @@ local tasks = {}          -- { co = thread, wake = time, label = string }
 local main_co = nil       -- nil means the main Lua thread
 local task_seq = 0
 
+local TASK_ERRS = {}
 local function resume_task(t, ...)
     local ok, err = coroutine.resume(t.co, ...)
     if not ok then
-        log("TASK ERR", t.label .. ": " .. tostring(err))
-        real_print(debug.traceback(t.co))
+        local msg = tostring(err)
+        TASK_ERRS[msg] = (TASK_ERRS[msg] or 0) + 1
+        if TASK_ERRS[msg] == 1 then
+            log("TASK ERR", t.label .. ": " .. msg)
+            real_print(debug.traceback(t.co))
+        end
         return false
     end
     if coroutine.status(t.co) == "dead" then return false end
@@ -196,10 +201,22 @@ local STR_PROPS = { ClassName = "Part", Text = "", JobId = "mock-job", DisplayNa
 local TRUE_PROPS = { Visible = true, Enabled = true, Anchored = false, CanCollide = true, Archivable = true,
                      Active = true, Playing = false, IsPlaying = false }
 
+local SIGNALS = {}
+for nm in ("Heartbeat RenderStepped Stepped PreSimulation PostSimulation PreRender Changed Touched TouchEnded "
+        .. "ChildAdded ChildRemoved DescendantAdded DescendantRemoving CharacterAdded CharacterRemoving "
+        .. "PlayerAdded PlayerRemoving Died HealthChanged InputBegan InputEnded InputChanged Idled "
+        .. "MouseButton1Click MouseButton1Down Activated Triggered AncestryChanged FocusLost"):gmatch("%S+") do
+    SIGNALS[nm] = true
+end
+local SIGNAL_MEMBERS = { Connect = true, Once = true, Wait = true, ConnectParallel = true }
+
 proxy_mt.__index = function(p, k)
     local d = PX[p]
     local v = d.store[k]
     if v ~= nil then return v end
+    if SIGNALS[d.short] and d.key == d.short and not SIGNAL_MEMBERS[k] then
+        error(tostring(k) .. " is not a valid member of RBXScriptSignal", 2)
+    end
     if NUM_PROPS[k] then return NUM_PROPS[k] end
     if k == "Name" then return d.short end
     if STR_PROPS[k] then return STR_PROPS[k] end
@@ -231,6 +248,9 @@ local TRUE_METHODS = set{ "IsA", "IsDescendantOf", "IsAncestorOf", "IsLoaded", "
 local FALSE_METHODS = set{ "IsKeyDown", "IsMouseButtonPressed", "IsStudio", "IsServer" }
 local CONNECT_METHODS = set{ "Connect", "Once", "ConnectParallel" }
 
+local FRAME_SIGNALS = { Heartbeat = true, RenderStepped = true, Stepped = true,
+                  PreSimulation = true, PostSimulation = true, PreRender = true }
+local FRAME_CONNS = {}
 local ABSENT = {}
 for nm in (os.getenv("ABSENT") or ""):gmatch("[^,]+") do ABSENT[nm] = true end
 
@@ -252,7 +272,16 @@ proxy_mt.__call = function(p, ...)
     elseif FALSE_METHODS[key] then
         return false
     elseif CONNECT_METHODS[key] then
-        return mkproxy("Connection", "Connection", nil, "RBXScriptConnection")
+        local conn = mkproxy("Connection", "Connection", nil, "RBXScriptConnection")
+        local sig = d.parent and PX[d.parent]
+        local fn = select(2, ...)
+        if sig and FRAME_SIGNALS[sig.short] and type(fn) == "function" then
+            FRAME_CONNS[conn] = fn
+        end
+        return conn
+    elseif key == "Disconnect" then
+        if self ~= nil then FRAME_CONNS[self] = nil end
+        return nil
     elseif key == "Wait" then
         wait_impl(0.03)
         return mkproxy("waited", "waited")
@@ -456,6 +485,7 @@ local ok, e = xpcall(chunk, debug.traceback)
 log("MAIN", ok and "main chunk returned normally" or ("main chunk died: " .. tostring(e)))
 for _ = 1, tonumber(os.getenv("DRAIN_STEPS")) or 100 do
     now = now + 0.5
+    for _, fn in pairs(FRAME_CONNS) do spawn_now(fn, 0.016) end
     run_due()
 end
 local uc = {}
@@ -468,4 +498,12 @@ local pe = {}
 for msg, c in pairs(PCALL_LOG) do pe[#pe + 1] = string.format("%5d x %s", c, msg) end
 table.sort(pe)
 log("SUMMARY", #pe .. " distinct pcall errors")
+local te = {}
+for msg, c in pairs(TASK_ERRS) do te[#te + 1] = string.format("%5d x %s", c, msg) end
+table.sort(te)
+log("SUMMARY", #te .. " distinct task errors")
+for _, l in ipairs(te) do real_print("   " .. l) end
+local nf = 0
+for _ in pairs(FRAME_CONNS) do nf = nf + 1 end
+log("SUMMARY", nf .. " frame-signal connections active")
 for _, l in ipairs(pe) do real_print("   " .. l) end
