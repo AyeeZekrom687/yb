@@ -3954,8 +3954,8 @@
                                     _r14 = _r65
                                     _r14 = _r14()
                                     if _r14 then
-                                        _r14 = task
                                     end
+                                    _r14 = task
                                     _r14 = _r14.wait
                                     _r14()
                                     _r14 = pcall
@@ -4009,8 +4009,8 @@
                                 _r3 = _r65
                                 _r3 = _r3()
                                 if _r3 then
-                                    _r3 = task
                                 end
+                                _r3 = task
                                 _r3 = _r3.wait
                                 _r3()
                                 _r3 = pcall
@@ -4060,8 +4060,8 @@
                                     _r1 = _r65
                                     _r1 = _r1()
                                     if _r1 then
-                                        _r1 = _r4
                                     end
+                                    _r1 = _r4
                                     _r1 = _r1.CameraType
                                     local _r2 = Enum
                                     _r2 = _r2.CameraType
@@ -5377,8 +5377,8 @@
                 _r4 = SF
                 _r4 = _r4.isEatingRoka
                 if not _r4 then
-                    _r4 = getgenv
                 end
+                _r4 = getgenv
                 _r4 = _r4()
                 _r4 = _r4._YBA_IsEatingRoka
                 if not _r4 then
@@ -5471,8 +5471,8 @@
                         _r12 = SF
                         _r12 = _r12.isEatingRoka
                         if not _r12 then
-                            _r12 = getgenv
                         end
+                        _r12 = getgenv
                         _r12 = _r12()
                         _r12 = _r12._YBA_IsEatingRoka
                         if not _r12 then
@@ -5644,8 +5644,8 @@
                             _r10 = _r9.Frame
                             _r10 = _r10.Visible
                             if _r10 then
-                                _r10 = tick
                             end
+                            _r10 = tick
                             _r10 = _r10()
                             while true do
                                 _r11 = tick
@@ -6617,8 +6617,8 @@
                 _r11 = SF
                 _r11 = _r11.isEatingRoka
                 if not _r11 then
-                    _r11 = getgenv
                 end
+                _r11 = getgenv
                 _r11 = _r11()
                 _r11 = _r11._YBA_IsEatingRoka
                 if not _r11 then
@@ -6638,8 +6638,8 @@
             _r11 = _r11()
             _r11 = _r11._YBA_SellingBusy
             if _r11 then
-                _r11 = getgenv
             end
+            _r11 = getgenv
             _r11 = _r11()
             _r11 = _r11._YBA_LastSellTick
             if not _r11 then
@@ -7349,8 +7349,8 @@
                 _r104 = "Up"
                 _r102 = _r102(_r103, _r104)
                 if not _r102 then
-                    _r102 = getgenv
                 end
+                _r102 = getgenv
                 _r102 = _r102()
                 _r102 = _r102.InstantMethod
                 if not _r102 then
@@ -13103,8 +13103,8 @@
                                     _r17 = "TextButton"
                                     _r15 = _r15(_r16, _r17)
                                     if _r15 then
-                                        _r15 = table
                                     end
+                                    _r15 = table
                                     _r15 = _r15.insert
                                     _r16 = _r8
                                     _r17 = _p1
@@ -15695,8 +15695,8 @@
                                                                         _r15 = _r148
                                                                         _r15 = _r15[_r13]
                                                                         if _r15 then
-                                                                            _r15 = tick
                                                                         end
+                                                                        _r15 = tick
                                                                         _r15 = _r15()
                                                                         _r9 = _r15
                                                                         _r15 = task
@@ -16544,8 +16544,8 @@
                         local _r21 = 0
                         _r18 = _r18(_r19, _r20, _r21)
                         if not _r18 then
-                            _r18 = Color3
                         end
+                        _r18 = Color3
                         _r18 = _r18.fromRGB
                         _r19 = 255
                         _r20 = 255
@@ -17278,8 +17278,8 @@
                                             if _r24 then
                                                 _r25 = _r24.Parent
                                                 if not _r25 then
-                                                    _r25 = Instance
                                                 end
+                                                _r25 = Instance
                                                 _r25 = _r25.new
                                                 local _r26 = "Highlight"
                                                 _r25 = _r25(_r26)
@@ -17327,8 +17327,8 @@
                                             if _r25 then
                                                 _r26 = _r25.Parent
                                                 if not _r26 then
-                                                    _r26 = Instance
                                                 end
+                                                _r26 = Instance
                                                 _r26 = _r26.new
                                                 _r27 = "BillboardGui"
                                                 _r26 = _r26(_r27)
@@ -17703,8 +17703,8 @@
                         if _r18 then
                             _r19 = _r18.Parent
                             if not _r19 then
-                                _r19 = Instance
                             end
+                            _r19 = Instance
                             _r19 = _r19.new
                             local _r20 = "Highlight"
                             _r19 = _r19(_r20)
@@ -17718,8 +17718,8 @@
                                 local _r22 = 0
                                 _r19 = _r19(_r20, _r21, _r22)
                                 if not _r19 then
-                                    _r19 = Color3
                                 end
+                                _r19 = Color3
                                 _r19 = _r19.fromRGB
                                 _r20 = 255
                                 _r21 = 90
@@ -17735,8 +17735,8 @@
                                 _r22 = 40
                                 _r19 = _r19(_r20, _r21, _r22)
                                 if not _r19 then
-                                    _r19 = Color3
                                 end
+                                _r19 = Color3
                                 _r19 = _r19.fromRGB
                                 _r20 = 255
                                 _r21 = 255
@@ -17784,8 +17784,8 @@
                                 _r22 = 0
                                 _r19 = _r19(_r20, _r21, _r22)
                                 if not _r19 then
-                                    _r19 = Color3
                                 end
+                                _r19 = Color3
                                 _r19 = _r19.fromRGB
                                 _r20 = 255
                                 _r21 = 90
@@ -17801,8 +17801,8 @@
                                 _r22 = 40
                                 _r19 = _r19(_r20, _r21, _r22)
                                 if not _r19 then
-                                    _r19 = Color3
                                 end
+                                _r19 = Color3
                                 _r19 = _r19.fromRGB
                                 _r20 = 255
                                 _r21 = 255
@@ -17837,8 +17837,8 @@
                             if _r19 then
                                 _r20 = _r19.Parent
                                 if not _r20 then
-                                    _r20 = Instance
                                 end
+                                _r20 = Instance
                                 _r20 = _r20.new
                                 _r21 = "BillboardGui"
                                 _r20 = _r20(_r21)
@@ -17887,8 +17887,8 @@
                                     local _r24 = 40
                                     _r21 = _r21(_r22, _r23, _r24)
                                     if not _r21 then
-                                        _r21 = Color3
                                     end
+                                    _r21 = Color3
                                     _r21 = _r21.fromRGB
                                     _r22 = 255
                                     _r23 = 255
@@ -17937,8 +17937,8 @@
                                         _r24 = 40
                                         _r21 = _r21(_r22, _r23, _r24)
                                         if not _r21 then
-                                            _r21 = Color3
                                         end
+                                        _r21 = Color3
                                         _r21 = _r21.fromRGB
                                         _r22 = 255
                                         _r23 = 255
@@ -19722,8 +19722,8 @@
                         if 0.01 < _r8 then
                             _r8 = _r7.Unit
                             if not _r8 then
-                                _r8 = Vector3
                             end
+                            _r8 = Vector3
                             _r8 = _r8.new
                             _r9 = 0
                             _r10 = 0
@@ -20527,8 +20527,8 @@
                                         _r20 = _r6
                                         _r20 = _r20.Name
                                         if not _r20 then
-                                            _r20 = _r5
                                         end
+                                        _r20 = _r5
                                         _r20 = _r20.Name
                                     end
                                     _r18 = _r18(_r19, _r20)
@@ -20542,8 +20542,8 @@
                                         _r20 = _r6
                                         _r20 = _r20.Name
                                         if not _r20 then
-                                            _r20 = _r5
                                         end
+                                        _r20 = _r5
                                         _r20 = _r20.Name
                                     end
                                     _r18 = _r18(_r19, _r20)
@@ -21040,8 +21040,8 @@
                             _r16 = _r15.CFrame
                             _r16 = _r16.LookVector
                             if not _r16 then
-                                _r16 = Vector3
                             end
+                            _r16 = Vector3
                             _r16 = _r16.new
                             _r17 = 0
                             local _r18 = 0
@@ -21109,8 +21109,8 @@
                             _r8 = _r65
                             _r8 = _r8()
                             if not _r8 then
-                                _r8 = task
                             end
+                            _r8 = task
                             _r8 = _r8.spawn
                             local _r9 = function()
                                 local _r7 = pcall
@@ -21467,8 +21467,8 @@
                                         _r7 = _r6
                                         _r7 = _r7.Name
                                         if not _r7 then
-                                            _r7 = _r5
                                         end
+                                        _r7 = _r5
                                         _r7 = _r7.Name
                                     end
                                     _r5 = _r5(_r6, _r7)
@@ -21482,8 +21482,8 @@
                                         _r7 = _r6
                                         _r7 = _r7.Name
                                         if not _r7 then
-                                            _r7 = _r5
                                         end
+                                        _r7 = _r5
                                         _r7 = _r7.Name
                                     end
                                     _r5 = _r5(_r6, _r7)
@@ -23413,8 +23413,8 @@
                             if _r7 then
                                 _r8 = _r7.Position
                                 if not _r8 then
-                                    _r8 = Vector3
                                 end
+                                _r8 = Vector3
                                 _r8 = _r8.zero
                             end
                             _r9 = function(_p1)
@@ -23889,8 +23889,8 @@
                             if not _r10 then
                                 _r10 = isBuyingRedeemedLucky
                                 if _r10 then
-                                    _r10 = tick
                                 end
+                                _r10 = tick
                                 _r10 = _r10()
                                 local _r11 = lastJackInteractionTick
                                 _r10 = _r10 - _r11
@@ -24597,8 +24597,8 @@
                             if not _r13 then
                                 _r13 = isTurningInCandies
                                 if _r13 then
-                                    _r13 = tick
                                 end
+                                _r13 = tick
                                 _r13 = _r13()
                                 local _r14 = lastJackInteractionTick
                                 _r13 = _r13 - _r14
@@ -27363,8 +27363,8 @@
                                         _r10 = _r65
                                         _r10 = _r10()
                                         if not _r10 then
-                                            _r10 = task
                                         end
+                                        _r10 = task
                                         _r10 = _r10.spawn
                                         local _r11 = function()
                                             local _r13 = tick
@@ -31902,8 +31902,8 @@
                                     _r6 = _r6()
                                     _r6 = _r6.YBAHub_ToggleAutoPrestige
                                     if not _r6 then
-                                        _r6 = _G
                                     end
+                                    _r6 = _G
                                     _r6 = _r6.toggleAutoPrestige
                                     if not _r6 then
                                         _r6 = _r151
@@ -36426,8 +36426,8 @@
                                         if _r30 < 6 then
                                             _r30 = _r167
                                             if not _r30 then
-                                                _r30 = _r5
                                             end
+                                            _r30 = _r5
                                             _r30 = _r30.Character
                                             _r31 = _r30
                                             if not _r31 then
@@ -37984,8 +37984,8 @@
                                                         if not _r9 then
                                                             _r14 = _r167
                                                             if not _r14 then
-                                                                _r14 = task
                                                             end
+                                                            _r14 = task
                                                             _r14 = _r14.wait
                                                             _r15 = 0.3
                                                             _r14(_r15)
@@ -38523,8 +38523,8 @@
                                         if not _r37 then
                                             _r37 = _r168
                                             if _r37 then
-                                                _r37 = tick
                                             end
+                                            _r37 = tick
                                             _r37 = _r37()
                                             if _r37 < _r35 then
                                                 _r37 = tick
@@ -39073,8 +39073,8 @@
                                                     if not _r5 then
                                                         _r5 = _r23
                                                         if _r5 then
-                                                            _r5 = CFrame
                                                         end
+                                                        _r5 = CFrame
                                                         _r5 = _r5.new
                                                         local _r6 = _r4.X
                                                         local _r7 = _r4.Y
@@ -41130,8 +41130,8 @@
                                         _r17 = "DialogueGui"
                                         _r15 = _r15(_r16, _r17)
                                         if not _r15 then
-                                            _r15 = tick
                                         end
+                                        _r15 = tick
                                         _r15 = _r15()
                                         _r15 = _r15 - _r14
                                         if 2 < _r15 then
@@ -42327,8 +42327,8 @@
                                                                 _r20 = _r142
                                                                 _r20 = _r20.findNearestItem
                                                                 if not _r20 then
-                                                                    _r20 = getgenv
                                                                 end
+                                                                _r20 = getgenv
                                                                 _r20 = _r20()
                                                                 _r20 = _r20._YBA_Exports
                                                                 if _r20 then
@@ -42346,8 +42346,8 @@
                                                                 _r21 = _r142
                                                                 _r21 = _r21.collectSingleItemNormal
                                                                 if not _r21 then
-                                                                    _r21 = getgenv
                                                                 end
+                                                                _r21 = getgenv
                                                                 _r21 = _r21()
                                                                 _r21 = _r21._YBA_Exports
                                                                 if _r21 then
@@ -42409,8 +42409,8 @@
                                                     if _r23 == 0 then
                                                         _r24 = 1
                                                         if not _r24 then
-                                                            _r24 = math
                                                         end
+                                                        _r24 = math
                                                         _r24 = _r24.max
                                                         _r25 = 1
                                                         _r26 = math
@@ -42446,8 +42446,8 @@
                                                             _r25 = _r142
                                                             _r25 = _r25.randomSkyRoam
                                                             if not _r25 then
-                                                                _r25 = getgenv
                                                             end
+                                                            _r25 = getgenv
                                                             _r25 = _r25()
                                                             _r25 = _r25._YBA_Exports
                                                             if _r25 then
@@ -45298,8 +45298,8 @@
                                     _r14 = _r14.getFarmMethod
                                     _r14 = _r14()
                                     if not _r14 then
-                                        _r14 = _r152
                                     end
+                                    _r14 = _r152
                                     _r14 = _r14.farmMethod
                                     if not _r14 then
                                         _r14 = _r31
@@ -45322,8 +45322,8 @@
                                     _r5 = _r65
                                     _r5 = _r5()
                                     if not _r5 then
-                                        _r5 = tick
                                     end
+                                    _r5 = tick
                                     _r5 = _r5()
                                     while true do
                                         while true do
@@ -45483,8 +45483,8 @@
                                                                     if _r8 then
                                                                         _r9 = _r8.Parent
                                                                         if not _r9 then
-                                                                            _r9 = _r5
                                                                         end
+                                                                        _r9 = _r5
                                                                         _r9 = _r9.CharacterAdded
                                                                         local _r10 = _r9
                                                                         _r9 = _r9.Wait
@@ -46232,8 +46232,8 @@
                                     _r1 = _r65
                                     _r1 = _r1()
                                     if not _r1 then
-                                        _r1 = task
                                     end
+                                    _r1 = task
                                     _r1 = _r1.spawn
                                     local _r2 = function()
                                         local _r0 = tick
@@ -46596,8 +46596,8 @@
                                     _r12 = _r65
                                     _r12 = _r12()
                                     if not _r12 then
-                                        _r12 = tick
                                     end
+                                    _r12 = tick
                                     _r12 = _r12()
                                     while true do
                                         while true do
@@ -46868,8 +46868,8 @@
                                                                     _r25 = "Stand"
                                                                     _r23 = _r23(_r24, _r25)
                                                                     if not _r23 then
-                                                                        _r23 = task
                                                                     end
+                                                                    _r23 = task
                                                                     _r23 = _r23.wait
                                                                     _r24 = 0.5
                                                                     _r23(_r24)
@@ -47179,8 +47179,8 @@
                                     _r9 = _r65
                                     _r9 = _r9()
                                     if not _r9 then
-                                        _r9 = task
                                     end
+                                    _r9 = task
                                     _r9 = _r9.spawn
                                     local _r10 = function()
                                         local _r12 = tick
@@ -47472,8 +47472,8 @@
                                     _r7 = _r65
                                     _r7 = _r7()
                                     if not _r7 then
-                                        _r7 = tick
                                     end
+                                    _r7 = tick
                                     _r7 = _r7()
                                     while true do
                                         while true do
@@ -47852,8 +47852,8 @@
                                     _r5 = _r65
                                     _r5 = _r5()
                                     if not _r5 then
-                                        _r5 = task
                                     end
+                                    _r5 = task
                                     _r5 = _r5.spawn
                                     _r6 = function()
                                         local _r3 = tick
@@ -49410,8 +49410,8 @@
                                     _r1 = _r1.YBAItemFarm
                                     _r1 = _r1.standFarmTarget
                                     if not _r1 then
-                                        _r1 = _r152
                                     end
+                                    _r1 = _r152
                                     _r1 = _r1.standFarmTarget
                                 end
                                 if not _r1 then
@@ -49519,8 +49519,8 @@
                                     _r7 = _r7.YBAItemFarm
                                     _r7 = _r7.shinyFarmTarget
                                     if not _r7 then
-                                        _r7 = _r152
                                     end
+                                    _r7 = _r152
                                     _r7 = _r7.shinyFarmTarget
                                 end
                                 if not _r7 then
@@ -62050,8 +62050,8 @@
                                                                                     _r13 = _r3
                                                                                     _r13 = _r13()
                                                                                     if not _r13 then
-                                                                                        _r13 = task
                                                                                     end
+                                                                                    _r13 = task
                                                                                     _r13 = _r13.wait
                                                                                     _r14 = 1
                                                                                     _r13(_r14)
@@ -67592,8 +67592,8 @@
                                         _r14 = _r65
                                         _r14 = _r14()
                                         if not _r14 then
-                                            _r14 = task
                                         end
+                                        _r14 = task
                                         _r14 = _r14.spawn
                                         _r15 = function()
                                             local _r5 = pcall
