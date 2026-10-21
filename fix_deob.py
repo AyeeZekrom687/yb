@@ -2692,16 +2692,25 @@ def _call_based(lines, ln, R):
     n = int(R[2:])
     ind = _indent(lines[ln - 1])
     call = re.compile(r'^(?:' + R + r'(?:\s*,\s*_r\d+)*\s*=\s*)?' + R + r'\(')
-    for j in range(ln, min(ln + MAX_OPERAND, len(lines))):
+    j, stop = ln, min(ln + 80, len(lines))
+    while j < stop:
         s = lines[j]
         if _indent(s) != ind:
             return False
         st = s.strip()
         if call.match(st):
             return True
-        m = ASSIGN_REG_RE.match(st)
+        # argument setup above R: register loads, stores into an argument table (an options
+        # table with a Callback closure for `Window:GlobalSetting(...)`)
+        m = ASSIGN_REG_RE.match(st) or re.match(r'^_r(\d+)(?:\.\w+|\[[^\]]+\])\s*=', st)
         if not m or int(m.group(1)) <= n:
             return False
+        if FUNC_HEAD_RE.search(st):
+            e = _close_of(lines, j)
+            if e is None:
+                return False
+            j = e
+        j += 1
     return False
 
 
@@ -4122,6 +4131,10 @@ def _relaxed_rest_ok(rest, test_line):
     m = re.search(r'\b(_[rp]\d+)\b', COND_IF_RE.match(test_line.rstrip('\r\n')).group(2))
     first = rest[0].strip()
     if not m or not re.match(r'^(?:local\s+)?' + re.escape(m.group(1)) + r'\s*=', first):
+        return True
+    # `X = f / X(...)`: a call statement discards its result, so X is a callee, not an operand
+    # (collectSingleItemNormal's `if not ok or not isItemAvailable(m) then cleanup() ...`)
+    if len(rest) >= 2 and re.fullmatch(re.escape(m.group(1)) + r'\(.*\)', rest[1].strip()):
         return True
     # literal loads of the returned registers followed by the return (`return nil, nil, nil`)
     lit = r'^(?:local\s+)?_r\d+\s*=\s*(?:true|false|nil|-?\d[\d.]*|"[^"]*")$'
