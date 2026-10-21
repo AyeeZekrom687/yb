@@ -13608,7 +13608,7 @@ do
         return true
       end
       local L11_2 = L150_1("Lucky Arrow")
-      if 0 < L11_2 and (L149_1.farmMethod == "Lucky Arrow" or L149_1.farmMethod == "Arrow + Lucky Arrow" and A3_2 == 0) then
+      if 0 < L11_2 and (L149_1.farmMethod == "Lucky Arrow" or L149_1.farmMethod == "Arrow + Lucky Arrow") then
         L170_1("Using Lucky Arrow (no stand)...")
         local L12_2 = A7_2.Stand.Value
         local L13_2 = useItemDirect("Lucky Arrow", "Lucky Arrow")

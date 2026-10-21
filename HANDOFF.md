@@ -76,8 +76,8 @@ Only the hub's own backend is changed; all Roblox remote calls are untouched.
    off (Enable Ping, item/stand/prestige/staff/kick filters) was on again after each
    rejoin/hop/re-execute while the UI showed it off. Now read as saved. Auto Prestige's own
    started/stopped embeds (`L157_1`) also ignored the switch and its filter; now gated.
-9. Stand farm method "Arrow + Lucky Arrow" (user request): Mysterious Arrows first, Lucky Arrows
-   when none are left; collects Rokakaka, Mysterious and Lucky Arrows from the map; never buys
+9. Stand farm method "Arrow + Lucky Arrow" (user request): Lucky Arrows first, Mysterious
+   Arrows when none are left; collects Rokakaka, Mysterious and Lucky Arrows from the map; never buys
    Lucky Arrows (only the "Lucky Arrow" method does). Edits: dropdown, the main loop's
    usable-now check and needed/collected item lists, `sfUseResetItem`'s Lucky Arrow branch.
 10. Lag reductions (user request; same speed and behaviour, harness traces identical in the

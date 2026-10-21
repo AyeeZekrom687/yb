@@ -203,8 +203,8 @@ EDITS = [
      '    -- [port fix] respect the webhook switch and the Auto Prestige Progress filter\n'
      '    if not L109_1.Enabled or not L109_1.NotifyPrestige then\n      return\n    end\n'
      '    local L1_2 = getgenv().webhook\n', 1),
-    # (user request) stand farm method "Arrow + Lucky Arrow": Mysterious Arrows first, then
-    # Lucky Arrows; collects Rokakaka, Mysterious and Lucky Arrows from the map; never buys
+    # (user request) stand farm method "Arrow + Lucky Arrow": Lucky Arrows first, then
+    # Mysterious Arrows; collects Rokakaka, Mysterious and Lucky Arrows from the map; never buys
     # Lucky Arrows (only the "Lucky Arrow" method does)
     ('combined arrows: dropdown',
      '    Options = {\n      "Arrow",\n      "Lucky Arrow",\n      "Rib Cage"\n    },\n'
@@ -244,10 +244,10 @@ EDITS = [
      '              return {\n                "Rokakaka",\n                "Mysterious Arrow",\n'
      '                "Lucky Arrow"\n              }\n'
      '            end\n', 1),
-    ('combined arrows: use lucky when out of mysterious',
+    ('combined arrows: lucky first',
      '      if 0 < L11_2 and L149_1.farmMethod == "Lucky Arrow" then\n',
      '      if 0 < L11_2 and (L149_1.farmMethod == "Lucky Arrow"'
-     ' or L149_1.farmMethod == "Arrow + Lucky Arrow" and A3_2 == 0) then\n', 1),
+     ' or L149_1.farmMethod == "Arrow + Lucky Arrow") then\n', 1),
     # (user request) lag reductions that keep speed and behaviour:
     # the name lowercaser ran one pcall closure + gsub per Cyrillic capital (33) on every call;
     # one gsub over the same table gives the same result (each key is \208 + one byte, no value
