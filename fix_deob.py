@@ -44,7 +44,10 @@ Passes run in this order:
 13b. Closed upvalues: main-chunk registers reused after the closures that captured them get a
     new name for the captured range (evidence: kind change, a later call based at or below
     the register, argument setup for such a call, object use followed by a scalar).
+13c. AutoPlay stage-click log: the one copy of the main logger that 13 cannot prove.
 14. Garbled empty strings: 2-byte garbage constants that stand for "".
+15. Item-name normalizer: the decompiled or-of-and chain is replaced by a first-match loop
+    over the rules read back from the raw output.
 """
 
 import bisect
@@ -1480,13 +1483,19 @@ def _matching_end(toks, open_tok):
     return len(toks) - 1
 
 
-def forced_upvalues(F, toks, lines_F, svc):
+CALL_ARGS_RE = re.compile(r'^(?:_r\d+(?:\s*,\s*_r\d+)*\s*=\s*)?_r(\d+)\((.*)\)$')
+
+
+def forced_upvalues(F, toks, lines_F, svc, tlines=None):
     """{R: {tok}} of reads in F that must be the enclosing variable named R although F's own
     R is in scope:
     - for-loop control registers (`in _rG, _rS, _rC` / `= _rA, _rB, _rC`) read in the loop
       body before any body write: source code cannot name them;
     - a copy `X = R` followed by `X = X.M` where M exists only on service S, F's own R is not
-      that service, and the nearest enclosing function that owns R assigns it GetService(S)."""
+      that service, and the nearest enclosing function that owns R assigns it GetService(S);
+    - a copy `_rK = _rJ` in a call's argument setup where _rJ is the callee or an earlier
+      argument of the same call written in that setup: a compiler reloads from the source, never
+      from a call temporary (`TeleportToPlaceInstance(id, job, job)`, `FireServer("X", "X")`)."""
     out = defaultdict(set)
     keys = sorted(lines_F)
     for idx, line in enumerate(keys):
@@ -1532,10 +1541,76 @@ def forced_upvalues(F, toks, lines_F, svc):
             if any(d.name == R for d in G.decls):
                 break
             G = G.parent
+    if tlines:
+        for line in keys:
+            src = tlines[line - 1]
+            m = re.match(r'^\s*(?:local\s+)?_r(\d+)\s*=\s*_r(\d+)\s*$', src)
+            if not m or int(m.group(2)) >= int(m.group(1)):
+                continue
+            K, J = int(m.group(1)), int(m.group(2))
+            ind = _indent(src)
+            wj = re.compile(r'^(?:local\s+)?_r' + str(J) + r'\s*=')
+            call = None
+            for q in range(line, min(line + 15, len(tlines))):
+                st = tlines[q].strip()
+                if _indent(tlines[q]) != ind or wj.match(st):
+                    break
+                c = CALL_ARGS_RE.match(st)
+                if c:
+                    call = (int(c.group(1)), [int(x) for x in re.findall(r'_r(\d+)', c.group(2))])
+                    break
+            if not call or not (call[0] <= J < K and K in call[1] and (J in call[1] or J == call[0])):
+                continue
+            if not any(wj.match(tlines[q].strip()) and _indent(tlines[q]) == ind
+                       for q in range(max(0, line - 13), line - 1)):
+                continue
+            out[f'_r{J}'].add(lines_F[line][-1])
+        # (d) a copy that is then called (or indexed) while F's latest own write of the source
+        # is a literal that cannot be called (indexed); (e) the same source copied into both
+        # the callee and an argument of one call (`f(f)`): the callee copy is the outer value.
+        for idx, line in enumerate(keys):
+            src = tlines[line - 1]
+            m = re.match(r'^\s*(?:local\s+)?(_r\d+)\s*=\s*(_r\d+)\s*$', src)
+            if not m or m.group(1) == m.group(2):
+                continue
+            X, R = m.group(1), m.group(2)
+            ind = _indent(src)
+            wx = re.compile(r'^(?:local\s+)?' + X + r'\s*=')
+            use = None
+            for q in range(line, min(line + 15, len(tlines))):
+                st = tlines[q].strip()
+                if _indent(tlines[q]) != ind:
+                    break
+                c = CALL_ARGS_RE.match(st)
+                if c and f'_r{c.group(1)}' == X:
+                    use = ('call', c, q)
+                    break
+                if re.match(r'^' + X + r'\s*=\s*' + X + r'\s*[.\[]', st):
+                    use = ('index', None, q)
+                    break
+                if wx.match(st):
+                    break
+            if use is None:
+                continue
+            kind = None
+            wr = re.compile(r'^\s*(?:local\s+)?' + R + r'\s*=\s*(.+)$')
+            for q in reversed(keys[:idx]):
+                w = wr.match(tlines[q - 1])
+                if w:
+                    kind = _value_kind(w.group(1))
+                    break
+            bad = ('string', 'number', 'boolean', 'table', 'nil') if use[0] == 'call' else ('number', 'boolean', 'nil')
+            same_src_arg = use[0] == 'call' and any(
+                re.match(r'^\s*(?:local\s+)?_r(\d+)\s*=\s*' + R + r'\s*$', tlines[q])
+                and int(re.match(r'^\s*(?:local\s+)?_r(\d+)', tlines[q]).group(1))
+                in [int(x) for x in re.findall(r'_r(\d+)', use[1].group(2))]
+                for q in range(line, use[2]))
+            if kind in bad or same_src_arg:
+                out[R].add(lines_F[line][-1])
     return out
 
 
-def find_leaks(funcs, toks=None, svc=None):
+def find_leaks(funcs, toks=None, svc=None, tlines=None):
     """Return {func: {name: {'decls': set(Decl), 'uses': [(line, tok, res)]}}} for leaked registers.
 
     A use is a leak when it does not resolve to one of the function's own visible locals,
@@ -1562,7 +1637,7 @@ def find_leaks(funcs, toks=None, svc=None):
             continue
         lines_F = own_line_tokens(F, toks)
         # Reads that must be the enclosing variable (for-loop control registers, service members).
-        for name, ftoks in forced_upvalues(F, toks, lines_F, svc or {}).items():
+        for name, ftoks in forced_upvalues(F, toks, lines_F, svc or {}, tlines).items():
             ent = out.setdefault(F, {}).setdefault(name, {'decls': set(), 'uses': []})
             ent['forced'] = ftoks
         # Non-copy writes before a register's first declaration can only target F's own
@@ -1721,7 +1796,7 @@ def fix_scope_leaks(text):
     """Hoist leaked registers to function scope. Returns (new_text, stats, warnings)."""
     toks = tokenize(text)
     funcs = analyze(toks)
-    leaks = find_leaks(funcs, toks, service_writes(text, funcs, toks))
+    leaks = find_leaks(funcs, toks, service_writes(text, funcs, toks), text.split('\n'))
     lines_of = {F: own_line_tokens(F, toks) for F in leaks}
     decisions = {}                      # (F, R) -> ({tok: 'own' | 'up'}, timeline)
     for F, names in leaks.items():
@@ -1919,6 +1994,118 @@ def fix_scope_leaks(text):
         pos = end
     out.append(text[pos:])
     return ''.join(out), stats, warnings
+
+
+AUTOPLAY_LOG_RE = re.compile(
+    r'(\s*)_r21 = _r20o1\n'
+    r'(\s*_r22 = string\n\s*_r22 = _r22\.format\n'
+    r'\s*_r23o1 = "AutoPlay: Clicking stage %d button \[%s\] \(attempt %d\)")')
+
+
+# --- ITEM-NAME NORMALIZER (Pass 15) ---
+# normalizeItemName maps a raw item name to its canonical name through a chain of
+# `if <find tests> then name = X; goto END end`. Its or-of-and conditions decompiled into
+# nested tests whose jumps were lost (most names became "Yellow Candy") and the 46 gotos fell
+# through (later, looser rules overrode earlier ones). The rules are read back from the raw
+# output and the chain is replaced by a first-match loop over them.
+# Reading a test `r = find(P)` + `if [not] r then`: a non-empty `if not r` continues the AND
+# group (P); a non-empty `if r` ends an alternative (P alone); an empty if jumps on its printed
+# condition - to the result if the next statement is another test (the group ends there), to
+# failure if the next statement is the result (the literal is the opposite). `if s ~= "X" then`
+# is an exact-name alternative.
+
+def parse_item_name_rules(raw):
+    """[(name, [[(kind, text, wanted)]])] from the raw normalizer chain."""
+    L = [ln.rstrip('\r\n') for ln in raw]
+    start = next(i for i, ln in enumerate(L) if ln.strip() == '_r14 = "(Redeemed Items)"')
+    ret = next(i for i in range(start, len(L)) if L[i].strip() == '_r15 = _r145')
+
+    def next_stmt(j):
+        while j < ret and (not L[j].strip() or L[j].strip() == 'end' or L[j].strip().startswith('--')):
+            j += 1
+        return L[j].strip()
+    rules, groups, cur, pat = [], [], [], None
+    for i in range(start + 1, ret):
+        st = L[i].strip()
+        m = re.match(r'^(?:local )?_r17 = "(.*)"$', st)
+        c = re.match(r'^if _r13 ~= "(.*)" then$', st)
+        b = re.match(r'^_r14 = "(.*)"$', st)
+        if m:
+            pat = m.group(1)
+        elif c:
+            groups.append(cur + [('eq', c.group(1), True)])
+            cur = []
+        elif st == '_r15 = _r15(_r16, _r17, _r18, _r19)':
+            t = L[i + 1].strip()
+            assert t in ('if _r15 then', 'if not _r15 then') and pat is not None, f'item rules: line {i + 2}'
+            neg = t == 'if not _r15 then'
+            if L[i + 2].strip() != 'end':
+                if neg:
+                    cur.append(('find', pat, True))
+                else:
+                    groups.append(cur + [('find', pat, True)])
+                    cur = []
+            elif next_stmt(i + 3).startswith('_r14 = "'):
+                cur.append(('find', pat, neg))
+            else:
+                groups.append(cur + [('find', pat, not neg)])
+                cur = []
+            pat = None
+        elif b:
+            if cur:
+                groups.append(cur)
+            rules.append((b.group(1), groups))
+            groups, cur = [], []
+    return rules
+
+
+def fix_item_name_chain(text, rules):
+    lines = text.split('\n')
+    r = next(i for i, ln in enumerate(lines) if ln.strip() == '_r14 = "(Redeemed Items)"')
+    ind = _indent(lines[r]) - 4
+    assert lines[r - 1].strip() == 'if _r15 then' and lines[r + 1] == ' ' * ind + 'else', 'item rules: anchor'
+    e = block_end(lines, r - 1, ind)
+    assert e is not None and lines[e + 1].strip() == '_r15 = _r145', 'item rules: chain end'
+    head = next(i for i in range(r, -1, -1) if lines[i].strip() == 'local _r146 = function(_p1)')
+
+    def lit(k, v, w):
+        return '{"%s", "%s", %s}' % (k, v, 'true' if w else 'false')
+    table = ['_YBA_ITEM_NAME_RULES = {'] + [
+        '    {"%s", {%s}},' % (name, ', '.join('{' + ', '.join(lit(*x) for x in g) + '}' for g in groups))
+        for name, groups in rules] + ['}']
+    pad = ' ' * (ind + 4)
+    loop = [
+        'for _, _rule in ipairs(_YBA_ITEM_NAME_RULES) do',
+        '    local _hit = false',
+        '    for _, _grp in ipairs(_rule[2]) do',
+        '        local _ok = true',
+        '        for _, _lit in ipairs(_grp) do',
+        '            local _found',
+        '            if _lit[1] == "eq" then',
+        '                _found = _r13 == _lit[2]',
+        '            else',
+        '                _found = string.find(_r13, _lit[2], 1, true) ~= nil',
+        '            end',
+        '            if _found ~= _lit[3] then',
+        '                _ok = false',
+        '                break',
+        '            end',
+        '        end',
+        '        if _ok then',
+        '            _hit = true',
+        '            break',
+        '        end',
+        '    end',
+        '    if _hit then',
+        '        _r14 = _rule[1]',
+        '        break',
+        '    end',
+        'end',
+    ]
+    lines[r + 2:e] = [pad + ln for ln in loop]
+    hpad = lines[head][:_indent(lines[head])]
+    lines[head:head] = [hpad + ln for ln in table]
+    return '\n'.join(lines), len(rules)
 
 
 # --- CLOSED UPVALUES IN THE MAIN CHUNK (Pass 13b) ---
@@ -2622,9 +2809,48 @@ def _splits_chain(lines, q, carried):
     return bool(reads) and any(c != R for c in carried)
 
 
-def _choose_goto_target(lines, group):
+def _skip_safe(lines, g, q, end):
+    """No register written in the code a goto at g skips (up to target q) is read after q
+    before being rewritten (linear scan to the function end): skipping it loses no value."""
+    writes = set()
+    for k in range(g + 1, q):
+        m = re.match(r'^\s*(?:local\s+)?((?:_r\d+)(?:\s*,\s*_r\d+)*)\s*(?:=|$)', lines[k])
+        if m:
+            writes.update(re.findall(r'_r\d+', m.group(1)))
+    for R in writes:
+        rx = re.compile(r'\b' + R + r'\b')
+        for k in range(q, end):
+            st = lines[k].strip()
+            if not rx.search(st):
+                continue
+            a = LHS_RE.match(st)
+            if a and rx.search(a.group(1)) and not rx.search(a.group(2)):
+                break                          # rewritten first: the skipped value is dead
+            return False
+    return True
+
+
+def _after_exit(lines, q):
+    """Position q directly follows a return/break in its block: reachable only by a jump, so a
+    drifted count there is most likely a miss for the return itself."""
+    p = q - 1
+    while p >= 0 and not lines[p].strip():
+        p -= 1
+    st = lines[q].strip()
+    ind = _indent(lines[q]) + (4 if st in ('end', 'else') or st.startswith('until') else 0)
+    return _indent(lines[p]) == ind and re.match(r'^(?:return\b|do return\b|break$)', lines[p].strip()) is not None
+
+
+def _overwrites_carried(target, carried):
+    """The target statement assigns a register a goto carries (set right before jumping)."""
+    a = LHS_RE.match(target.strip())
+    return bool(a) and any(r and re.search(r'\b' + r + r'\b', a.group(1)) for r in carried)
+
+
+def _choose_goto_target(lines, group, end=None):
     """One target for gotos that jump to the same instruction: the common candidate nearest N.
-    group: [(g, N, carried, cands)]."""
+    group: [(g, N, carried, cands)]. Off-by-one/two counts (dropped instructions) are accepted
+    only when skipping to the candidate loses no live value."""
     N = group[0][1]
     common = set(group[0][3])
     for _, _, _, cands in group[1:]:
@@ -2638,8 +2864,11 @@ def _choose_goto_target(lines, group):
         flag_test = any(r and re.match(r'^if (?:not )?' + r + r' then$', lines[q].strip())
                         and FLAG_SET_RE.match(lines[g - 1].strip() if lines[g - 1].strip() else '')
                         for g, _, r, _ in group)
-        if c != N and not flag_test:
-            continue                           # off-by-k picks can skip a needed assignment
+        if c != N and not flag_test and (end is None or abs(c - N) > 2
+                                         or not all(_skip_safe(lines, g, q, end) for g, _, _, _ in group)
+                                         or _overwrites_carried(lines[q], carried)
+                                         or _after_exit(lines, q)):
+            continue                           # off-by-k picks must not skip or clobber a value
         key = (0 if flag_test else 1, abs(c - N), c > N, -q)
         if best is None or key < best[0]:
             best = (key, q)
@@ -2665,7 +2894,7 @@ def fix_gotos(lines):
                 groups[int(GOTO_RE.match(lines[g]).group(2))].append((g,) + (0,) + c)
         for N, group in groups.items():
             group = [(g, N, carried, cands) for g, _, carried, cands in group]
-            t = _choose_goto_target(lines, group)
+            t = _choose_goto_target(lines, group, _close_of(lines, h))
             if t is not None:
                 for g, _, _, _ in group:
                     targets[g] = t
@@ -3388,6 +3617,7 @@ def main():
         lines = f.readlines()
 
     print(f"Read {len(lines)} lines from {input_file}")
+    item_rules = parse_item_name_rules(lines)
 
     # Pass 0b: Structural repairs on the raw output (blocks left open to end of file)
     lines, sr_stats = fix_structural_repairs(lines)
@@ -3513,9 +3743,19 @@ def main():
     full_text, cu_count = fix_closed_upvalues(full_text)
     print(f"Pass 13b: Split {cu_count} reused main-chunk registers captured by closures")
 
+    # Pass 13c: AutoPlay stage-click log (collision 13 cannot prove: the function's own _r20 is
+    # the second return of a call, the log call needs the main logger _r20)
+    full_text, n = AUTOPLAY_LOG_RE.subn(r'\1_r21 = _r20\n\2', full_text)
+    assert n == 1, f'Pass 13c: expected 1 AutoPlay log copy, got {n}'
+    print("Pass 13c: Fixed AutoPlay stage-click log copy")
+
     # Pass 14: Garbled empty strings
     full_text, gs_count = fix_garbled_strings(full_text)
     print(f"Pass 14: Replaced {gs_count} garbled empty-string constants")
+
+    # Pass 15: Item-name normalizer chain rebuilt from its rules (after Pass 14: rule strings are clean)
+    full_text, in_count = fix_item_name_chain(full_text, item_rules)
+    print(f"Pass 15: Rebuilt item-name normalizer ({in_count} rules)")
 
     full_text = full_text.replace(TS_MARK, '')
     fixed_lines = split_lines(full_text)

@@ -350,6 +350,15 @@ proxy_mt.__call = function(p, ...)
     elseif key == "FireServer" or key == "InvokeServer" or key == "Kick" then
         STATS[key] = STATS[key] + 1
         return nil
+    elseif key == "Teleport" or key == "TeleportToPlaceInstance" or key == "TeleportAsync"
+            or key == "TeleportToSpawnByName" then
+        STATS.Teleport = (STATS.Teleport or 0) + 1
+        local tb = {}
+        for line in debug.traceback("", 2):gmatch("[^\n]+") do
+            if line:find("SCR:%d+:") then tb[#tb + 1] = line:match("SCR:%d+") end
+        end
+        log("TELEPORT", key .. " called from " .. table.concat(tb, " < "))
+        return nil
     elseif key == "GetAttribute" then
         return nil
     end
@@ -542,6 +551,16 @@ for _ = 1, tonumber(os.getenv("DRAIN_STEPS")) or 100 do
     for _, fn in pairs(FRAME_CONNS) do spawn_now(fn, 0.016) end
     run_due()
 end
+-- EVAL=<lua>: run code in the script's global environment after boot (results printed by the code)
+local EVAL = os.getenv("EVAL")
+if EVAL then
+    local f, err = real_loadstring(EVAL, "=EVAL")
+    if not f then log("EVAL", "compile error: " .. tostring(err)) else
+        local ok2, e2 = pcall(f)
+        if not ok2 then log("EVAL", "error: " .. tostring(e2)) end
+    end
+end
+
 -- FIRE=<pattern>: switch on matching toggles / press matching buttons (case-insensitive plain
 -- match on the element name, "*" = all), then run FIRE_STEPS half-second steps.
 local FIRE = os.getenv("FIRE")
@@ -569,8 +588,8 @@ local uc = {}
 for k, v in pairs(UI_CALLS) do uc[#uc + 1] = k .. "=" .. v end
 table.sort(uc)
 log("SUMMARY", "MacLib calls: " .. table.concat(uc, " "))
-log("SUMMARY", string.format("FireServer=%d InvokeServer=%d Kick=%d HttpGet=%d live tasks=%d",
-    STATS.FireServer, STATS.InvokeServer, STATS.Kick, #STATS.HttpGet, #tasks))
+log("SUMMARY", string.format("FireServer=%d InvokeServer=%d Kick=%d Teleport=%d HttpGet=%d live tasks=%d",
+    STATS.FireServer, STATS.InvokeServer, STATS.Kick, STATS.Teleport or 0, #STATS.HttpGet, #tasks))
 local pe = {}
 for msg, c in pairs(PCALL_LOG) do pe[#pe + 1] = string.format("%5d x %s", c, msg) end
 table.sort(pe)

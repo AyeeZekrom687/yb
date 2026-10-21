@@ -48,13 +48,16 @@ A copy `_rX = R` made after a call clobbered the function's own R (R was a call 
 14. **Lost gotos.** Jumps the decompiler could not structure print as `-- goto [N]` (N = 1-based instruction index in the function) and fall through. Counting: one instruction per line, `if` = 2, `else` = 1, loop `end` = 1, other `end`/`while true do` = 0, closure = 1. Dropped instructions make the count drift, so only exact matches against structural join points are used.
 15. **Double while loops.** `while true do / while true do BODY end / end` (outer body = inner loop) is one loop: as printed, `break` restarts it (the number formatter spun forever below 1000), and the code after the loop is printed at the end of BODY (a trailing return, e.g. `return formatted`), so the loop ran once.
 16. **Unnameable registers.** For-loop control registers (`in _rG, _rS, _rC` / `= _rA, _rB, _rC`) read in the loop body, and copies indexed with a member that exists only on one service (`.RenderStepped`, `.GetPlayerFromCharacter`, ...), are the enclosing variable of that name. A decompiler local that is dead where a nested closure is created (a call clobbered it), or holds a boolean/number literal while the copy is indexed, is passed through to the next owner.
+18. **Copies that cannot be own.** In a call's argument setup, a copy from the callee or an earlier argument register of the same call (`TeleportToPlaceInstance(id, job, job)`, `FireServer("X", "X")`); a copy that is then called while the function's latest own write of the source is a string/number/boolean/table/nil literal (or indexed while it is a number/boolean/nil); the same source copied into both the callee and an argument (`f(f)`). All are the enclosing variable.
+19. **Near-miss goto targets.** A count off by 1-2 is accepted only if no register written in the skipped code is read after the target before being rewritten, the target does not assign the register set right before the goto, and the target does not directly follow a return/break (a drifted count there is the return itself).
+20. **Or-of-and chains.** `if A or (B and C) or (D and not E) then` prints as nested tests where an empty `if` jumps on its printed condition: to the result when another test follows, to failure when the result follows. Pass 3b reads these wrong (it assumes the jump always skips the result); only the item-name normalizer was affected in a way that matters (Pass 15).
 17. **Register reuse evidence (13b).** A main-chunk register R captured by a closure is reused when its next write changes the value kind (copies take their source's kind; a function replacing a function counts), when a later call is based at or below R (calls sit at the stack top), when the next write sets up an argument of a call based below R, when the closure indexes R as an object and R later gets a string/number/boolean, or when R later gets a function literal and did not hold one (e.g. `lastTeleportTick` in register 89, later reused for the farm activity check). The split range starts at the latest write in the closure's own block, so conditional writes in between stay consistent.
 
 ## Passes in fix_deob.py (current counts)
 | Pass | What | Count |
 |------|------|-------|
 | 0b | Structural repairs (loop end, bypass else, GameModes or-chain, outer game-ready while) | 4 |
-| 0d | Lost gotos: `F = true` at the goto, skipped code wrapped in `if not F then`, `if F then break end` where a loop is left | 30 resolved, 141 left |
+| 0d | Lost gotos: `F = true` at the goto, skipped code wrapped in `if not F then`, `if F then break end` where a loop is left | 39 resolved, 132 left (46 of them inside the chain Pass 15 replaces) |
 | 0c | Double while loops collapsed / post-loop code moved out | 49 / 22 |
 | 0 | TESTSET restoration (marked / operands moved / ternary else) | 394 / 32 / 11 |
 | 1 | Truthiness inversions (TEST) | 5,390 |
@@ -75,9 +78,11 @@ A copy `_rX = R` made after a call clobbered the function's own R (R was a call 
 | 10 | Players service upvalue fixes | 75 |
 | 11 | Dropped return-false | 0 |
 | 12 | Game-ready initial skip (structure already correct after 0c/0d) | 0 |
-| 13 | Scope leaks (202 renamed for collisions, incl. forced upvalues and dead lexical owners) | 1,694 |
+| 13 | Scope leaks (214 renamed for collisions, incl. forced upvalues and dead lexical owners) | 1,703 |
+| 13c | AutoPlay stage-click log copy (anchored patch) | 1 |
 | 13b | Closed upvalues (main-chunk registers split per captured range) | 312 |
 | 14 | Garbled empty strings | 220 |
+| 15 | Item-name normalizer chain replaced by a first-match loop over 47 rules read from the raw output | 47 |
 
 Patch 3f (UI restore loop) was removed: Pass 0c produces the same structure generically.
 
@@ -91,18 +96,20 @@ MACLIB_PATH=maclib.lua ABSENT="LoadingScreen1,LoadingScreen,BlackScreen,Main Men
 # switch on toggles / press buttons after boot (case-insensitive name match, "*" = all), 200 x 0.5 s:
 FIRE="Enable farming" FIRE_STEPS=200 MACLIB_PATH=... ABSENT=... lua5.1 tools/harness.lua scr 50000000
 ```
-With FIRE set, repeated output lines are counted (log spam shows as `N x line`). Mock limitations: every child exists unless listed in ABSENT, numeric properties (`.X`, `.Value`) return numbers (so `UDim2.X.Scale` errors at scr:30519 and `PlayerStats.Quest.Value` is a number at scr:37049), MacLib is a stub, the world has no items.
+With FIRE set, repeated output lines are counted (log spam shows as `N x line`). `EVAL=<lua>` runs code after boot (main-chunk locals are reachable through `debug.getupvalue` on functions in `_G.YBAItemFarm`); every Teleport/TeleportToPlaceInstance call is logged with its scr call stack. Mock limitations: every child exists unless listed in ABSENT, numeric properties (`.X`, `.Value`) return numbers (so `UDim2.X.Scale` errors at scr:30519 and `PlayerStats.Quest.Value` is a number at scr:37049), MacLib is a stub, the world has no items.
 
 ## Current Status
 - Builds 8d707ab, dbd97d4, 253ad8a: see git log; their reported errors are reproduced and cleared in the harness.
 - Round 3 report (253ad8a): watermark `RenderStepped` on a ScreenGui (32513), `GetPlayerFromCharacter` nil (41841/41924), `Destroy` on nil (52419/52503), repeating `number < function` (56130). Causes: service-member collision, for-loop control register read, TESTSET false positive, main register 160 reused as an `ipairs` generator. All fixed (rules 12, 16, 17).
 - Item farm toggle ("spams logs and does not work"): the watchdog's `if status == "dead"` lost its body, so every 2 s it warned and spawned another farm thread; the farm loop itself hit a nil multiplier (lost ternary), spun without yielding (double while), and had 7 lost gotos. All fixed; in the harness the farm runs with no errors and a constant task count.
 - Round 4 report (113513c): `scr:29544 attempt to call a number value` in the item farm watchdog. Main register 89 held `lastTeleportTick` (written by the teleport marker closure) and was then reused for the farm activity function, so the first teleport overwrote it. Fixed by the function-literal rule above. The same watchdog lost its `and`: the stall recovery (no farm action for 8 s) only ran when no farm thread existed; now `if thread and status == "dead" then resurrect else stall check end`.
+- Round 5 report (d36932e): `Lib.Spawn Error: attempt to yield across metamethod/C-call boundary | ClientFunctions 1354` while loading into a server. Printed by the game's own ClientFunctions; nothing in scr references it, and scr's only metamethod hooks are installed after the game-ready wait. If it ever appears after the UI loads, test with `YBA/NO_HOOKS.txt` (skips the bypass hooks) to see whether the executor cannot yield through the `newcclosure` __namecall hook.
+- Item farm item selection: `normalizeItemName` returned "Yellow Candy" for almost every item and plain "Candy" for every colored candy (or-of-and chains misread + 46 lost gotos), so selected farm items never matched. Rebuilt (Pass 15); all 47 canonical names map to themselves in the harness.
+- Also fixed: Reconnect button passed the JobId as the player; 6 ProximityPrompt `FireServer("PromptTriggered", ...)` calls passed the string/method instead of the prompt; VirtualInputManager `SendKeyEvent` passed the manager as the key; a `LearnSkill` call used the string "II" as the function; AutoPlay stage-click log.
 - Harness, current build: in-game and main-menu boot complete (8 tabs, 62 toggles); firing all 77 toggles/buttons leaves only the mock artifacts and the AutoPlay log collision below.
 
 ## Known Residual Issues
-- **141 lost gotos still fall through** (no exact join point). Most are in long if/elseif chains (item-name normalizer: a later match can overwrite the result) and in the server-hop page loop.
-- **AutoPlay stage-click log** (scr:5430, main menu only, inside pcall): `_r21 = _r20` copies the main logger while the function's own `_r20` holds the stage from a multi-return call; no literal evidence to separate them.
+- **86 lost gotos still fall through** (132 minus the 46 in the replaced normalizer chain): no join point within the accepted count tolerance. Larger groups: stand/shiny/rib farm helpers, the server-hop page loop, the key-type chain (key system is stubbed).
 - `isSellableItem` / `isCandyItem` / `isProtectedItem` / `sellableItems` are read as globals in a few places but only defined as `_r142` fields (pre-existing in the original).
 - 66 setlists are still skipped (nested table constructors).
 
