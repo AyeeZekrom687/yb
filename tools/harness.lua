@@ -668,6 +668,7 @@ local uc = {}
 for k, v in pairs(UI_CALLS) do uc[#uc + 1] = k .. "=" .. v end
 table.sort(uc)
 log("SUMMARY", "MacLib calls: " .. table.concat(uc, " "))
+if os.getenv("LIST_TASKS") then for _, t in ipairs(tasks) do real_print("   task " .. tostring(t.label)) end end
 log("SUMMARY", string.format("FireServer=%d InvokeServer=%d Kick=%d Teleport=%d HttpGet=%d live tasks=%d",
     STATS.FireServer, STATS.InvokeServer, STATS.Kick, STATS.Teleport or 0, #STATS.HttpGet, #tasks))
 local pe = {}

@@ -3029,16 +3029,6 @@ def _operand_body(lines, i, ind, reg):
     return False
 
 
-def _chain_tail_test(lines, i, ind, reg):
-    """True for an empty TESTSET that ends the innermost branch of an and-chain
-    (`X = (A and B) or K`): its right operand `X = K` follows the chain's closing `end`, out
-    of reach of the operand move. Left unmarked, Pass 3b rebuilds it as an or-flag chain."""
-    return (ind >= 4 and i + 3 < len(lines)
-            and lines[i + 1].rstrip('\r\n') == ' ' * ind + 'end'
-            and lines[i + 2].rstrip('\r\n') == ' ' * (ind - 4) + 'end'
-            and lines[i + 3].startswith(' ' * (ind - 4) + reg + ' = '))
-
-
 def fix_testsets(lines):
     """Mark TESTSET tests so Pass 1 leaves them, and move empty-if right operands inside."""
     text = ''.join(lines)
@@ -3067,8 +3057,7 @@ def fix_testsets(lines):
         F, res = use_info[ytoks[-1]]
         ind = len(f.group(1))
         if (_is_own_source(F, Y, ytoks[-1], res, toks, cache, lines)
-                and _operand_body(lines, i, ind, f.group(3))
-                and not _chain_tail_test(lines, i, ind, f.group(3))):
+                and _operand_body(lines, i, ind, f.group(3))):
             targets.append(i)
 
     stats = {'marked': 0, 'operand_moved': 0, 'ternary_else': 0}
@@ -4046,6 +4035,9 @@ def fix_or_and_chains(lines):
 # assignments, no inner level has an else, and REST is non-empty.
 
 COND_IF_RE = re.compile(r'^(\s*)if (.+) then$')
+# Chain levels may carry Pass 0's TESTSET mark: `x = (A and B and C) or K` ends its and-chain
+# with the TESTSET `x = C / if not x then end` (correct sense) and has `x = K` as the body.
+LEVEL_IF_RE = re.compile(r'^(\s*)if (.+?) then(?:' + re.escape(TS_MARK) + r')?$')
 COND_REG_RE = re.compile(r'\b_[rp]\d+\b')
 
 
@@ -4087,7 +4079,7 @@ def _chain_level(lines, start, end, ind, regs, relaxed=False):
     assigned = set()
     while k < end:
         s = lines[k].rstrip('\r\n')
-        if _indent(s) == body and COND_IF_RE.match(s):
+        if _indent(s) == body and LEVEL_IF_RE.match(s):
             break
         if _indent(s) != body or not SIMPLE_STMT_RE.match(s.strip()) or 'function' in s:
             return None
@@ -4095,7 +4087,7 @@ def _chain_level(lines, start, end, ind, regs, relaxed=False):
         k += 1
     if k >= end:
         return None
-    nregs = set(COND_REG_RE.findall(COND_IF_RE.match(lines[k].rstrip('\r\n')).group(2)))
+    nregs = set(COND_REG_RE.findall(LEVEL_IF_RE.match(lines[k].rstrip('\r\n')).group(2)))
     shared = nregs & (regs | assigned) if relaxed else nregs & regs
     if relaxed and not shared and k == start + 1:
         shared = nregs or {'_'}          # a level holding only the next test: a pure or-chain
@@ -4128,7 +4120,7 @@ def _relaxed_rest_ok(rest, test_line):
     """With registers that differ per level, REST inside the outer block is accepted unless
     it starts by assigning the final test's register (Pass 4's `x = x or v` operand), with
     the exception of a plain `X = <literal>` / `return X` block."""
-    m = re.search(r'\b(_[rp]\d+)\b', COND_IF_RE.match(test_line.rstrip('\r\n')).group(2))
+    m = re.search(r'\b(_[rp]\d+)\b', LEVEL_IF_RE.match(test_line.rstrip('\r\n')).group(2))
     first = rest[0].strip()
     if not m or not re.match(r'^(?:local\s+)?' + re.escape(m.group(1)) + r'\s*=', first):
         return True
@@ -4156,6 +4148,15 @@ def _dropped_rest_end(lines, e, I):
     return r
 
 
+def _operand_rest(lines, E, lo, hi):
+    """A TESTSET final test (`x = C / if not x then end`, Pass 0's mark) ends an or-chain only
+    as `x = (A and C) or K`: REST must start with the right operand `x = K`. Otherwise the
+    TESTSET is a plain `x = a and b` and the code after it is not a chain body."""
+    reg = re.search(r'\b(_[rp]\d+)\b', LEVEL_IF_RE.match(lines[E].rstrip('\r\n')).group(2))
+    first = next((ln.strip() for ln in lines[lo:hi] if ln.strip()), '')
+    return reg is not None and re.match(r'^(?:local\s+)?' + reg.group(1) + r'\s*=', first) is not None
+
+
 def fix_or_chains(lines):
     lines = list(lines)
     count = 0
@@ -4179,6 +4180,8 @@ def fix_or_chains(lines):
             if found is None:
                 continue
             E, top_end, depth = found
+            if TS_MARK in lines[E] and not _operand_rest(lines, E, top_end + 1, then_end):
+                continue
             if any(lines[q].strip() for q in range(top_end + 1, then_end)):
                 inside = [ln for ln in lines[top_end + 1:then_end] if ln.strip()]
                 if relaxed and depth < 2 and not _relaxed_rest_ok(inside, lines[E]):
@@ -4199,7 +4202,7 @@ def fix_or_chains(lines):
         pad = ' ' * I
         eind = _indent(lines[E])
         flag = f'_or{count}'
-        cond = COND_IF_RE.match(lines[E].rstrip('\r\n')).group(2)
+        cond = LEVEL_IF_RE.match(lines[E].rstrip('\r\n')).group(2)
         new = [pad + f'local {flag} = true\n']
         new += lines[i:E]
         new += [' ' * eind + f'if {_negate_cond(cond)} then\n', ' ' * (eind + 4) + f'{flag} = false\n']
@@ -4230,7 +4233,7 @@ def fix_or_chains(lines):
 # chain of nested ifs with every exit dropped:
 #   while true do / if A then / <setup> / if B then / <setup> / if C then / BODY / end / end / end / end
 # Each level is plain setup statements followed by the next test (testing a register the
-# setup computed) as its last statement. When a test fails the loop must exit, so every
+# setup computed, or with no setup at all) as its last statement. When a test fails the loop must exit, so every
 # if in the chain gets `else break`. Descent stops at the first level that does not fit.
 
 def _while_chain(lines, k, ind, first_end=None):
@@ -4247,11 +4250,14 @@ def _while_chain(lines, k, ind, first_end=None):
             assigned.update(n.strip() for n in lines[q].strip().split('=')[0].replace('local ', '').split(','))
             q += 1
         m = COND_IF_RE.match(lines[q].rstrip('\r\n')) if q < e and _indent(lines[q]) == body else None
-        if not m or not assigned & set(COND_REG_RE.findall(m.group(2))):
+        # the next test uses a register its setup computed, or is the level's only statement
+        # (`while playing and not aborted and t < limit do`: `not aborted` has no setup)
+        if not m or (assigned and not assigned & set(COND_REG_RE.findall(m.group(2)))):
             return chain
         eq = block_end(lines, q, body)
-        if eq != e - 1 or _has_else(lines, q + 1, eq, body):
-            return chain
+        if eq != e - 1 or _has_else(lines, q + 1, eq, body) \
+                or [ln.strip() for ln in lines[q + 1:eq] if ln.strip()] == ['break']:
+            return chain                 # `if k == 0 then break end` is an exit test, not a level
         chain.append(q)
         k, ind = q, body
 
