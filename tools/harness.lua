@@ -272,6 +272,74 @@ for nm in ("Heartbeat RenderStepped Stepped PreSimulation PostSimulation PreRend
 end
 local SIGNAL_MEMBERS = { Connect = true, Once = true, Wait = true, ConnectParallel = true }
 
+-- minimal JSON decoder for HttpService:JSONDecode (objects, arrays, strings, numbers, booleans,
+-- null); malformed input gives {}
+function json_decode(s)
+    if type(s) ~= "string" then return {} end
+    local pos = 1
+    local function ws() pos = s:find("[^ \t\r\n]", pos) or #s + 1 end
+    local value
+    local function str()
+        local out, i = {}, pos + 1
+        while true do
+            local c = s:sub(i, i)
+            if c == "" then error("eof") end
+            if c == '"' then pos = i + 1; return table.concat(out) end
+            if c == "\\" then
+                local e = s:sub(i + 1, i + 1)
+                local map = { n = "\n", t = "\t", r = "\r", b = "\b", f = "\f" }
+                if e == "u" then
+                    local cp = tonumber(s:sub(i + 2, i + 5), 16) or 63
+                    out[#out + 1] = cp < 128 and string.char(cp) or "?"
+                    i = i + 6
+                else
+                    out[#out + 1] = map[e] or e
+                    i = i + 2
+                end
+            else
+                out[#out + 1] = c
+                i = i + 1
+            end
+        end
+    end
+    function value()
+        ws()
+        local c = s:sub(pos, pos)
+        if c == "{" then
+            local t = {}
+            pos = pos + 1; ws()
+            if s:sub(pos, pos) == "}" then pos = pos + 1; return t end
+            while true do
+                ws(); local k = str(); ws()
+                pos = pos + 1          -- ':'
+                t[k] = value(); ws()
+                local d = s:sub(pos, pos); pos = pos + 1
+                if d == "}" then return t end
+            end
+        elseif c == "[" then
+            local t = {}
+            pos = pos + 1; ws()
+            if s:sub(pos, pos) == "]" then pos = pos + 1; return t end
+            while true do
+                t[#t + 1] = value(); ws()
+                local d = s:sub(pos, pos); pos = pos + 1
+                if d == "]" then return t end
+            end
+        elseif c == '"' then
+            return str()
+        elseif s:sub(pos, pos + 3) == "true" then pos = pos + 4; return true
+        elseif s:sub(pos, pos + 4) == "false" then pos = pos + 5; return false
+        elseif s:sub(pos, pos + 3) == "null" then pos = pos + 4; return nil
+        end
+        local num = s:match("^-?%d+%.?%d*[eE]?[-+]?%d*", pos)
+        if not num or num == "" then error("bad json") end
+        pos = pos + #num
+        return tonumber(num)
+    end
+    local ok, v = pcall(value)
+    return ok and v or {}
+end
+
 -- VALUES="Stand=None,Level=2": the .Value of instances with these names (numbers when numeric)
 local VALUES = {}
 for nm, v in (os.getenv("VALUES") or ""):gmatch("([^,=]+)=([^,]*)") do VALUES[nm] = tonumber(v) or v end
@@ -427,7 +495,7 @@ proxy_mt.__call = function(p, ...)
     elseif key == "JSONEncode" then
         return "{}"
     elseif key == "JSONDecode" then
-        return {}
+        return json_decode(select(2, ...))
     elseif key == "GenerateGUID" then
         return "00000000-0000-0000-0000-000000000000"
     elseif (key == "FireServer" or key == "InvokeServer") and os.getenv("LOG_REMOTES") then
@@ -623,6 +691,12 @@ G.getcustomasset = function(p) return "rbxasset://" .. tostring(p) end
 G.getsynasset = G.getcustomasset
 G.request = function() return { StatusCode = 200, Success = true, Body = "{}", Headers = {} } end
 G.http_request = G.request
+-- PRELOAD="mock/path=local/file[,...]": start with these files in the mock filesystem
+for spec in (os.getenv("PRELOAD") or ""):gmatch("[^,]+") do
+    local mock, src = spec:match("^([^=]+)=(.+)$")
+    local fh = mock and io.open(src, "rb")
+    if fh then FS[mock] = fh:read("*a"); fh:close() end
+end
 G.readfile = function(p) local s = FS[p] if s == nil then error("file not found: " .. tostring(p), 2) end return s end
 G.writefile = fs_write
 G.appendfile = fs_append

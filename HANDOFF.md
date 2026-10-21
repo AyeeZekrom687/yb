@@ -76,6 +76,10 @@ Only the hub's own backend is changed; all Roblox remote calls are untouched.
    off (Enable Ping, item/stand/prestige/staff/kick filters) was on again after each
    rejoin/hop/re-execute while the UI showed it off. Now read as saved. Auto Prestige's own
    started/stopped embeds (`L157_1`) also ignored the switch and its filter; now gated.
+9. Stand farm method "Arrow + Lucky Arrow" (user request): Mysterious Arrows first, Lucky Arrows
+   when none are left; collects Rokakaka, Mysterious and Lucky Arrows from the map; never buys
+   Lucky Arrows (only the "Lucky Arrow" method does). Edits: dropdown, the main loop's
+   usable-now check and needed/collected item lists, `sfUseResetItem`'s Lucky Arrow branch.
 Kept as in the original: safe mode (`YBA/NO_AUTOSTART.txt`), headless mode (`YBA/NO_UI.txt`), the
 key-info panel (reads key metadata the loader leaves in globals; no network), webhooks, server hop.
 The payload contains no HWID or heartbeat calls (those are in the loader, which is not shipped).
@@ -130,7 +134,7 @@ SANDBOX=1 TRACE=t.txt MACLIB_PATH=maclib.lua ABSENT="$A" lua-250 tools/harness.l
 ```
 `TRACE` writes a canonical event trace (compare runs of two scripts with `sort` + diff after
 masking wall-clock times). Other options: `FIRE`/`FIRE_STEPS`, `ITEMS`, `COVER=<from>-<to>`,
-`LOG_REMOTES=1`, `EVAL=<lua>`, `VALUES=Stand=None,Level=2` (the `.Value` of instances with those names). Mock limits: every child exists unless in ABSENT, numeric
+`LOG_REMOTES=1`, `EVAL=<lua>`, `PRELOAD=mock/path=local/file` (e.g. a settings file; the mock JSONDecode is a real decoder), `VALUES=Stand=None,Level=2` (the `.Value` of instances with those names). Mock limits: every child exists unless in ABSENT, numeric
 properties are numbers, `IsA` is true except for ITEMS models, collected items never disappear.
 Expected harness errors (same in the original): `require` is nil, `UDim2.X.Scale` on a number,
 `debug` nil in the sandbox.

@@ -203,6 +203,51 @@ EDITS = [
      '    -- [port fix] respect the webhook switch and the Auto Prestige Progress filter\n'
      '    if not L109_1.Enabled or not L109_1.NotifyPrestige then\n      return\n    end\n'
      '    local L1_2 = getgenv().webhook\n', 1),
+    # (user request) stand farm method "Arrow + Lucky Arrow": Mysterious Arrows first, then
+    # Lucky Arrows; collects Rokakaka, Mysterious and Lucky Arrows from the map; never buys
+    # Lucky Arrows (only the "Lucky Arrow" method does)
+    ('combined arrows: dropdown',
+     '    Options = {\n      "Arrow",\n      "Lucky Arrow",\n      "Rib Cage"\n    },\n'
+     '    Default = L28_1("SFM", "Arrow"),\n',
+     '    Options = {\n      "Arrow",\n      "Lucky Arrow",\n      "Arrow + Lucky Arrow",\n'
+     '      "Rib Cage"\n    },\n    Default = L28_1("SFM", "Arrow"),\n', 1),
+    ('combined arrows: usable now',
+     '          elseif L17_2 == "Rib Cage" then\n            if L8_2 and 0 < L10_2 then\n'
+     '              L16_2 = true\n            elseif not L8_2 and 0 < L11_2 then\n'
+     '              L16_2 = true\n            end\n          end\n',
+     '          elseif L17_2 == "Rib Cage" then\n            if L8_2 and 0 < L10_2 then\n'
+     '              L16_2 = true\n            elseif not L8_2 and 0 < L11_2 then\n'
+     '              L16_2 = true\n            end\n'
+     '          elseif L17_2 == "Arrow + Lucky Arrow" then\n'
+     '            -- [port] (user request) either arrow kind\n'
+     '            if L8_2 and 0 < L10_2 then\n              L16_2 = true\n'
+     '            elseif not L8_2 and (0 < L9_2 or 0 < L12_2) then\n              L16_2 = true\n'
+     '            end\n          end\n', 1),
+    ('combined arrows: needed items',
+     '              if L3_3 < L8_3 then\n'
+     '                table.insert(L0_3, "Rib Cage of The Saint\'s Corpse")\n'
+     '              end\n            end\n            return L0_3\n',
+     '              if L3_3 < L8_3 then\n'
+     '                table.insert(L0_3, "Rib Cage of The Saint\'s Corpse")\n'
+     '              end\n'
+     '            elseif L5_3 == "Arrow + Lucky Arrow" then\n'
+     '              if L2_3 < L6_3 then\n                table.insert(L0_3, "Rokakaka")\n              end\n'
+     '              if L1_3 < L7_3 then\n                table.insert(L0_3, "Mysterious Arrow")\n'
+     '              end\n'
+     '            end\n            return L0_3\n', 1),
+    ('combined arrows: collected items',
+     '            elseif L0_3 == "Rib Cage" then\n              return {\n                "Rokakaka",\n'
+     '                "Rib Cage of The Saint\'s Corpse"\n              }\n            end\n',
+     '            elseif L0_3 == "Rib Cage" then\n              return {\n                "Rokakaka",\n'
+     '                "Rib Cage of The Saint\'s Corpse"\n              }\n'
+     '            elseif L0_3 == "Arrow + Lucky Arrow" then\n'
+     '              return {\n                "Rokakaka",\n                "Mysterious Arrow",\n'
+     '                "Lucky Arrow"\n              }\n'
+     '            end\n', 1),
+    ('combined arrows: use lucky when out of mysterious',
+     '      if 0 < L11_2 and L149_1.farmMethod == "Lucky Arrow" then\n',
+     '      if 0 < L11_2 and (L149_1.farmMethod == "Lucky Arrow"'
+     ' or L149_1.farmMethod == "Arrow + Lucky Arrow" and A3_2 == 0) then\n', 1),
     # the Info tab's Links section held only the RAILhub Discord invite
     ('brand: links section', '  local L149_1 = L147_1:Section({Side = "Right", Name = "Links"})\n',
      '  local L149_1\n', 1),
