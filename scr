@@ -17781,12 +17781,8 @@ do
       end
       if L5_2.PlayerStats.Stand.Value == "None" then
         L27_2(L5_2.Character.HumanoidRootPart, standFarmPosition)
-        if not L5_2.Character:GetAttribute("WorthinessLearned") then
-          sfLearnWorthiness()
-          pcall(function()
-            L5_2.Character:SetAttribute("WorthinessLearned", true)
-          end)
-        end
+        -- [port fix] always learn before using arrows
+        pcall(sfLearnWorthiness, true)
         pcall(function()
           L14_2("LearnSkill", {
             Skill = "Stand Summon",
@@ -19284,6 +19280,12 @@ do
             Skill = "Stand Barrage Finisher",
             SkillTreeType = "Stand"
           })
+        else
+          -- [port fix] no stand yet: the next arrow needs Worthiness, so it gets the skill
+          -- points first (after Agility I-III, the order sfLearnWorthiness uses)
+          for L4_4, L5_4 in ipairs({"Agility I", "Agility II", "Agility III", "Worthiness"}) do
+            L14_2("LearnSkill", {Skill = L5_4, SkillTreeType = "Character"})
+          end
         end
         for L4_4, L5_4 in ipairs(L0_4) do
           L14_2("LearnSkill", {

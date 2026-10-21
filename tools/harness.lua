@@ -272,10 +272,14 @@ for nm in ("Heartbeat RenderStepped Stepped PreSimulation PostSimulation PreRend
 end
 local SIGNAL_MEMBERS = { Connect = true, Once = true, Wait = true, ConnectParallel = true }
 
+-- VALUES="Stand=None,Level=2": the .Value of instances with these names (numbers when numeric)
+local VALUES = {}
+for nm, v in (os.getenv("VALUES") or ""):gmatch("([^,=]+)=([^,]*)") do VALUES[nm] = tonumber(v) or v end
 proxy_mt.__index = function(p, k)
     local d = PX[p]
     local v = d.store[k]
     if v ~= nil then return v end
+    if k == "Value" and VALUES[d.short] ~= nil then return VALUES[d.short] end
     if SIGNALS[d.short] and d.key == d.short and not SIGNAL_MEMBERS[k] then
         error(tostring(k) .. " is not a valid member of RBXScriptSignal", 2)
     end

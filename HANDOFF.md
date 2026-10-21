@@ -42,6 +42,13 @@ Only the hub's own backend is changed; all Roblox remote calls are untouched.
    runtime's own `__YBA_RUNTIME.Shutdown` still replaces a previous instance.
 3. Auto-reload `L95_1` stubbed: it queued the paid-key loader (`AZX0OZ/keyrh`) with
    `queue_on_teleport` and wrote `autoexec/railhub.lua`. The AutoExecute setting is still stored.
+4. Auto Prestige Worthiness (bug fix, user report: arrows used without Worthiness after the first
+   stand). Its per-step skill routine `L44_2` spent every point on Agility/Vitality/Sturdiness I-V
+   before Worthiness, so after a prestige reset the tree the next stand's arrows had no
+   Worthiness; while there is no stand it now learns Agility I-III + Worthiness first. Its
+   get-stand routine `L30_2` learned Worthiness up front only when the character lacked the
+   `WorthinessLearned` attribute (set even when learning fails, survives a prestige); it now
+   always learns before using arrows. Harness: `VALUES="Stand=None,Level=1"` shows the new order.
 Kept as in the original: safe mode (`YBA/NO_AUTOSTART.txt`), headless mode (`YBA/NO_UI.txt`), the
 key-info panel (reads key metadata the loader leaves in globals; no network), webhooks, server hop.
 The payload contains no HWID or heartbeat calls (those are in the loader, which is not shipped).
@@ -96,7 +103,7 @@ SANDBOX=1 TRACE=t.txt MACLIB_PATH=maclib.lua ABSENT="$A" lua-250 tools/harness.l
 ```
 `TRACE` writes a canonical event trace (compare runs of two scripts with `sort` + diff after
 masking wall-clock times). Other options: `FIRE`/`FIRE_STEPS`, `ITEMS`, `COVER=<from>-<to>`,
-`LOG_REMOTES=1`, `EVAL=<lua>`. Mock limits: every child exists unless in ABSENT, numeric
+`LOG_REMOTES=1`, `EVAL=<lua>`, `VALUES=Stand=None,Level=2` (the `.Value` of instances with those names). Mock limits: every child exists unless in ABSENT, numeric
 properties are numbers, `IsA` is true except for ITEMS models, collected items never disappear.
 Expected harness errors (same in the original): `require` is nil, `UDim2.X.Scale` on a number,
 `debug` nil in the sandbox.

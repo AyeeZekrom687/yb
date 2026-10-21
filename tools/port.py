@@ -34,6 +34,34 @@ EDITS = [
     # (name, old, new, expected count)
     ('folder', '"RAILhubYBA', '"YBA', 6),
     ('duplicate-run guard', GUARD, '-- [port] duplicate-run guard removed\n', 1),
+    # Auto Prestige bug fixes (user report: no Worthiness when using arrows after the first time).
+    # Its per-step skill routine spent every point on Agility, Vitality and Sturdiness I-V before
+    # Worthiness, so after a prestige reset the skill tree the next stand's arrows were used
+    # without Worthiness.
+    ('prestige worthiness first',
+     '          L14_2("LearnSkill", {\n            Skill = "Stand Barrage Finisher",\n'
+     '            SkillTreeType = "Stand"\n          })\n        end\n'
+     '        for L4_4, L5_4 in ipairs(L0_4) do\n          L14_2("LearnSkill", {\n'
+     '            Skill = "Agility " .. L5_4,\n',
+     '          L14_2("LearnSkill", {\n            Skill = "Stand Barrage Finisher",\n'
+     '            SkillTreeType = "Stand"\n          })\n'
+     '        else\n'
+     '          -- [port fix] no stand yet: the next arrow needs Worthiness, so it gets the skill\n'
+     '          -- points first (after Agility I-III, the order sfLearnWorthiness uses)\n'
+     '          for L4_4, L5_4 in ipairs({"Agility I", "Agility II", "Agility III", "Worthiness"}) do\n'
+     '            L14_2("LearnSkill", {Skill = L5_4, SkillTreeType = "Character"})\n'
+     '          end\n'
+     '        end\n'
+     '        for L4_4, L5_4 in ipairs(L0_4) do\n          L14_2("LearnSkill", {\n'
+     '            Skill = "Agility " .. L5_4,\n', 1),
+    # its get-stand routine learned Worthiness up front only once per character model (the
+    # WorthinessLearned attribute is set even when learning fails, and survives a prestige)
+    ('prestige worthiness before arrows',
+     '        if not L5_2.Character:GetAttribute("WorthinessLearned") then\n'
+     '          sfLearnWorthiness()\n          pcall(function()\n'
+     '            L5_2.Character:SetAttribute("WorthinessLearned", true)\n          end)\n        end\n',
+     '        -- [port fix] always learn before using arrows\n'
+     '        pcall(sfLearnWorthiness, true)\n', 1),
 ]
 
 # Coordinator checkpoints (coordinator.lua): (name, anchor, text inserted after the anchor's first
