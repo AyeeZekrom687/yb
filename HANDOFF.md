@@ -17,20 +17,21 @@ transforms that work around unluac's bugs. The decompile is verified against the
 - `payload_decompiled.lua` - verified decompile of the payload (generated, do not edit by hand)
 - `tools/port.py` - builds `scr`: console logger on top + decompile with the port edits below
 - `console_logger.lua` - mirrors the client console to `YBA/console_log.txt` (user request)
+- `coordinator.lua` - feature coordinator module (user request), inserted by `tools/port.py`
 - `scr` - the loaded script
 - `tools/harness.lua` - Lua 5.1 mock Roblox/executor environment (see Testing)
 - `tools/devirt/` - the devirtualizer/decompiler pipeline (see below)
-- Superseded, kept for reference: `fix_deob.py`, `yba_hub_deobfuscated.lua`, `tools/build.py`,
-  `coordinator_block.lua` (the heuristic patcher over an older, buggy decompile; it had known
-  residual errors and is replaced by the verified decompile)
+- Superseded, kept for reference: `fix_deob.py`, `yba_hub_deobfuscated.lua` (the heuristic
+  patcher over an older, buggy decompile; it had known residual errors and is replaced by the
+  verified decompile)
 
 ## Build (MUST follow every time)
 ```bash
 set -o pipefail
-python3 -I tools/port.py payload_decompiled.lua console_logger.lua scr
+python3 -I tools/port.py payload_decompiled.lua console_logger.lua coordinator.lua scr
 luac-250 -p scr                 # Lua 5.1 built with LUAI_MAXVARS 250 (main has >200 locals in 5.1 counting)
 luau-compile --null scr         # real Luau compiler (github.com/luau-lang/luau releases)
-git add scr tools/port.py && git commit -m "..." && git push -u origin main
+git add scr tools/port.py coordinator.lua && git commit -m "..." && git push -u origin main
 ```
 Every edit in `tools/port.py` is anchored on exact text and asserts its match count.
 
@@ -100,10 +101,27 @@ properties are numbers, `IsA` is true except for ITEMS models, collected items n
 Expected harness errors (same in the original): `require` is nil, `UDim2.X.Scale` on a number,
 `debug` nil in the sandbox.
 
-## Pending
-- Coordination so several features (auto prestige, item farm, stand farm, quest/NPC farms, ...)
-  can run together without interfering (user request). The original already has busy flags
-  (`_YBA_SellingBusy`, `_YBA_IsEatingRoka`, `_YBA_IsUsingItem`) and prestige/farm waiting flags.
+## Coordinator (coordinator.lua, user request)
+The original's character-driving features do not know about each other (item farm, stand farm
+which teleports back to its spot every iteration, quest/NPC farm, auto prestige), so running two
+makes them fight over the character. The coordinator is a cooperative lease: each feature calls
+`getgenv()._YBA_Coord.checkpoint(name, isOn, idle, onPause, onWait)` at safe points, and only the
+holder proceeds. With one feature on, checkpoint returns at once (harness: item-farm-only and
+quest-farm-only traces are identical to the build without it, apart from one console line).
+- Turns: the holder keeps the character for the turn length (Settings > Coordinator, 60 s
+  default), then hands over at its next checkpoint to the feature that has waited longest. A
+  feature with nothing to do (item farm with no items: roam loop; NPC farm with no target) hands
+  over at once.
+- Quest/NPC farm yields to Auto Prestige while it runs (both use the game's single quest slot).
+- Checkpoints: item farm per-item loop and roam loop (pausing stops its tween and item stick; the
+  stall watchdog's progress time is kept fresh while it waits); stand/rib/shiny farm loops (their
+  respawn teleports only happen on the stand farm's turn); quest farm and NPC farm loops; auto
+  prestige storyline step (`L53_2`), NPC dialogue (`L37_2`), kill (`L43_2`), get stand (`L30_2`).
+- A holder that is switched off, or has not reached a checkpoint for 120 s, loses the lease.
+- Turn changes print `[Coordinator] A -> B` (in `YBA/console_log.txt`). "Coordinate Farms" off
+  restores the original free-for-all.
+- Not covered: actions the item farm takes inside its own turn that leave the area (server hop
+  farm, auto sell) and PvP/pilot features (manual use).
 
 ## User Directives
 - Do NOT make your own additions — just port the script as-is with bug fixes only

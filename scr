@@ -288,6 +288,141 @@ local function L28_1(A0_2, A1_2)
   return L26_1[A0_2]
 end
 
+-- [port] Coordinator (user request): features that drive the character (item farm, stand
+-- farms, quest/NPC farm, auto prestige) take turns instead of fighting over it. Each one calls
+-- checkpoint() at safe points (the start of a loop iteration or of an action). With one
+-- feature running, checkpoint() returns at once, so single-feature behaviour is the original's.
+-- Turn changes are printed as "[Coordinator] ..." (mirrored to YBA/console_log.txt).
+do
+  local C = {
+    enabled = L28_1("COORD", true) ~= false,
+    slice = tonumber(L28_1("COORD_SLICE", 60)) or 60,
+    holder = nil,         -- feature that may drive the character
+    sliceStart = 0,
+    waiting = {},         -- feature -> tick() when it started waiting
+    active = {},          -- feature -> function: is the feature still switched on
+    seen = {},            -- feature -> tick() of its latest checkpoint
+    STALE = 120,          -- a holder silent this long while on is treated as stuck
+    -- the quest farm and Auto Prestige's storyline share the game's single quest slot
+    yieldsTo = {QuestFarm = "AutoPrestige"},
+    names = {
+      ItemFarm = "Item Farm",
+      StandFarm = "Stand Farm",
+      QuestFarm = "Quest/NPC Farm",
+      AutoPrestige = "Auto Prestige"
+    }
+  }
+  getgenv()._YBA_Coord = C
+
+  local function running(name)
+    local f = C.active[name]
+    if not f then
+      return false
+    end
+    local ok, on = pcall(f)
+    return ok and on and true or false
+  end
+
+  local function blocked(name)
+    local other = C.yieldsTo[name]
+    return other ~= nil and running(other)
+  end
+
+  -- the holder no longer needs the character: switched off, or stuck outside any checkpoint
+  local function vacant(holder)
+    return holder == nil or not running(holder) or tick() - (C.seen[holder] or 0) > C.STALE
+  end
+
+  -- the feature that has waited longest and may run now, other than except
+  local function nextWaiter(except)
+    local best, bestT
+    for name, t in pairs(C.waiting) do
+      if name ~= except and running(name) and not blocked(name) and (bestT == nil or t < bestT) then
+        best, bestT = name, t
+      end
+    end
+    return best
+  end
+
+  local function grant(name)
+    if C.holder ~= name then
+      print("[Coordinator] " .. tostring(C.names[C.holder] or "idle") .. " -> " .. tostring(C.names[name] or name))
+    end
+    C.holder = name
+    C.sliceStart = tick()
+    C.seen[name] = tick()
+    C.waiting[name] = nil
+  end
+
+  -- name: feature id; isOn(): whether the feature is still switched on; idle: it has nothing to
+  -- do right now (hand over at once if another feature waits); onPause(): stops the feature's own
+  -- movement before another takes over; onWait(): called every 0.25 s while it waits.
+  -- Returns false when the feature was switched off while waiting (the caller leaves its loop).
+  function C.checkpoint(name, isOn, idle, onPause, onWait)
+    if not C.enabled then
+      return true
+    end
+    C.active[name] = isOn
+    C.seen[name] = tick()
+    local holder = C.holder
+    if holder == name or vacant(holder) then
+      if not blocked(name) then
+        if holder ~= name then
+          grant(name)
+        end
+        local other = nextWaiter(name)
+        if other == nil or not idle and tick() - C.sliceStart < C.slice then
+          return true
+        end
+        grant(other)
+      elseif holder == name then
+        -- blocked while holding (the feature it yields to has started): let others run
+        C.holder = nil
+        local other = nextWaiter(name)
+        if other then
+          grant(other)
+        end
+      end
+    end
+    if onPause then
+      pcall(onPause)
+    end
+    C.waiting[name] = C.waiting[name] or tick()
+    while true do
+      task.wait(0.25)
+      if not C.enabled then
+        C.waiting[name] = nil
+        return true
+      end
+      if not running(name) then
+        C.waiting[name] = nil
+        return false
+      end
+      if C.holder == name then
+        C.seen[name] = tick()
+        return true
+      end
+      if vacant(C.holder) and nextWaiter(nil) == name then
+        grant(name)
+        return true
+      end
+      if onWait then
+        pcall(onWait)
+      end
+    end
+  end
+
+  -- whether name may move the character now (for event handlers such as respawn teleports)
+  function C.allows(name)
+    return not C.enabled or C.holder == name or vacant(C.holder)
+  end
+
+  function C.setEnabled(on)
+    C.enabled = on and true or false
+    C.holder = nil
+  end
+end
+
 local function L29_1()
   if type(L26_1) == "table" then
     if type(table.clear) == "function" then
@@ -8054,6 +8189,14 @@ do
   end
   
   function normalFarm()
+    -- [port] coordinator hooks: the farm is on; stop its tween and item stick when pausing
+    local coordOn = function()
+      return normalFarmOn
+    end
+    local coordPause = function()
+      L150_1()
+      L155_1()
+    end
     if not waitForGameLoad() then
       if not L62_1 or not L62_1() then
         normalFarmOn = false
@@ -8094,6 +8237,9 @@ do
           L2_2 = 0
         end
         while normalFarmOn do
+          if not getgenv()._YBA_Coord.checkpoint("ItemFarm", coordOn, false, coordPause, noteItemFarmProgress) then
+            break
+          end
           if L126_1 and L126_1() then
             normalFarmOn = false
             break
@@ -8197,6 +8343,9 @@ do
           break
         else
           while normalFarmOn do
+            if not getgenv()._YBA_Coord.checkpoint("ItemFarm", coordOn, true, coordPause, noteItemFarmProgress) then
+              break
+            end
             local L7_2 = false
             if serverHopFarmEnabled then
               serverHopToRandom()
@@ -11870,7 +12019,13 @@ do
         L107_1("Quest Farm", "Quest Farm started.")
         task.spawn(function()
           local L0_3 = 0
+          local qfCoordOn = function()
+            return L164_1 or L165_1
+          end
           while L164_1 do
+            if not getgenv()._YBA_Coord.checkpoint("QuestFarm", qfCoordOn) then
+              break
+            end
             local L1_3 = L2_1:FindFirstChild("PlayerStats")
             while true do
               if not L1_3 then
@@ -11956,8 +12111,16 @@ do
         end
         L107_1("NPC Farm", "NPC Farm started for " .. tostring(L168_1))
         task.spawn(function()
+          local npcCoordOn = function()
+            return L164_1 or L165_1
+          end
+          local npcIdle = false
           while L165_1 do
+            if not getgenv()._YBA_Coord.checkpoint("QuestFarm", npcCoordOn, npcIdle) then
+              break
+            end
             local L0_3 = L194_1(L168_1)
+            npcIdle = not L0_3
             if not L0_3 then
               task.wait(0.3)
             else
@@ -13855,7 +14018,7 @@ do
         return
       end
       local L1_3 = A0_3:WaitForChild("HumanoidRootPart", 5)
-      if L1_3 and L149_1.standFarmRunning then
+      if L1_3 and L149_1.standFarmRunning and getgenv()._YBA_Coord.allows("StandFarm") then
         L163_1(L167_1)
         L1_3.AssemblyLinearVelocity = Vector3.zero
         L1_3.AssemblyAngularVelocity = Vector3.zero
@@ -13866,6 +14029,11 @@ do
     local L0_2 = tick()
     local L1_2 = 0
     while L149_1.standFarmRunning do
+      if not getgenv()._YBA_Coord.checkpoint("StandFarm", function()
+        return L149_1.standFarmRunning or L149_1.ribFarmRunning or L149_1.shinyFarmRunning
+      end) then
+        break
+      end
       local L2_2 = false
       while true do
         L1_2 = L1_2 + 1
@@ -14337,7 +14505,7 @@ do
         return
       end
       local L1_3 = A0_3:WaitForChild("HumanoidRootPart", 10)
-      if L1_3 and L149_1.ribFarmRunning then
+      if L1_3 and L149_1.ribFarmRunning and getgenv()._YBA_Coord.allows("StandFarm") then
         L159_1(L164_1)
       end
     end)
@@ -14346,6 +14514,11 @@ do
     local L5_2 = 0
     local L6_2 = 100000
     while L149_1.ribFarmRunning do
+      if not getgenv()._YBA_Coord.checkpoint("StandFarm", function()
+        return L149_1.standFarmRunning or L149_1.ribFarmRunning or L149_1.shinyFarmRunning
+      end) then
+        break
+      end
       local L7_2 = false
       L5_2 = L5_2 + 1
       while true do
@@ -14679,7 +14852,7 @@ do
         return
       end
       local L1_3 = A0_3:WaitForChild("HumanoidRootPart", 10)
-      if L1_3 and L149_1.shinyFarmRunning then
+      if L1_3 and L149_1.shinyFarmRunning and getgenv()._YBA_Coord.allows("StandFarm") then
         L155_1(L160_1)
       end
     end)
@@ -14688,6 +14861,11 @@ do
     local L5_2 = 0
     local L6_2 = 100000
     while L149_1.shinyFarmRunning do
+      if not getgenv()._YBA_Coord.checkpoint("StandFarm", function()
+        return L149_1.standFarmRunning or L149_1.ribFarmRunning or L149_1.shinyFarmRunning
+      end) then
+        break
+      end
       local L7_2 = false
       L5_2 = L5_2 + 1
       while true do
@@ -17595,6 +17773,9 @@ do
     end
     
     local function L30_2()
+      if not getgenv()._YBA_Coord.checkpoint("AutoPrestige", L1_2) then
+        return false
+      end
       if L5_2.PlayerStats.Level.Value < 2 then
         return false
       end
@@ -18267,6 +18448,9 @@ do
     end
     
     local function L37_2(A0_3, A1_3, A2_3, A3_3)
+      if not getgenv()._YBA_Coord.checkpoint("AutoPrestige", L1_2) then
+        return false
+      end
       A3_3 = A3_3 or 2
       local L4_3 = tostring(L5_2.PlayerStats.Quest.Value or "")
       for L8_3 = 1, A3_3 do
@@ -18532,6 +18716,9 @@ do
     local L42_2 = {}
     
     local function L43_2(A0_3, A1_3, A2_3, A3_3)
+      if not getgenv()._YBA_Coord.checkpoint("AutoPrestige", L1_2) then
+        return
+      end
       local function L4_3(A0_4)
         if not (A0_4 and A0_4.Parent) or not A0_4:FindFirstChild("HumanoidRootPart") then
           return false
@@ -19372,6 +19559,9 @@ do
     end
     
     local function L53_2()
+      if not getgenv()._YBA_Coord.checkpoint("AutoPrestige", L1_2) then
+        return
+      end
       if L5_2.PlayerStats.Level.Value == 50 and L5_2.PlayerStats.Prestige.Value >= 3 then
         return L52_2("MAXED! P3 L50")
       end
@@ -21217,6 +21407,32 @@ do
 end
 L151_1 = "Settings"
 L151_1 = L146_1[L151_1]
+-- [port] Coordinator settings (user request)
+do
+  local C = getgenv()._YBA_Coord
+  local L0_2 = L151_1:Section({Side = "Right", Name = "Coordinator"})
+  L0_2:Toggle({
+    Name = "Coordinate Farms",
+    Default = C.enabled,
+    Callback = function(A0_3)
+      L27_1("COORD", A0_3)
+      C.setEnabled(A0_3)
+    end
+  })
+  local L1_2 = {"30", "60", "120", "300"}
+  L0_2:Dropdown({
+    Name = "Turn Length (sec)",
+    Options = L1_2,
+    Default = tostring(C.slice),
+    Callback = function(A0_3)
+      local L1_3 = tonumber(type(A0_3) == "number" and L1_2[A0_3] or A0_3)
+      if L1_3 then
+        C.slice = L1_3
+        L27_1("COORD_SLICE", L1_3)
+      end
+    end
+  })
+end
 local L152_1 = L151_1:Section({
   Side = "Left",
   Name = "Script Settings"
