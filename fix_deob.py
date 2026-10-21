@@ -1400,6 +1400,10 @@ SERVICE_MEMBERS = {
                 'PlayerAdded', 'PlayerRemoving'),
 }
 MEMBER_SERVICE = {m: s for s, ms in SERVICE_MEMBERS.items() for m in ms}
+# Members only a Player has: a closure reading them through a register its parent last set to
+# something else (a Humanoid from FindFirstChildOfClass, a literal) reads the outer player.
+PLAYER_MEMBERS = {'Character', 'PlayerGui', 'Backpack', 'CharacterAdded', 'CharacterRemoving',
+                  'PlayerScripts', 'UserId', 'DisplayName', 'GetMouse', 'PlayerStats'}   # YBA's stats folder
 SVC_CALL_RE = re.compile(r'^\s*(_r\d+) = \1\((_r\d+), (_r\d+)\)\s*$')
 
 
@@ -1457,6 +1461,30 @@ def _matching_end(toks, open_tok):
 
 
 CALL_ARGS_RE = re.compile(r'^(?:_r\d+(?:\s*,\s*_r\d+)*\s*=\s*)?_r(\d+)\((.*)\)$')
+
+
+def _nonplayer_write(tlines, keys, idx, q, R, line):
+    """F's write of R at line q (its latest before the copy at keys[idx] == line) cannot
+    give a Player: the result of FindFirstChildOfClass/WhichIsA with another class, of
+    FindFirstChild/WaitForChild with a literal child name, or R is used as a part (`R.CFrame
+    = ...`) between that write and the copy."""
+    part = re.compile(r'^\s*' + R + r'\.(?:CFrame|Position|AssemblyLinearVelocity|Anchored|CanCollide)\s*=')
+    if any(part.match(tlines[k - 1]) for k in keys[:idx] if k > q):
+        return True
+    call = re.match(r'^\s*(?:local\s+)?' + R + r'\s*=\s*' + R + r'\((.*)\)\s*$', tlines[q - 1])
+    if not call:
+        return False
+    prev = [k for k in keys if k < q][-6:]
+    method = next((m.group(1) for k in reversed(prev) for m in
+                   [re.match(r'^\s*(?:local\s+)?' + R + r'\s*=\s*_r\d+\.(\w+)\s*$', tlines[k - 1])] if m), None)
+    if method not in ('FindFirstChild', 'FindFirstChildOfClass', 'FindFirstChildWhichIsA', 'WaitForChild'):
+        return False
+    args = [a.strip() for a in call.group(1).split(',')]
+    if len(args) < 2:
+        return False
+    lit = next((m.group(1) for k in reversed(prev) for m in
+                [re.match(r'^\s*(?:local\s+)?' + re.escape(args[1]) + r'\s*=\s*"(\w+)"\s*$', tlines[k - 1])] if m), None)
+    return lit is not None and lit != 'Player'
 
 
 def forced_upvalues(F, toks, lines_F, svc, tlines=None):
@@ -1571,8 +1599,12 @@ def forced_upvalues(F, toks, lines_F, svc, tlines=None):
                 w = wr.match(tlines[q - 1])
                 if w:
                     kind = _value_kind(w.group(1))
+                    pm = re.match(r'^' + X + r'\s*=\s*' + X + r'\.(\w+)$', tlines[use[2]].strip())
+                    if use[0] == 'index' and pm and pm.group(1) in PLAYER_MEMBERS and (
+                            kind is not None or _nonplayer_write(tlines, keys, idx, q, R, line)):
+                        kind = 'nonplayer'          # a literal or a found child is not a Player
                     break
-            bad = ('string', 'number', 'boolean', 'table', 'nil') if use[0] == 'call' else ('number', 'boolean', 'nil')
+            bad = ('string', 'number', 'boolean', 'table', 'nil') if use[0] == 'call' else ('number', 'boolean', 'nil', 'function', 'nonplayer')
             same_src_arg = use[0] == 'call' and any(
                 re.match(r'^\s*(?:local\s+)?_r(\d+)\s*=\s*' + R + r'\s*$', tlines[q])
                 and int(re.match(r'^\s*(?:local\s+)?_r(\d+)', tlines[q]).group(1))
@@ -1881,6 +1913,60 @@ def fix_scope_leaks(text):
                 kind = _value_kind(m.group(1))
         return kind
 
+    def player_member_copy(tok):
+        """The reference is a plain copy `X = R` whose next line reads a Player-only member, or
+        the guard copy of `X = R / if X then / X = R / X = X.Member`."""
+        ln = toks[tok][2]
+        r = re.escape(toks[tok][1])
+        m = re.match(r'^(?:local\s+)?(_r\d+)\s*=\s*' + r + r'$', tlines[ln - 1].strip())
+        if not m or ln + 2 >= len(tlines):
+            return False
+        x = m.group(1)
+        member = re.compile(r'^' + x + r'\s*=\s*' + x + r'\.(\w+)$')
+        k = member.match(tlines[ln].strip())
+        if k is None and tlines[ln].strip() == f'if {x} then' \
+                and re.match(r'^' + x + r'\s*=\s*' + r + r'$', tlines[ln + 1].strip()):
+            k = member.match(tlines[ln + 2].strip())
+        return k is not None and k.group(1) in PLAYER_MEMBERS
+
+    def nonplayer_before(A, G, name, tok):
+        """name cannot be a Player where G is created in A: A's latest own write of it before
+        token tok is a literal, a function, one of several call results, or the result of
+        FindFirstChildOfClass / FindFirstChildWhichIsA with another class; A uses it as a part
+        after that write; or G itself copies it into a CFrame (G then holds two different
+        upvalues of that name, the Player being the outer one)."""
+        lines_of.setdefault(A, own_line_tokens(A, toks))
+        rx = re.compile(r'^\s*(?:local\s+)?((?:_r\d+\s*,\s*)*)' + name + r'((?:\s*,\s*_r\d+)*)\s*=\s*(.*)$')
+        writes = [(ln, rx.match(tlines[ln - 1])) for ln in sorted(lines_of[A])
+                  if ln < toks[tok][2] and rx.match(tlines[ln - 1])]
+        if writes:
+            ln, w = writes[-1]
+            rhs = w.group(3).strip()
+            if _value_kind(rhs) is not None or w.group(1) or w.group(2):
+                return True
+            part = re.compile(r'^\s*' + name + r'\.(?:CFrame|Position|AssemblyLinearVelocity|Anchored|CanCollide)\s*=')
+            if any(part.match(tlines[q - 1]) for q in sorted(lines_of[A]) if ln < q < toks[tok][2]):
+                return True
+            call = re.fullmatch(name + r'\((.*)\)', rhs)
+            if call and len(writes) >= 2 and re.fullmatch(
+                    r'_r\d+\.(?:FindFirstChildOfClass|FindFirstChildWhichIsA)', writes[-2][1].group(3).strip()):
+                arg = call.group(1).split(',')[-1].strip()
+                cls = None
+                for q in range(writes[-2][0], ln):
+                    c = re.match(r'^\s*(?:local\s+)?' + re.escape(arg) + r'\s*=\s*"(\w+)"$', tlines[q - 1])
+                    if c:
+                        cls = c.group(1)
+                if cls is not None and cls != 'Player':
+                    return True
+        lines_of.setdefault(G, own_line_tokens(G, toks))
+        gl = sorted(lines_of[G])
+        for q in gl:
+            c = re.match(r'^\s*(?:local\s+)?(_r\d+)\s*=\s*' + name + r'$', tlines[q - 1])
+            if c and any(re.match(r'^\s*[\w.]+\.CFrame\s*=\s*' + c.group(1) + r'$', tlines[q2 - 1])
+                         for q2 in range(q + 1, min(q + 4, len(tlines) + 1))):
+                return True
+        return False
+
     def frames_of(A):
         if A not in frame_cache:
             frame_cache[A] = closure_frames(A, toks, lines_of.get(A) or own_line_tokens(A, toks)) \
@@ -1901,6 +1987,9 @@ def fix_scope_leaks(text):
                     continue
                 if d is not None and d.block.func is A:
                     if (A, name) in decisions:
+                        if player_member_copy(tok) and nonplayer_before(A, G, name, C.header_tok):
+                            C, A = A, A.parent      # `.Character` of A's Humanoid: the outer player
+                            continue
                         claims[(G, tok)] = A
                         break
                     # The decompiler's local in A. Dead where C is created (a call clobbered it):
@@ -1909,13 +1998,15 @@ def fix_scope_leaks(text):
                         lines_of.setdefault(A, own_line_tokens(A, toks))
                         lazy[(A, name)] = classify_pair(A, name, toks, lines_of[A], False)
                     scalar = indexed_copy(tok) and literal_before(A, name, C.header_tok) in ('boolean', 'number')
+                    scalar = scalar or (player_member_copy(tok) and nonplayer_before(A, G, name, C.header_tok))
                     if not scalar and live_at(lazy[(A, name)][1], C.header_tok):
                         lazy_claims.append((G, tok, A, name))
                         break
                     dead_bound.add((A, name))
                     C, A = A, A.parent
                     continue
-                if (A, name) in decisions and live_at(decisions[(A, name)][1], C.header_tok):
+                if (A, name) in decisions and live_at(decisions[(A, name)][1], C.header_tok) \
+                        and not (player_member_copy(tok) and nonplayer_before(A, G, name, C.header_tok)):
                     claims[(G, tok)] = A
                     break
                 C, A = A, A.parent
@@ -2297,6 +2388,76 @@ def fix_misplaced_else(text):
                              + y + [' ' * (e - 8) + 'end'])
         count += 1
         k = p + 1
+    return '\n'.join(lines), count
+
+
+# --- ELSE ON A TRAILING GUARDED CALL (Pass 16b) ---
+# `if a then X; if g then g() end else Y; if g then g() end end` decompiles with the outer
+# else attached to the trailing guard: `if a then X; if g then g() else Y; if g then g() end
+# end end`. As printed the else runs only when g is nil, and its own final `if g` is then
+# dead - the signature, since source code would not test g again where it is known nil.
+# (travelToInstant: the Tween branch hung off `if recordTeleport`, so Tween travel never
+# moved the character and Teleport travel always snapped.) The else goes to the outer if.
+
+GUARD_LOAD_RE = re.compile(r'^(\s*)(_r\d+) = ([A-Za-z_]\w*)$')
+
+
+def _guarded_call(lines, k, ind):
+    """(name, end index) when lines[k-1:..] is `R = NAME / if R then / R = NAME / <args> /
+    R(...) / end-or-else` with the if at indent ind, else None."""
+    load = GUARD_LOAD_RE.match(lines[k - 1]) if k > 0 else None
+    m = re.match(r'^(\s*)if (_r\d+) then$', lines[k])
+    if not load or not m or len(m.group(1)) != ind or len(load.group(1)) != ind or load.group(2) != m.group(2):
+        return None
+    r, name = m.group(2), load.group(3)
+    if lines[k + 1].strip() != f'{r} = {name}':
+        return None
+    q = k + 2
+    while q < len(lines) and _indent(lines[q]) == ind + 4 and not lines[q].strip().startswith(r + '('):
+        if not re.match(r'^(?:local\s+)?_r\d+ = ', lines[q].strip()):
+            return None
+        q += 1
+    if q >= len(lines) or not re.fullmatch(re.escape(r) + r'\(.*\)', lines[q].strip()):
+        return None
+    return name, q + 1
+
+
+def fix_dead_guard_else(text):
+    lines = text.split('\n')
+    count = 0
+    for k in range(len(lines) - 1, 0, -1):
+        m = re.match(r'^(\s*)if (_r\d+) then$', lines[k])
+        if not m:
+            continue
+        g = len(m.group(1))
+        gc = _guarded_call(lines, k, g)
+        if gc is None or lines[gc[1]] != ' ' * g + 'else':
+            continue
+        name, els = gc
+        e = block_end(lines, k, g)
+        if e is None or e + 1 >= len(lines) or lines[e + 1] != ' ' * (g - 4) + 'end':
+            continue
+        # the else ends with the same guarded call
+        t = e - 1
+        if lines[t] != ' ' * (g + 4) + 'end':
+            continue
+        h = t - 1
+        while h > els and not (lines[h].strip() and _indent(lines[h]) == g + 4):
+            h -= 1
+        tail = _guarded_call(lines, h, g + 4)
+        if tail is None or tail[0] != name or tail[1] != t:
+            continue
+        # the outer if: header at g - 4 owning this block, without an else of its own
+        o = k - 1
+        while o >= 0 and not (lines[o].strip() and _indent(lines[o]) < g):
+            o -= 1
+        if o < 0 or _indent(lines[o]) != g - 4 or not re.match(r'^if .+ then$', lines[o].strip()) \
+                or block_end(lines, o, g - 4) != e + 1 or _has_else(lines, o + 1, k, g - 4):
+            continue
+        body = lines[els + 1:e]
+        _dedent(body, 0, len(body), 4)
+        lines[els:e + 1] = [' ' * g + 'end', ' ' * (g - 4) + 'else'] + body
+        count += 1
     return '\n'.join(lines), count
 
 
@@ -3634,7 +3795,13 @@ def fix_bool_materialization(lines):
             continue
         ind = len(m.group(1))
         X, val = b.group(2), b.group(3)
-        if len(b.group(1)) != ind + 4 or not re.search(r'\b' + re.escape(X) + r'\b', m.group(2)) \
+        # the loaded register is the compared one, or a temporary the next statement consumes
+        # (`setSetting("K", v == "Teleport")`, `getgenv().flag = v == "Teleport"`)
+        nxt = lines[i + 2].strip()
+        consumed = re.fullmatch(r'_r\d+\((?:_r\d+, )*' + re.escape(X) + r'\)', nxt) is not None \
+            or re.fullmatch(r'_r\d+(?:\.\w+|\[[^\]]+\]) = ' + re.escape(X), nxt) is not None
+        if len(b.group(1)) != ind + 4 \
+                or not (re.search(r'\b' + re.escape(X) + r'\b', m.group(2)) or consumed) \
                 or TYPE_GUARD_RE.search(m.group(2)):
             i += 1
             continue
@@ -4602,6 +4769,8 @@ def main():
     # Pass 16: Else branches attached to the wrong if
     full_text, me_count = fix_misplaced_else(full_text)
     print(f"Pass 16: Moved {me_count} misplaced else branches to their if")
+    full_text, dg_count = fix_dead_guard_else(full_text)
+    print(f"Pass 16b: Moved {dg_count} else branches off a trailing guarded call")
 
     # Pass 17: And-chains whose else belongs to the whole chain
     full_text, ac_count = fix_and_chain_else(full_text)
