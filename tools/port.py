@@ -164,6 +164,32 @@ EDITS = [
      '      if L127_1 and L127_1() then\n        return false\n      end\n',
      '        delfile("AutoPres3_" .. L5_2.Name .. ".txt")\n      end)\n'
      '      if L127_1 and L127_1() then\n        return false\n      end\n' + STAND_FARM_ON_MAX, 1),
+] + [
+    # (user request) RAILhub branding -> "YBA Thing": everything shown in the UI, notifications,
+    # console and webhooks, and the names of the script's own GUI/ESP instances. Internal getgenv
+    # flags, the key loader's data and download URLs keep their names (not shown anywhere).
+    ('brand: name', 'RAIL Hub', 'YBA Thing', 29),
+    ('brand: warn prefix', '[RAILhub]', '[YBA Thing]', 1),
+    ('brand: boot log', 'RAILhub UI & features', 'YBA Thing UI & features', 1),
+    ('brand: window title', 'Title = "RailHub"', 'Title = "YBA Thing"', 1),
+    ('brand: title fallback', '"RAIL|hub"', '"YBA Thing"', 2),
+    ('brand: watermark', '"RailHub | %s', '"YBA Thing | %s', 1),
+    ('brand: toggle gui', '"RAILhubToggle"', '"YBAThingToggle"', 2),
+    ('brand: watermark gui', '"RAILhubWatermark"', '"YBAThingWatermark"', 2),
+    ('brand: staff esp', '"RAILhubStaffESP"', '"YBAThingStaffESP"', 1),
+    ('brand: staff label', '"RAILhubStaffLabel"', '"YBAThingStaffLabel"', 1),
+    ('brand: player esp', '"RAILhubPlayerESP"', '"YBAThingPlayerESP"', 1),
+    ('brand: player label', '"RAILhubPlayerLabel"', '"YBAThingPlayerLabel"', 1),
+    ('brand: item esp', '"RailHubItemESP"', '"YBAThingItemESP"', 1),
+    ('brand: shiny sound', '"RAILhubShinySound"', '"YBAThingShinySound"', 1),
+    # the Info tab's Links section held only the RAILhub Discord invite
+    ('brand: links section', '  local L149_1 = L147_1:Section({Side = "Right", Name = "Links"})\n',
+     '  local L149_1\n', 1),
+    ('brand: discord button',
+     '  L149_1:Header({Text = "Links", AutoLocalize = false})\n  L149_1:Button({\n'
+     '    Name = "Discord Link",\n    Callback = function()\n'
+     '      L104_1("https://discord.gg/67UTqK8su5")\n    end\n  })\n',
+     '', 1),
 ]
 
 # Coordinator checkpoints (coordinator.lua): (name, anchor, text inserted after the anchor's first

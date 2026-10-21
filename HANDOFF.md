@@ -1,4 +1,4 @@
-# YBA Hub Port Handoff
+# YBA Thing (YBA hub port) Handoff
 
 ## Project Summary
 Port of the obfuscated YBA (Your Bizarre Adventure) exploit hub to a readable script. The hub
@@ -64,6 +64,13 @@ Only the hub's own backend is changed; all Roblox remote calls are untouched.
    next to the stand farm toggle; sets the toggle, the `SF` setting and stats like a click).
    Auto Leave on Max, checked first, takes precedence. Harness: `VALUES="Level=50,Prestige=3,
    Quest=" FIRE="Stand Farm on Max|Auto Prestige"` (FIRE accepts `a|b`).
+7. Branding (user request): every shown "RAIL Hub"/"RailHub"/"RAIL|hub"/"[RAILhub]" (window
+   title, notifications, console, webhook username/titles/footers, FPS watermark) and the
+   script's own GUI/ESP instance names become "YBA Thing"/"YBAThing..."; the Info tab's Links
+   section (RAILhub Discord invite) is removed. Internal getgenv flags (`RAILhub_YBA_Loaded`,
+   `RAILHUB_NO_HOOKS`, ...), the key loader's data and download URLs keep their names. The
+   header/toggle-button image `rbxassetid://87452743189169` is unchanged (could not be viewed
+   from here; it may be the RAILhub logo).
 Kept as in the original: safe mode (`YBA/NO_AUTOSTART.txt`), headless mode (`YBA/NO_UI.txt`), the
 key-info panel (reads key metadata the loader leaves in globals; no network), webhooks, server hop.
 The payload contains no HWID or heartbeat calls (those are in the loader, which is not shipped).

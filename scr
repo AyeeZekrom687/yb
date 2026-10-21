@@ -2373,7 +2373,7 @@ end
 applySavedConfig()
 L95_1()
 if not L62_1 or not L62_1() then
-  L17_1("Waiting for strict main game before initializing RAILhub UI & features...")
+  L17_1("Waiting for strict main game before initializing YBA Thing UI & features...")
   local L96_1 = tick()
   while not L62_1 or not L62_1() do
     task.wait(0.5)
@@ -2408,7 +2408,7 @@ do
   local L98_1 = L97_1()
   if not L98_1 then
     getgenv().RAILhub_YBA_Loaded = nil
-    warn("[RAILhub] Failed to download MacLib from GitHub!")
+    warn("[YBA Thing] Failed to download MacLib from GitHub!")
     return
   end
   L98_1 = L98_1:gsub("globe%s*=%s*\"rbxassetid://%d+\"", "globe = \"rbxassetid://4677859281\"")
@@ -2472,7 +2472,7 @@ if L103_1 then
 end
 for L107_1, L108_1 in ipairs(L102_1) do
   for L112_1, L113_1 in ipairs(L108_1:GetChildren()) do
-    if L113_1:IsA("ScreenGui") and (L113_1.Name == "RAILhubToggle" or L113_1.Name == "RAILhubWatermark") then
+    if L113_1:IsA("ScreenGui") and (L113_1.Name == "YBAThingToggle" or L113_1.Name == "YBAThingWatermark") then
       L113_1:Destroy()
     end
   end
@@ -2550,7 +2550,7 @@ local function L107_1(A0_2, A1_2)
   if L2_2 and type(L2_2.Notify) == "function" then
     pcall(function()
       L2_2:Notify({
-        Title = tostring(A0_2 or "RAIL Hub"),
+        Title = tostring(A0_2 or "YBA Thing"),
         Description = tostring(A1_2 or ""),
         Lifetime = 5
       })
@@ -2600,7 +2600,7 @@ end
 local function L114_1(A0_2, A1_2)
   local L2_2 = L113_1()
   if not L2_2 then
-    warn("[RAIL Hub Webhook] No HTTP request function available in this executor.")
+    warn("[YBA Thing Webhook] No HTTP request function available in this executor.")
     return false, "No HTTP request function available"
   end
   A0_2 = tostring(A0_2 or ""):gsub("^%s+", ""):gsub("%s+$", "")
@@ -2612,7 +2612,7 @@ local function L114_1(A0_2, A1_2)
     return L5_1:JSONEncode(A1_2)
   end)
   if not L4_2 or not L5_2 then
-    warn("[RAIL Hub Webhook] JSONEncode error: " .. tostring(L5_2))
+    warn("[YBA Thing Webhook] JSONEncode error: " .. tostring(L5_2))
     return false, "JSONEncode failed"
   end
   L3_2 = L5_2
@@ -2854,7 +2854,7 @@ local function L128_1(A0_2, A1_2, A2_2)
     return
   end
   local L3_2 = {}
-  L3_2.username = "RAIL Hub"
+  L3_2.username = "YBA Thing"
   L3_2.embeds = {A0_2}
   if A1_2 and L109_1.UserId and L109_1.UserId ~= "" then
     L3_2.content = ("<@%s>"):format(L109_1.UserId)
@@ -2865,7 +2865,7 @@ end
 local function L129_1()
   local L0_2 = L110_1()
   local L1_2 = {}
-  L1_2.title = L0_2 and "[RAIL Hub] \208\146\208\181\208\177\209\133\209\131\208\186 \208\191\208\190\208\180\208\186\208\187\209\142\209\135\208\181\208\189" or "[RAIL Hub] Webhook Connected"
+  L1_2.title = L0_2 and "[YBA Thing] \208\146\208\181\208\177\209\133\209\131\208\186 \208\191\208\190\208\180\208\186\208\187\209\142\209\135\208\181\208\189" or "[YBA Thing] Webhook Connected"
   L1_2.color = 3066993
   L1_2.fields = {
     {
@@ -2895,7 +2895,7 @@ local function L129_1()
     }
   }
   L1_2.footer = {
-    text = "RAIL Hub | Your Bizarre Adventure"
+    text = "YBA Thing | Your Bizarre Adventure"
   }
   L1_2.timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
   L128_1(L1_2, true, false)
@@ -2932,7 +2932,7 @@ local function L130_1(A0_2, A1_2, A2_2, A3_2)
     color = A1_2,
     fields = L5_2,
     footer = {
-      text = "RAIL Hub | Your Bizarre Adventure"
+      text = "YBA Thing | Your Bizarre Adventure"
     },
     timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
   }
@@ -2947,7 +2947,7 @@ local function L131_1(A0_2, A1_2, A2_2)
     return
   end
   local L4_2 = L110_1()
-  local L5_2 = L130_1(L4_2 and "[RAIL Hub] \208\160\208\181\208\180\208\186\208\184\208\185 / \208\155\208\181\208\179\208\181\208\189\208\180\208\176\209\128\208\189\209\139\208\185 \208\191\209\128\208\181\208\180\208\188\208\181\209\130" or "[RAIL Hub] Rare / Legendary Item", 15844367, {
+  local L5_2 = L130_1(L4_2 and "[YBA Thing] \208\160\208\181\208\180\208\186\208\184\208\185 / \208\155\208\181\208\179\208\181\208\189\208\180\208\176\209\128\208\189\209\139\208\185 \208\191\209\128\208\181\208\180\208\188\208\181\209\130" or "[YBA Thing] Rare / Legendary Item", 15844367, {
     {
       name = L4_2 and "\208\159\209\128\208\181\208\180\208\188\208\181\209\130" or "Item",
       value = tostring(A0_2),
@@ -2971,7 +2971,7 @@ local function L132_1(A0_2, A1_2)
   end
   local L2_2 = A1_2 and A1_2 ~= "None" and A1_2 ~= "" and A1_2 ~= A0_2
   local L3_2 = L110_1()
-  local L4_2 = L130_1(L2_2 and (L3_2 and "[RAIL Hub] \208\146\209\139\208\177\208\184\209\130 \209\129\208\186\208\184\208\189" or "[RAIL Hub] Shiny Stand") or L3_2 and "[RAIL Hub] \208\146\209\139\208\177\208\184\209\130 \209\129\209\130\208\181\208\189\208\180" or "[RAIL Hub] Stand Obtained", L2_2 and 10181046 or 3447003, {
+  local L4_2 = L130_1(L2_2 and (L3_2 and "[YBA Thing] \208\146\209\139\208\177\208\184\209\130 \209\129\208\186\208\184\208\189" or "[YBA Thing] Shiny Stand") or L3_2 and "[YBA Thing] \208\146\209\139\208\177\208\184\209\130 \209\129\209\130\208\181\208\189\208\180" or "[YBA Thing] Stand Obtained", L2_2 and 10181046 or 3447003, {
     {
       name = L3_2 and "\208\161\209\130\208\181\208\189\208\180" or "Stand",
       value = tostring(A0_2 or "None"),
@@ -2991,7 +2991,7 @@ local function L133_1(A0_2, A1_2)
     return
   end
   local L2_2 = L110_1()
-  local L3_2 = L130_1(L2_2 and "[RAIL Hub] \208\166\208\181\208\187\209\140 \208\180\208\190\209\129\209\130\208\184\208\179\208\189\209\131\209\130\208\176: 9 Lucky + $1M" or "[RAIL Hub] Goal Reached: 9 Lucky + $1M", 15844367, {
+  local L3_2 = L130_1(L2_2 and "[YBA Thing] \208\166\208\181\208\187\209\140 \208\180\208\190\209\129\209\130\208\184\208\179\208\189\209\131\209\130\208\176: 9 Lucky + $1M" or "[YBA Thing] Goal Reached: 9 Lucky + $1M", 15844367, {
     {
       name = L2_2 and "\208\161\209\130\209\128\208\181\208\187\209\139 \209\131\208\180\208\176\209\135\208\184" or "Lucky Arrows",
       value = ("%d / 9"):format(A0_2 or 9),
@@ -3037,7 +3037,7 @@ local function L134_1(A0_2)
   end
   local L1_2 = typeof(A0_2) == "Instance" and A0_2.Name or tostring(A0_2 or "Unknown")
   local L2_2 = L110_1()
-  local L3_2 = L130_1(L2_2 and "[RAIL Hub] \208\158\208\177\208\189\208\176\209\128\209\131\208\182\208\181\208\189 \209\129\209\130\208\176\209\132\209\132" or "[RAIL Hub] Staff Detected", 15158332, {
+  local L3_2 = L130_1(L2_2 and "[YBA Thing] \208\158\208\177\208\189\208\176\209\128\209\131\208\182\208\181\208\189 \209\129\209\130\208\176\209\132\209\132" or "[YBA Thing] Staff Detected", 15158332, {
     {
       name = L2_2 and "\208\161\209\130\208\176\209\132\209\132" or "Staff Member",
       value = L1_2,
@@ -3059,7 +3059,7 @@ local function L135_1(A0_2, A1_2, A2_2, A3_2)
   local L4_2 = L110_1()
   local L5_2
   if A2_2 then
-    L5_2 = L130_1(L4_2 and "[RAIL Hub] Auto Prestige \208\151\208\176\208\178\208\181\209\128\209\136\209\145\208\189" or "[RAIL Hub] Auto Prestige Completed", 15844367, {
+    L5_2 = L130_1(L4_2 and "[YBA Thing] Auto Prestige \208\151\208\176\208\178\208\181\209\128\209\136\209\145\208\189" or "[YBA Thing] Auto Prestige Completed", 15844367, {
       {
         name = L4_2 and "\208\161\209\130\208\176\209\130\209\131\209\129" or "Status",
         value = L4_2 and "\208\156\208\176\208\186\209\129 \209\131\209\128\208\190\208\178\208\181\208\189\209\140 50 / \208\159\209\128\208\181\209\129\209\130\208\184\208\182 3 (50/3)" or "Max Level 50 / Prestige 3 (50/3)",
@@ -3072,7 +3072,7 @@ local function L135_1(A0_2, A1_2, A2_2, A3_2)
       }
     })
   else
-    L5_2 = L130_1(L4_2 and "[RAIL Hub] Auto Prestige \208\159\209\128\208\190\208\179\209\128\208\181\209\129\209\129" or "[RAIL Hub] Auto Prestige Progress", 3066993, {
+    L5_2 = L130_1(L4_2 and "[YBA Thing] Auto Prestige \208\159\209\128\208\190\208\179\209\128\208\181\209\129\209\129" or "[YBA Thing] Auto Prestige Progress", 3066993, {
       {
         name = L4_2 and "\208\159\209\128\208\181\209\129\209\130\208\184\208\182" or "Prestige",
         value = tostring(A0_2 or "Unknown"),
@@ -3095,7 +3095,7 @@ function L47_1(A0_2, A1_2)
   local L2_2 = L110_1()
   local L3_2 = A1_2 or A0_2 and tostring(A0_2):find("Server") and "Server Hopping" or "Kicked / Reconnecting"
   local L4_2 = {}
-  L4_2.title = L2_2 and "[RAIL Hub] \208\160\208\181\208\186\208\190\208\189\208\189\208\181\208\186\209\130 / \208\154\208\184\208\186" or "[RAIL Hub] Reconnect / Kick"
+  L4_2.title = L2_2 and "[YBA Thing] \208\160\208\181\208\186\208\190\208\189\208\189\208\181\208\186\209\130 / \208\154\208\184\208\186" or "[YBA Thing] Reconnect / Kick"
   L4_2.color = 15105570
   L4_2.fields = {
     {
@@ -3130,7 +3130,7 @@ function L47_1(A0_2, A1_2)
     }
   }
   L4_2.footer = {
-    text = "RAIL Hub | Your Bizarre Adventure"
+    text = "YBA Thing | Your Bizarre Adventure"
   }
   L4_2.timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
   L128_1(L4_2, false, true)
@@ -5026,7 +5026,7 @@ do
     local L9_2 = L8_2 and Color3.fromRGB(255, 220, 0) or Color3.fromRGB(255, 255, 255)
     local L10_2 = L1_2.textSize or 14
     L2_2 = Instance.new("BillboardGui")
-    L2_2.Name = "RailHubItemESP"
+    L2_2.Name = "YBAThingItemESP"
     L2_2.Size = UDim2.fromOffset(200, L10_2 + 12)
     L2_2.StudsOffset = Vector3.new(0, 2.5, 0)
     L2_2.AlwaysOnTop = true
@@ -5313,7 +5313,7 @@ do
           local L11_2 = L0_2.highlights[L6_2]
           if not L11_2 or not L11_2.Parent then
             L11_2 = Instance.new("Highlight")
-            L11_2.Name = "RAILhubStaffESP"
+            L11_2.Name = "YBAThingStaffESP"
             L11_2.FillColor = Color3.fromRGB(255, 0, 0)
             L11_2.OutlineColor = Color3.fromRGB(255, 40, 40)
             L11_2.FillTransparency = 0.35
@@ -5332,7 +5332,7 @@ do
           local L12_2 = L0_2.labels[L6_2]
           if not L12_2 or not L12_2.Parent then
             L12_2 = Instance.new("BillboardGui")
-            L12_2.Name = "RAILhubStaffLabel"
+            L12_2.Name = "YBAThingStaffLabel"
             L12_2.Size = UDim2.fromOffset(200, 50)
             L12_2.StudsOffset = Vector3.new(0, 3.5, 0)
             L12_2.AlwaysOnTop = true
@@ -5460,7 +5460,7 @@ do
     local L9_2 = L2_2.highlights[A0_2]
     if not L9_2 or not L9_2.Parent then
       L9_2 = Instance.new("Highlight")
-      L9_2.Name = "RAILhubPlayerESP"
+      L9_2.Name = "YBAThingPlayerESP"
       L9_2.FillColor = L8_2 and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(255, 90, 90)
       L9_2.OutlineColor = L8_2 and Color3.fromRGB(255, 40, 40) or Color3.fromRGB(255, 255, 255)
       L9_2.FillTransparency = L8_2 and 0.35 or 0.65
@@ -5483,7 +5483,7 @@ do
     local L10_2 = L2_2.labels[A0_2]
     if not L10_2 or not L10_2.Parent then
       L10_2 = Instance.new("BillboardGui")
-      L10_2.Name = "RAILhubPlayerLabel"
+      L10_2.Name = "YBAThingPlayerLabel"
       L10_2.Size = UDim2.fromOffset(200, 60)
       L10_2.StudsOffset = Vector3.new(0, 3, 0)
       L10_2.AlwaysOnTop = true
@@ -8852,7 +8852,7 @@ do
     L27_1("MenuScale", L157_1)
   end
   L105_1 = L96_1:Window({
-    Title = "RailHub",
+    Title = "YBA Thing",
     Subtitle = "YBA",
     Size = UDim2.fromOffset(868, 650),
     DragStyle = 2,
@@ -9450,7 +9450,7 @@ do
 end
 do
   local L144_1 = Instance.new("ScreenGui")
-  L144_1.Name = "RAILhubToggle"
+  L144_1.Name = "YBAThingToggle"
   L144_1.ResetOnSpawn = false
   L144_1.IgnoreGuiInset = true
   L144_1.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -9532,7 +9532,7 @@ do
       end
     end
     local L0_2 = gethui and gethui() or game:GetService("CoreGui")
-    local L1_2 = L105_1 and L105_1.Settings and L105_1.Settings.Title or "RAIL|hub"
+    local L1_2 = L105_1 and L105_1.Settings and L105_1.Settings.Title or "YBA Thing"
     for L5_2, L6_2 in ipairs(L0_2:GetChildren()) do
       if L6_2:IsA("ScreenGui") then
         for L10_2, L11_2 in ipairs(L6_2:GetDescendants()) do
@@ -9660,7 +9660,7 @@ task.spawn(function()
     return
   end
   local L0_2 = Instance.new("ScreenGui")
-  L0_2.Name = "RAILhubWatermark"
+  L0_2.Name = "YBAThingWatermark"
   L0_2.ResetOnSpawn = false
   L0_2.IgnoreGuiInset = true
   L0_2.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -9725,7 +9725,7 @@ task.spawn(function()
     end
     L9_2 = L0_3
     if L0_2.Enabled then
-      L6_2.Text = string.format("RailHub | %s | %s | %d FPS", os.date("%H:%M:%S"), os.date("%d/%m/%Y"), L8_2)
+      L6_2.Text = string.format("YBA Thing | %s | %s | %d FPS", os.date("%H:%M:%S"), os.date("%d/%m/%Y"), L8_2)
     end
   end)
   _G.CustomWatermark = L0_2
@@ -9777,7 +9777,7 @@ end)
 do
   local L147_1 = L146_1.Info
   local L148_1 = L147_1:Section({Side = "Left", Name = "Updates"})
-  local L149_1 = L147_1:Section({Side = "Right", Name = "Links"})
+  local L149_1
   L148_1:Header({
     Text = "Version: 0.2.3",
     AutoLocalize = false
@@ -9785,13 +9785,6 @@ do
   L148_1:Header({
     Text = "Last update: 16.10.2026",
     AutoLocalize = false
-  })
-  L149_1:Header({Text = "Links", AutoLocalize = false})
-  L149_1:Button({
-    Name = "Discord Link",
-    Callback = function()
-      L104_1("https://discord.gg/67UTqK8su5")
-    end
   })
   L147_1 = _G
   L148_1 = "YBAItemFarm"
@@ -13478,7 +13471,7 @@ do
     end
     pcall(function()
       local L0_3 = Instance.new("Sound")
-      L0_3.Name = "RAILhubShinySound"
+      L0_3.Name = "YBAThingShinySound"
       L0_3.SoundId = L0_2
       L0_3.Volume = 5
       L0_3.Parent = game:GetService("SoundService")
@@ -15629,7 +15622,7 @@ do
     local L0_2 = gethui and gethui() or game:GetService("CoreGui")
     
     local L1_2 = L105_1 and L105_1.Settings
-    local L2_2 = L1_2 and L1_2.Title or "RAIL|hub"
+    local L2_2 = L1_2 and L1_2.Title or "YBA Thing"
     local L3_2 = L1_2 and L1_2.Subtitle or "YBA"
     local L4_2
     for L8_2, L9_2 in ipairs(L0_2:GetChildren()) do
@@ -17338,11 +17331,11 @@ do
       local L4_3 = L155_1()
       local L5_3 = L110_1 and L110_1() or false
       local L6_3 = {}
-      L6_3.title = "[RAIL Hub] Auto Prestige"
+      L6_3.title = "[YBA Thing] Auto Prestige"
       L6_3.color = A0_2 == "started" and 3447003 or A0_2 == "completed" and 15844367 or A0_2 == "stopped" and 15158332 or 7506394
       L6_3.timestamp = L4_3
       L6_3.footer = {
-        text = "RAIL Hub | Your Bizarre Adventure"
+        text = "YBA Thing | Your Bizarre Adventure"
       }
       if A0_2 == "started" then
         L6_3.fields = {
@@ -17421,7 +17414,7 @@ do
           L135_1(3, 50, true, L8_3)
           return
         end
-        L6_3.title = L5_3 and "[RAIL Hub] Auto Prestige \208\151\208\176\208\178\208\181\209\128\209\136\208\181\208\189" or "[RAIL Hub] Auto Prestige Completed"
+        L6_3.title = L5_3 and "[YBA Thing] Auto Prestige \208\151\208\176\208\178\208\181\209\128\209\136\208\181\208\189" or "[YBA Thing] Auto Prestige Completed"
         L6_3.color = 15844367
         L6_3.fields = {
           {
