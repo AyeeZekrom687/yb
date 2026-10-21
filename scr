@@ -10120,6 +10120,14 @@ do
       end
     end
   })
+  -- [port] (user request) Auto Prestige switches the stand farm on at Prestige 3 Level 50
+  L152_1:Toggle({
+    Name = "Stand Farm on Max (P3 L50)",
+    Default = L28_1("StandFarmOnMax", false),
+    Callback = function(A0_2)
+      L27_1("StandFarmOnMax", A0_2)
+    end
+  })
   if (L20_1.ItemFarmEnabled or L28_1("IF", false)) and not L92_1 then
     L17_1("autostart scheduled: item farm")
     task.delay(1.5, function()
@@ -15555,6 +15563,29 @@ do
     end
   })
   L149_1.standFarmToggleWidget = L160_1
+  -- [port] switch the stand farm on as its toggle does (for Stand Farm on Max)
+  getgenv()._YBA_StartStandFarm = function()
+    if L149_1.standFarmRunning then
+      return
+    end
+    L149_1._toggleSyncing = true
+    pcall(function()
+      L160_1:UpdateState(true)
+    end)
+    L149_1._toggleSyncing = nil
+    L27_1("SF", true)
+    L20_1.StandFarmEnabled = true
+    L149_1.farmStats = {
+      arrowsUsed = 0,
+      rokasUsed = 0,
+      ribsUsed = 0,
+      luckyArrowsUsed = 0,
+      standsGot = 0,
+      startTime = tick()
+    }
+    farmStats = L149_1.farmStats
+    L150_1()
+  end
   L159_1:Dropdown({
     Name = "Farm Method",
     Options = {
@@ -17530,6 +17561,11 @@ do
       getgenv().AutoPrestigeEnvBackup = nil
       if L127_1 and L127_1() then
         return
+      end
+      -- [port] Stand Farm on Max (user request)
+      if L28_1("StandFarmOnMax", false) and getgenv()._YBA_StartStandFarm then
+        L107_1("Auto Prestige", "Prestige 3 Level 50: starting Stand Farm")
+        pcall(getgenv()._YBA_StartStandFarm)
       end
       return
     end
@@ -19583,6 +19619,11 @@ do
       end)
       if L127_1 and L127_1() then
         return false
+      end
+      -- [port] Stand Farm on Max (user request)
+      if L28_1("StandFarmOnMax", false) and getgenv()._YBA_StartStandFarm then
+        L107_1("Auto Prestige", "Prestige 3 Level 50: starting Stand Farm")
+        pcall(getgenv()._YBA_StartStandFarm)
       end
       return false
     end

@@ -58,6 +58,12 @@ Only the hub's own backend is changed; all Roblox remote calls are untouched.
    arrow left equipped). The quest/NPC farm's kill loop (`L194_1`) and Auto Prestige's attack step
    (inside its kill routine `L43_2`) call `Humanoid:UnequipTools()` when the character holds a
    Tool. Not reachable in the harness (no NPCs in the mock); the snippet was tested standalone.
+6. "Stand Farm on Max (P3 L50)" toggle under Auto Prestige (user request, setting
+   `StandFarmOnMax`): when Auto Prestige reaches Prestige 3 Level 50 (`L52_2`), or is switched
+   on already there, it starts the stand farm through `getgenv()._YBA_StartStandFarm` (defined
+   next to the stand farm toggle; sets the toggle, the `SF` setting and stats like a click).
+   Auto Leave on Max, checked first, takes precedence. Harness: `VALUES="Level=50,Prestige=3,
+   Quest=" FIRE="Stand Farm on Max|Auto Prestige"` (FIRE accepts `a|b`).
 Kept as in the original: safe mode (`YBA/NO_AUTOSTART.txt`), headless mode (`YBA/NO_UI.txt`), the
 key-info panel (reads key metadata the loader leaves in globals; no network), webhooks, server hop.
 The payload contains no HWID or heartbeat calls (those are in the loader, which is not shipped).

@@ -775,13 +775,20 @@ if EVAL then
 end
 
 -- FIRE=<pattern>: switch on matching toggles / press matching buttons (case-insensitive plain
--- match on the element name, "*" = all), then run FIRE_STEPS half-second steps.
+-- match on the element name, "*" = all, "a|b" = either), then run FIRE_STEPS half-second steps.
 local FIRE = os.getenv("FIRE")
 if FIRE then
     LOG_AGG = true
-    local pat = FIRE:lower()
+    local pats = {}
+    for pat in FIRE:lower():gmatch("[^|]+") do pats[#pats + 1] = pat end   -- "a|b": either name
+    local function wanted(name)
+        for _, pat in ipairs(pats) do
+            if pat == "*" or name:lower():find(pat, 1, true) then return true end
+        end
+        return false
+    end
     for _, el in ipairs(UI_ELEMS) do
-        if (pat == "*" or el.name:lower():find(pat, 1, true)) and (el.kind == "Toggle" or el.kind == "Button") then
+        if wanted(el.name) and (el.kind == "Toggle" or el.kind == "Button") then
             log("FIRE", el.kind .. " '" .. el.name .. "'")
             if el.kind == "Toggle" then spawn_now(el.cb, true) else spawn_now(el.cb) end
         end

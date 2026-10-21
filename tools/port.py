@@ -30,6 +30,14 @@ RELOAD_STUB = '''local function L95_1(A0_2)
   -- server with queue_on_teleport and wrote autoexec/railhub.lua
   L20_1.AutoExecute = L28_1("AE", true)'''
 
+# Auto Prestige at Prestige 3 Level 50, after the original's Auto Leave on Max check
+STAND_FARM_ON_MAX = (
+    '      -- [port] Stand Farm on Max (user request)\n'
+    '      if L28_1("StandFarmOnMax", false) and getgenv()._YBA_StartStandFarm then\n'
+    '        L107_1("Auto Prestige", "Prestige 3 Level 50: starting Stand Farm")\n'
+    '        pcall(getgenv()._YBA_StartStandFarm)\n'
+    '      end\n')
+
 EDITS = [
     # (name, old, new, expected count)
     ('folder', '"RAILhubYBA', '"YBA', 6),
@@ -114,6 +122,48 @@ EDITS = [
      '          end\n'
      '        end\n'
      '        local L2_4 = L1_4:FindFirstChild("RemoteFunction") or L10_2\n', 1),
+] + [
+    # (user request) "Stand Farm on Max (P3 L50)" toggle under Auto Prestige: when Auto Prestige
+    # reaches Prestige 3 Level 50 (or is switched on already there), switch the stand farm on.
+    # Auto Leave on Max, checked first by the original, still takes precedence.
+    ('start stand farm helper', '  L149_1.standFarmToggleWidget = L160_1\n',
+     '  L149_1.standFarmToggleWidget = L160_1\n'
+     '  -- [port] switch the stand farm on as its toggle does (for Stand Farm on Max)\n'
+     '  getgenv()._YBA_StartStandFarm = function()\n'
+     '    if L149_1.standFarmRunning then\n      return\n    end\n'
+     '    L149_1._toggleSyncing = true\n'
+     '    pcall(function()\n      L160_1:UpdateState(true)\n    end)\n'
+     '    L149_1._toggleSyncing = nil\n'
+     '    L27_1("SF", true)\n'
+     '    L20_1.StandFarmEnabled = true\n'
+     '    L149_1.farmStats = {\n      arrowsUsed = 0,\n      rokasUsed = 0,\n      ribsUsed = 0,\n'
+     '      luckyArrowsUsed = 0,\n      standsGot = 0,\n      startTime = tick()\n    }\n'
+     '    farmStats = L149_1.farmStats\n'
+     '    L150_1()\n'
+     '  end\n', 1),
+    ('stand farm on max toggle',
+     '  L152_1:Toggle({\n    Name = "Auto Leave on Max (P3 L50)",\n'
+     '    Default = L28_1("AutoLeavePrestige", false),\n    Callback = function(A0_2)\n'
+     '      L27_1("AutoLeavePrestige", A0_2)\n      if A0_2 and L127_1 then\n        L127_1()\n'
+     '      end\n    end\n  })\n',
+     '  L152_1:Toggle({\n    Name = "Auto Leave on Max (P3 L50)",\n'
+     '    Default = L28_1("AutoLeavePrestige", false),\n    Callback = function(A0_2)\n'
+     '      L27_1("AutoLeavePrestige", A0_2)\n      if A0_2 and L127_1 then\n        L127_1()\n'
+     '      end\n    end\n  })\n'
+     '  -- [port] (user request) Auto Prestige switches the stand farm on at Prestige 3 Level 50\n'
+     '  L152_1:Toggle({\n    Name = "Stand Farm on Max (P3 L50)",\n'
+     '    Default = L28_1("StandFarmOnMax", false),\n    Callback = function(A0_2)\n'
+     '      L27_1("StandFarmOnMax", A0_2)\n    end\n  })\n', 1),
+    ('stand farm on max (already max)',
+     '      getgenv().AutoPrestigeEnvBackup = nil\n      if L127_1 and L127_1() then\n'
+     '        return\n      end\n',
+     '      getgenv().AutoPrestigeEnvBackup = nil\n      if L127_1 and L127_1() then\n'
+     '        return\n      end\n' + STAND_FARM_ON_MAX, 1),
+    ('stand farm on max (reached max)',
+     '        delfile("AutoPres3_" .. L5_2.Name .. ".txt")\n      end)\n'
+     '      if L127_1 and L127_1() then\n        return false\n      end\n',
+     '        delfile("AutoPres3_" .. L5_2.Name .. ".txt")\n      end)\n'
+     '      if L127_1 and L127_1() then\n        return false\n      end\n' + STAND_FARM_ON_MAX, 1),
 ]
 
 # Coordinator checkpoints (coordinator.lua): (name, anchor, text inserted after the anchor's first
