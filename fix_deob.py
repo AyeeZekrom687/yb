@@ -1398,6 +1398,8 @@ SERVICE_MEMBERS = {
                    'PostSimulation', 'BindToRenderStep', 'UnbindFromRenderStep'),
     'Players': ('LocalPlayer', 'GetPlayers', 'GetPlayerFromCharacter', 'GetPlayerByUserId',
                 'PlayerAdded', 'PlayerRemoving'),
+    'VirtualInputManager': ('SendKeyEvent', 'SendMouseButtonEvent', 'SendMouseMoveEvent',
+                            'SendTextInputCharacterEvent'),
 }
 MEMBER_SERVICE = {m: s for s, ms in SERVICE_MEMBERS.items() for m in ms}
 # Members only a Player has: a closure reading them through a register its parent last set to
@@ -1461,6 +1463,27 @@ def _matching_end(toks, open_tok):
 
 
 CALL_ARGS_RE = re.compile(r'^(?:_r\d+(?:\s*,\s*_r\d+)*\s*=\s*)?_r(\d+)\((.*)\)$')
+
+
+def _own_kind(tlines, keys, idx, R, depth=0):
+    """Kind of F's latest own write of R before keys[idx]: a literal kind, 'number' for
+    `R = tick / R = R()` and `R = os / R = R.clock / R = R()`, or the kind of the source of a
+    plain copy `R = S` (two levels). None when unknown."""
+    wr = re.compile(r'^\s*(?:local\s+)?' + R + r'\s*=\s*(.+)$')
+    ws = [(n, wr.match(tlines[k - 1]).group(1).strip()) for n, k in enumerate(keys[:idx])
+          if wr.match(tlines[k - 1])]
+    if not ws:
+        return None
+    n, rhs = ws[-1]
+    kind = _value_kind(rhs)
+    if kind is None and rhs == R + '()':
+        before = [w for _, w in reversed(ws[:-1])][:2]
+        if before[:1] in (['tick'], ['time'], [R + '.clock']) and (
+                before[0] != R + '.clock' or before[1:] == ['os']):
+            kind = 'number'
+    if kind is None and depth < 2 and re.fullmatch(r'_r\d+', rhs) and rhs != R:
+        kind = _own_kind(tlines, keys, n, rhs, depth + 1)
+    return kind
 
 
 def _nonplayer_write(tlines, keys, idx, q, R, line):
@@ -1598,7 +1621,7 @@ def forced_upvalues(F, toks, lines_F, svc, tlines=None):
             for q in reversed(keys[:idx]):
                 w = wr.match(tlines[q - 1])
                 if w:
-                    kind = _value_kind(w.group(1))
+                    kind = _own_kind(tlines, keys, idx, R)
                     pm = re.match(r'^' + X + r'\s*=\s*' + X + r'\.(\w+)$', tlines[use[2]].strip())
                     if use[0] == 'index' and pm and pm.group(1) in PLAYER_MEMBERS and (
                             kind is not None or _nonplayer_write(tlines, keys, idx, q, R, line)):
@@ -1791,10 +1814,18 @@ def classify_pair(F, R, toks, lines_F, is_main, forced=()):
     for idx, (occ, kill, last) in enumerate(events):
         if len(occ) == 2 and occ[0][1] in ('cwrite', 'owrite') and occ[1][1] == 'cread' and not is_main:
             # `R = R`: a register is never moved onto itself, so this is GETUPVAL of the
-            # enclosing variable named R into F's own register R.
-            decision[occ[1][0]] = 'up'
-            decision[occ[0][0]] = 'own'
-            live = True
+            # enclosing variable named R into F's own register R - or SETUPVAL right after an
+            # own write of R (`fired = true` printed as `_r13 = true / _r13 = _r13`): as a
+            # GETUPVAL it would discard the value just written.
+            prev = events[idx - 1] if idx else None
+            if prev and not prev[1] and prev[0] and toks[prev[2]][2] == toks[occ[0][0]][2] - 1 \
+                    and all(k in ('owrite', 'cwrite') for _, k in prev[0]):
+                decision[occ[0][0]] = 'up'
+                decision[occ[1][0]] = 'own'
+            else:
+                decision[occ[1][0]] = 'up'
+                decision[occ[0][0]] = 'own'
+                live = True
             timeline.append((last, live))
             continue
         for ti, k in occ:
@@ -1871,7 +1902,8 @@ def fix_scope_leaks(text):
     """Hoist leaked registers to function scope. Returns (new_text, stats, warnings)."""
     toks = tokenize(text)
     funcs = analyze(toks)
-    leaks = find_leaks(funcs, toks, service_writes(text, funcs, toks), text.split('\n'))
+    svc = service_writes(text, funcs, toks)
+    leaks = find_leaks(funcs, toks, svc, text.split('\n'))
     lines_of = {F: own_line_tokens(F, toks) for F in leaks}
     decisions = {}                      # (F, R) -> ({tok: 'own' | 'up'}, timeline)
     for F, names in leaks.items():
@@ -1913,21 +1945,42 @@ def fix_scope_leaks(text):
                 kind = _value_kind(m.group(1))
         return kind
 
-    def player_member_copy(tok):
-        """The reference is a plain copy `X = R` whose next line reads a Player-only member, or
-        the guard copy of `X = R / if X then / X = R / X = X.Member`."""
+    def copy_member(tok):
+        """Member read through a plain copy `X = R` at tok's line: `X = X.M` next, the method
+        call shape `X = R / [local] Y = X / X = X.M`, or the guard `X = R / if X then / X = R /
+        X = X.M`. None otherwise."""
         ln = toks[tok][2]
         r = re.escape(toks[tok][1])
         m = re.match(r'^(?:local\s+)?(_r\d+)\s*=\s*' + r + r'$', tlines[ln - 1].strip())
         if not m or ln + 2 >= len(tlines):
-            return False
+            return None
         x = m.group(1)
         member = re.compile(r'^' + x + r'\s*=\s*' + x + r'\.(\w+)$')
-        k = member.match(tlines[ln].strip())
-        if k is None and tlines[ln].strip() == f'if {x} then' \
-                and re.match(r'^' + x + r'\s*=\s*' + r + r'$', tlines[ln + 1].strip()):
+        nxt, nxt2 = tlines[ln].strip(), tlines[ln + 1].strip()
+        k = member.match(nxt)
+        if k is None and re.match(r'^(?:local\s+)?_r\d+\s*=\s*' + x + r'$', nxt):
+            k = member.match(nxt2)
+        if k is None and nxt == f'if {x} then' and re.match(r'^' + x + r'\s*=\s*' + r + r'$', nxt2):
             k = member.match(tlines[ln + 2].strip())
-        return k is not None and k.group(1) in PLAYER_MEMBERS
+        return k.group(1) if k else None
+
+    def player_member_copy(tok):
+        """The reference is a plain copy whose member read is a Player-only member."""
+        return copy_member(tok) in PLAYER_MEMBERS
+
+    def service_member_copy(tok, A, name):
+        """The reference is a plain copy whose member read exists only on service S, A's own R
+        is not S, and an enclosing function of A assigns R = GetService(S): the closure reads
+        that outer service."""
+        S = MEMBER_SERVICE.get(copy_member(tok))
+        if S is None or S in svc.get((A, name), ()):
+            return False
+        H = A.parent
+        while H is not None:
+            if S in svc.get((H, name), ()):
+                return True
+            H = H.parent
+        return False
 
     def nonplayer_before(A, G, name, tok):
         """name cannot be a Player where G is created in A: A's latest own write of it before
@@ -1987,7 +2040,8 @@ def fix_scope_leaks(text):
                     continue
                 if d is not None and d.block.func is A:
                     if (A, name) in decisions:
-                        if player_member_copy(tok) and nonplayer_before(A, G, name, C.header_tok):
+                        if (player_member_copy(tok) and nonplayer_before(A, G, name, C.header_tok)) \
+                                or service_member_copy(tok, A, name):
                             C, A = A, A.parent      # `.Character` of A's Humanoid: the outer player
                             continue
                         claims[(G, tok)] = A
@@ -1998,7 +2052,8 @@ def fix_scope_leaks(text):
                         lines_of.setdefault(A, own_line_tokens(A, toks))
                         lazy[(A, name)] = classify_pair(A, name, toks, lines_of[A], False)
                     scalar = indexed_copy(tok) and literal_before(A, name, C.header_tok) in ('boolean', 'number')
-                    scalar = scalar or (player_member_copy(tok) and nonplayer_before(A, G, name, C.header_tok))
+                    scalar = scalar or (player_member_copy(tok) and nonplayer_before(A, G, name, C.header_tok)) \
+                        or service_member_copy(tok, A, name)
                     if not scalar and live_at(lazy[(A, name)][1], C.header_tok):
                         lazy_claims.append((G, tok, A, name))
                         break
@@ -2006,7 +2061,8 @@ def fix_scope_leaks(text):
                     C, A = A, A.parent
                     continue
                 if (A, name) in decisions and live_at(decisions[(A, name)][1], C.header_tok) \
-                        and not (player_member_copy(tok) and nonplayer_before(A, G, name, C.header_tok)):
+                        and not (player_member_copy(tok) and nonplayer_before(A, G, name, C.header_tok)) \
+                        and not service_member_copy(tok, A, name):
                     claims[(G, tok)] = A
                     break
                 C, A = A, A.parent

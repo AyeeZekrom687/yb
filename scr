@@ -3542,7 +3542,7 @@ end
                         _r9 = "PressedPlay"
                         _r7o2(_r8, _r9)
                         _r7o2 = true
-                        _r7o2 = _r7
+                        _r7 = _r7o2
                         _r7o2 = _r20
                         _r8 = "AutoPlay: fired char.RemoteEvent PressedPlay"
                         _r7o2(_r8)
@@ -13308,7 +13308,7 @@ end
                                     _r5 = _r5()
                                     _r5 = _r5 - _r4
                                     if _r5 < 0.8 then
-                                        _r5 = _r9o2
+                                        _r5 = _r9
                                         _r5 = _r5.Heartbeat
                                         _r6 = _r5
                                         _r5 = _r5.Wait
@@ -20592,28 +20592,28 @@ end
         end
         moveCharacterTo = _r167
         _r167 = function(_p1, _p2, _p3)
-            local _r14, _r15, _r16, _r17
-            local _r12 = typeof
+            local _r12o1, _r14, _r15, _r16, _r17
+            local _r12o1 = typeof
             local _r13 = _p1
-            _r12 = _r12(_r13)
+            _r12o1 = _r12o1(_r13)
             local _or308 = true
-            if _r12 == "Instance" then
+            if _r12o1 == "Instance" then
                 _r13 = _p1
-                _r12 = _p1.IsA
+                _r12o1 = _p1.IsA
                 _r14 = "ProximityPrompt"
-                _r12 = _r12(_r13, _r14)
-                if _r12 then
+                _r12o1 = _r12o1(_r13, _r14)
+                if _r12o1 then
                     _or308 = false
                 end
             end
             if _or308 then
-                _r12 = false
-                do return _r12 end
+                _r12o1 = false
+                do return _r12o1 end
             end
-            _r12 = _r153v20560
+            _r12o1 = _r153v20560
             _r13 = _p1
-            _r12 = _r12(_r13)
-            if _r12 then
+            _r12o1 = _r12o1(_r13)
+            if _r12o1 then
                 if not _p3 then
                     _r13 = _r6
                     _r13 = _r13.Character
@@ -20639,7 +20639,7 @@ end
                     _r14 = _r14 - 0.5
                     local _or310 = true
                     if _r13 then
-                        _r15 = _r12.Position
+                        _r15 = _r12o1.Position
                         _r16 = _r13.Position
                         _r15 = _r15 - _r16
                         _r15 = _r15.Magnitude
@@ -20649,7 +20649,7 @@ end
                     end
                     if _or310 then
                         _r15 = moveCharacterTo
-                        _r16 = _r12
+                        _r16 = _r12o1
                         _r17 = Vector3
                         _r17 = _r17.new
                         local _r18 = 0
@@ -20671,7 +20671,7 @@ end
                     local _r14 = _p1
                     _r13o2(_r14)
                     _r13o2 = true
-                    _r13o2 = _r13
+                    _r13 = _r13o2
                     return
                 end
                 _r14(_r15)
@@ -46735,23 +46735,23 @@ end
             return _r14
         end
         _r174v48221 = function()
-            local _r7, _r9, _r10, _r11, _r13, _r14, _r15, _r16, _r17, _r18, _r19, _r23o1, _r24, _r25, _r26, _r27, _r28, _r29, _r30o1, _r31, _r32
-            local _r5 = _r65
+            local _r5o1, _r7, _r9, _r10, _r11, _r13, _r14, _r15, _r16, _r17, _r18, _r19, _r23o1, _r24, _r25, _r26, _r27, _r28, _r29, _r30o1, _r31, _r32
+            local _r5o1 = _r65
             local _or623 = true
-            if _r5 then
-                _r5 = _r65
-                _r5 = _r5()
-                if _r5 then
+            if _r5o1 then
+                _r5o1 = _r65
+                _r5o1 = _r5o1()
+                if _r5o1 then
                     _or623 = false
                 end
             end
             if _or623 then
-                _r5 = tick
-                _r5 = _r5()
+                _r5o1 = tick
+                _r5o1 = _r5o1()
                 while true do
                     local _r6 = tick
                     _r6 = _r6()
-                    _r6 = _r6 - _r5
+                    _r6 = _r6 - _r5o1
                     if _r6 < 180 then
                         _r6 = _r152
                         _r6 = _r6.standFarmRunning
@@ -46782,27 +46782,27 @@ end
                             do return end
                         end
                     end
-                    _r5 = task
-                    _r5 = _r5.wait
+                    _r5o1 = task
+                    _r5o1 = _r5o1.wait
                     _r6 = 0.15
-                    _r5(_r6)
-                    _r5 = _r153v48090
-                    _r5()
-                    _r5 = task
-                    _r5 = _r5.wait
+                    _r5o1(_r6)
+                    _r5o1 = _r153v48090
+                    _r5o1()
+                    _r5o1 = task
+                    _r5o1 = _r5o1.wait
                     _r6 = 0.05
-                    _r5(_r6)
-                    _r5 = _r152
-                    _r5 = _r5.standFarmRespawnConn
-                    if _r5 then
-                        _r5 = _r152
-                        _r5 = _r5.standFarmRespawnConn
-                        _r6 = _r5
-                        _r5 = _r5.Disconnect
-                        _r5(_r6)
+                    _r5o1(_r6)
+                    _r5o1 = _r152
+                    _r5o1 = _r5o1.standFarmRespawnConn
+                    if _r5o1 then
+                        _r5o1 = _r152
+                        _r5o1 = _r5o1.standFarmRespawnConn
+                        _r6 = _r5o1
+                        _r5o1 = _r5o1.Disconnect
+                        _r5o1(_r6)
                     end
-                    _r5 = _r152
-                    _r6 = _r5
+                    _r5o1 = _r152
+                    _r6 = _r5o1
                     _r6 = _r6.CharacterAdded
                     _r7 = _r6
                     _r6 = _r6.Connect
@@ -46852,9 +46852,9 @@ end
                         return
                     end
                     _r6 = _r6(_r7, _r8)
-                    _r5.standFarmRespawnConn = _r6
-                    _r5 = tick
-                    _r5 = _r5()
+                    _r5o1.standFarmRespawnConn = _r6
+                    _r5o1 = tick
+                    _r5o1 = _r5o1()
                     _r6 = 0
                     while true do
                         _r7 = _r152
@@ -46872,7 +46872,7 @@ end
                                 else
                                     _r8 = tick
                                     _r8 = _r8()
-                                    _r8 = _r8 - _r5
+                                    _r8 = _r8 - _r5o1
                                     if 7200 < _r8 then
                                         _r8 = _r152
                                         _r8.standFarmRunning = false
@@ -46921,7 +46921,7 @@ end
                                         _r10(_r11)
                                         _r8 = _r9
                                         if not _r8 then
-                                            _r10 = _r5
+                                            _r10 = _r5o1
                                             _r8 = _r10.Character
                                         end
                                     end
@@ -56554,9 +56554,9 @@ end
             return
         end
         _r163v58037 = function()
-            local _r11o1, _r12o1, _r15o1, _r16, _r19, _r20, _r21o1, _r22, _r23
+            local _r3o1, _r11o1, _r12o1, _r15o1, _r16, _r19, _r20, _r21o1, _r22, _r23
             local _r2 = _r155v57343
-            local _r3 = function()
+            local _r3o1 = function()
                 local _r9 = _r154
                 if _r9 then
                     _r9 = _r155v57343
@@ -56593,7 +56593,7 @@ end
                 local _r7 = task
                 _r7 = _r7.wait
                 _r7()
-                _r7 = _r3
+                _r7 = _r3o1
                 _r7 = _r7()
                 if not _r7 then
                     do return end
@@ -56650,7 +56650,7 @@ end
                         local _r10 = task
                         _r10 = _r10.wait
                         _r10()
-                        _r10 = _r3
+                        _r10 = _r3o1
                         _r10 = _r10()
                         if not _r10 then
                             do return end
@@ -57384,7 +57384,7 @@ end
                                             _r11o2 = _r11o2 - _r10
                                             _r12 = _r8 + 3
                                             if _r11o2 < _r12 then
-                                                _r11o2 = _r3
+                                                _r11o2 = _r3o1
                                                 _r11o2 = _r11o2()
                                                 if _r11o2 then
                                                     if _p1 then
@@ -57431,7 +57431,7 @@ end
                                 return
                             end
                             local _r30 = function()
-                                local _r3, _r5
+                                local _r3o2, _r5
                                 local _r0 = _r7
                                 _r0 = _r0.Backpack
                                 local _r1 = _r0
@@ -57474,8 +57474,8 @@ end
                                         _r1 = _r1.Backpack
                                         _r2 = _r1
                                         _r1 = _r1.FindFirstChild
-                                        _r3 = "Rokakaka"
-                                        _r1 = _r1(_r2, _r3)
+                                        _r3o2 = "Rokakaka"
+                                        _r1 = _r1(_r2, _r3o2)
                                         _r0 = _r1
                                         if not _r0 then
                                             _r1 = _r8
@@ -57484,8 +57484,8 @@ end
                                                 _r1 = _r8
                                                 _r2 = _r1
                                                 _r1 = _r1.FindFirstChild
-                                                _r3 = "Rokakaka"
-                                                _r1 = _r1(_r2, _r3)
+                                                _r3o2 = "Rokakaka"
+                                                _r1 = _r1(_r2, _r3o2)
                                                 _r0 = _r1
                                             end
                                         end
@@ -57493,8 +57493,8 @@ end
                                     if not _r0 then
                                         _r1 = _r24
                                         _r2 = "Rokakaka"
-                                        _r3 = 1
-                                        _r1(_r2, _r3)
+                                        _r3o2 = 1
+                                        _r1(_r2, _r3o2)
                                         _r1 = task
                                         _r1 = _r1.wait
                                         _r2 = 0.5
@@ -57503,8 +57503,8 @@ end
                                         _r1 = _r1.Backpack
                                         _r2 = _r1
                                         _r1 = _r1.FindFirstChild
-                                        _r3 = "Rokakaka"
-                                        _r1 = _r1(_r2, _r3)
+                                        _r3o2 = "Rokakaka"
+                                        _r1 = _r1(_r2, _r3o2)
                                         _r0 = _r1
                                         if not _r0 then
                                             _r1 = _r8
@@ -57513,8 +57513,8 @@ end
                                                 _r1 = _r8
                                                 _r2 = _r1
                                                 _r1 = _r1.FindFirstChild
-                                                _r3 = "Rokakaka"
-                                                _r1 = _r1(_r2, _r3)
+                                                _r3o2 = "Rokakaka"
+                                                _r1 = _r1(_r2, _r3o2)
                                                 _r0 = _r1
                                             end
                                         end
@@ -57529,21 +57529,21 @@ end
                                 _r1 = _r1.Stand
                                 _r1 = _r1.Value
                                 _r2 = useItemDirect
-                                _r3 = "Rokakaka"
+                                _r3o2 = "Rokakaka"
                                 local _r4 = "Rokakaka"
-                                _r2(_r3, _r4)
+                                _r2(_r3o2, _r4)
                                 _r2 = _r8
-                                _r3 = tick
-                                _r3 = _r3()
+                                _r3o2 = tick
+                                _r3o2 = _r3o2()
                                 while true do
                                     _r4 = tick
                                     _r4 = _r4()
-                                    _r4 = _r4 - _r3
+                                    _r4 = _r4 - _r3o2
                                     if _r4 < 4 then
                                         _r4 = _r7
                                         _r4 = _r4.Character
                                         if _r4 == _r2 then
-                                            _r4 = _r3
+                                            _r4 = _r3o1
                                             _r4 = _r4()
                                             if _r4 then
                                                 _r4 = task
@@ -57582,13 +57582,13 @@ end
                                 end
                                 _r4 = tick
                                 _r4 = _r4()
-                                _r3 = _r4
+                                _r3o2 = _r4
                                 while true do
                                     _r4 = tick
                                     _r4 = _r4()
-                                    _r4 = _r4 - _r3
+                                    _r4 = _r4 - _r3o2
                                     if _r4 < 3 then
-                                        _r4 = _r3
+                                        _r4 = _r3o1
                                         _r4 = _r4()
                                         if _r4 then
                                             _r4 = _r7
@@ -57629,7 +57629,7 @@ end
                                 local _r14 = 0
                                 while true do
                                     if _r14 < _p1 then
-                                        _r15 = _r3
+                                        _r15 = _r3o1
                                         _r15 = _r15()
                                         if _r15 then
                                             _r15 = _r7
@@ -57743,7 +57743,7 @@ end
                                                     _r19 = _r7
                                                     _r19 = _r19.Character
                                                     if _r19 == _r17o2 then
-                                                        _r19 = _r3
+                                                        _r19 = _r3o1
                                                         _r19 = _r19()
                                                         if _r19 then
                                                             _r19 = task
@@ -57874,7 +57874,7 @@ end
                                             _r5 = _r5.Value
                                             if _r5 == "None" then
                                                 if _r4 < 20 then
-                                                    _r5 = _r3
+                                                    _r5 = _r3o1
                                                     _r5 = _r5()
                                                     if _r5 then
                                                         _r5 = _r4 % 3
@@ -57994,7 +57994,7 @@ end
                                                                 _r10o2 = _r10o2()
                                                                 _r10o2 = _r10o2 - _r9
                                                                 if _r10o2 < 15 then
-                                                                    _r10o2 = _r3
+                                                                    _r10o2 = _r3o1
                                                                     _r10o2 = _r10o2()
                                                                     if _r10o2 then
                                                                         _r10o2 = _r7o2
@@ -58028,7 +58028,7 @@ end
                                                                     break
                                                                 end
                                                             end
-                                                            _r10o2 = _r3
+                                                            _r10o2 = _r3o1
                                                             _r10o2 = _r10o2()
                                                             if not _r10o2 then
                                                                 do return end
@@ -58260,7 +58260,7 @@ end
                                                                 _r23 = tick
                                                                 _r23 = _r23()
                                                                 while true do
-                                                                    _r24 = _r3
+                                                                    _r24 = _r3o1
                                                                     _r24 = _r24()
                                                                     if not _r24 then
                                                                         break
@@ -58381,7 +58381,7 @@ end
                                 _r3o2 = _r2
                                 _r4 = _p1
                                 local _r5 = _p2
-                                local _r6 = _r3
+                                local _r6 = _r3o1
                                 _r3o2(_r4, _r5, _r6)
                                 _r3o2 = disableNoclipState
                                 _r4 = "stand"
@@ -58504,7 +58504,7 @@ end
                                             _r16 = _r16()
                                             _r16 = _r16 - _r15
                                             if _r16 < _p1 then
-                                                _r16 = _r3
+                                                _r16 = _r3o1
                                                 _r16 = _r16()
                                                 if _r16 then
                                                     _r16 = task
@@ -60170,7 +60170,7 @@ end
                                 local _r13 = _p4
                                 local _r14 = 1
                                 for _r15 = _r12, _r13, _r14 do
-                                    local _r16 = _r3
+                                    local _r16 = _r3o1
                                     _r16 = _r16()
                                     if not _r16 then
                                     else
@@ -60203,7 +60203,7 @@ end
                                             end
                                         end
                                         if _r15 < _p4 then
-                                            _r18 = _r3
+                                            _r18 = _r3o1
                                             _r18 = _r18()
                                             if _r18 then
                                                 _r18 = _r162v58034
@@ -60784,7 +60784,7 @@ end
                                 _r15 = "stand"
                                 _r14(_r15)
                                 while true do
-                                    _r14 = _r3
+                                    _r14 = _r3o1
                                     _r14 = _r14()
                                     if _r14 then
                                         if _r12 < _r11 then
@@ -61180,7 +61180,7 @@ end
                                             _r11 = _r11()
                                             local _or740 = true
                                             if _r7 >= _r11 then
-                                                _r11 = _r3
+                                                _r11 = _r3o1
                                                 _r11 = _r11()
                                                 if _r11 then
                                                     _or740 = false
@@ -62293,7 +62293,7 @@ end
                                             end
                                         end
                                         while true do
-                                            _r40 = _r3
+                                            _r40 = _r3o1
                                             _r40 = _r40()
                                             if _r40 then
                                                 _r40 = tick
@@ -62739,7 +62739,7 @@ end
                                             _r22.SkillTreeType = "Stand"
                                             _r20(_r21, _r22)
                                         end
-                                        _r15 = _r16o3
+                                        _r15 = _r16
                                         _r16o3 = "LearnSkill"
                                         _r17 = {}
                                         _r17.Skill = "Stand Barrage"
@@ -62784,7 +62784,7 @@ end
                                         _r22.SkillTreeType = "Character"
                                         _r20(_r21, _r22)
                                     end
-                                    _r15 = _r16o3
+                                    _r15 = _r16
                                     _r16o3 = "LearnSkill"
                                     _r17 = {}
                                     _r17.Skill = "Worthiness"
@@ -62953,7 +62953,7 @@ end
                                             _r14 = _r14()
                                             _r14 = _r14 - _r13
                                             if _r14 < 3 then
-                                                _r14 = _r3
+                                                _r14 = _r3o1
                                                 _r14 = _r14()
                                                 if _r14 then
                                                     _r14 = _r12.Quest
@@ -63010,7 +63010,7 @@ end
                                         _r14 = _r14()
                                         _r14 = _r14 - _r13
                                         if _r14 < 3 then
-                                            _r14 = _r3
+                                            _r14 = _r3o1
                                             _r14 = _r14()
                                             if _r14 then
                                                 _r14 = _r12.Quest
@@ -63063,7 +63063,7 @@ end
                                 local _r11 = "Farming vampires until max level..."
                                 _r9(_r10, _r11)
                                 while true do
-                                    _r9 = _r3
+                                    _r9 = _r3o1
                                     _r9 = _r9()
                                     if _r9 then
                                         _r9 = _r7
@@ -63487,7 +63487,7 @@ end
                                 _r8 = _r8 .. _r9 .. _r10
                                 _r6(_r7o2, _r8)
                                 while true do
-                                    _r6 = _r3
+                                    _r6 = _r3o1
                                     _r6 = _r6()
                                     if _r6 then
                                         _r6 = _r7
@@ -63758,7 +63758,7 @@ end
                                                             _r13 = _r13.Value
                                                             local _or761 = true
                                                             if _r13 == _r12 then
-                                                                _r13 = _r3
+                                                                _r13 = _r3o1
                                                                 _r13 = _r13()
                                                                 if _r13 then
                                                                     _or761 = false
@@ -63943,7 +63943,7 @@ end
                                                 _r19 = 1
                                             end
                                             while true do
-                                                _r20 = _r3
+                                                _r20 = _r3o1
                                                 _r20 = _r20()
                                                 if _r20 then
                                                     _r20 = _r7
@@ -64230,7 +64230,7 @@ end
                                             _r12o3 = _r12o3()
                                             _r12o3 = _r12o3 + 30
                                             while true do
-                                                _r13o3 = _r3
+                                                _r13o3 = _r3o1
                                                 _r13o3 = _r13o3()
                                                 if _r13o3 then
                                                     _r13o3 = _r7
@@ -65167,7 +65167,7 @@ end
                                                                     _r20 = _r18
                                                                     _r19, _r20, _r21 = _r19(_r20)
                                                                     for _r22, _r23 in _r19, _r20, _r21 do
-                                                                        _r24 = _r3
+                                                                        _r24 = _r3o1
                                                                         _r24 = _r24()
                                                                         if not _r24 then
                                                                         else
@@ -65359,7 +65359,7 @@ end
                                 local _r13 = _r7
                                 _r13 = _r13.Name
                                 if _r12o2 == _r13 then
-                                    _r12o2 = _r3
+                                    _r12o2 = _r3o1
                                     _r12o2 = _r12o2()
                                     if not _r12o2 then
                                         _r12o2 = _r57
@@ -65406,7 +65406,7 @@ end
                                         _r12o2(_r13)
                                         _r12o2 = _r15o1
                                         if _r12o2 then
-                                            _r12o2 = _r3
+                                            _r12o2 = _r3o1
                                             _r12o2 = _r12o2()
                                             if _r12o2 then
                                                 _r12o2 = tick
@@ -65418,7 +65418,7 @@ end
                                                     _r12o2()
                                                 end
                                             else
-                                                _r12o2 = _r3
+                                                _r12o2 = _r3o1
                                                 _r12o2 = _r12o2()
                                                 if _r12o2 then
                                                     _r12o2 = _r32
@@ -65443,7 +65443,7 @@ end
                             _r59 = _r59.Connect
                             _r61 = function()
                                 local _r10
-                                local _r9 = _r3
+                                local _r9 = _r3o1
                                 _r9 = _r9()
                                 if not _r9 then
                                     _r9 = _r58
@@ -65502,7 +65502,7 @@ end
                             _r60 = _r60.Connect
                             local _r62 = function(_p1)
                                 local _r14o2, _r15
-                                _r14o2 = _r3
+                                _r14o2 = _r3o1
                                 _r14o2 = _r14o2()
                                 if not _r14o2 then
                                     _r14o2 = _r59
@@ -65598,7 +65598,7 @@ end
                                 _r10 = _r9
                                 _r9 = _r9.Connect
                                 local _r11 = function(_p1)
-                                    local _r6 = _r3
+                                    local _r6 = _r3o1
                                     _r6 = _r6()
                                     if not _r6 then
                                         do return end
@@ -65650,7 +65650,7 @@ end
                             local _r63 = _r62
                             _r62 = _r62.Connect
                             local _r64 = function(_p1)
-                                local _r4 = _r3
+                                local _r4 = _r3o1
                                 _r4 = _r4()
                                 if not _r4 then
                                     do return end
