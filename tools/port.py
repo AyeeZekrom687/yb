@@ -248,6 +248,62 @@ EDITS = [
      '      if 0 < L11_2 and L149_1.farmMethod == "Lucky Arrow" then\n',
      '      if 0 < L11_2 and (L149_1.farmMethod == "Lucky Arrow"'
      ' or L149_1.farmMethod == "Arrow + Lucky Arrow" and A3_2 == 0) then\n', 1),
+    # (user request) lag reductions that keep speed and behaviour:
+    # the name lowercaser ran one pcall closure + gsub per Cyrillic capital (33) on every call;
+    # one gsub over the same table gives the same result (each key is \208 + one byte, no value
+    # is a key), and a bounded cache serves the names the item farm checks again and again
+    ('perf: lowercaser',
+     'local function L141_1(A0_2)\n  if not A0_2 then\n    return ""\n  end\n'
+     '  local L1_2 = tostring(A0_2):lower()\n  if type(L140_1) == "table" then\n'
+     '    for L5_2, L6_2 in pairs(L140_1) do\n'
+     '      if type(L5_2) == "string" and type(L6_2) == "string" and L6_2 ~= "" then\n'
+     '        pcall(function()\n          L1_2 = L1_2:gsub(L5_2, L6_2)\n        end)\n'
+     '      end\n    end\n  end\n  return L1_2\nend\n',
+     'local L141_1\n'
+     'do\n'
+     '  -- [port perf] one gsub over the letter table (was one pcall + gsub per letter), cached\n'
+     '  local L0_2, L1_2 = {}, 0\n'
+     '  function L141_1(A0_2)\n'
+     '    if not A0_2 then\n      return ""\n    end\n'
+     '    local L2_2 = tostring(A0_2)\n'
+     '    local L3_2 = L0_2[L2_2]\n'
+     '    if L3_2 then\n      return L3_2\n    end\n'
+     '    L3_2 = L2_2:lower():gsub("\\208[\\128-\\191]", L140_1)\n'
+     '    if 4096 <= L1_2 then\n      L0_2, L1_2 = {}, 0\n    end\n'
+     '    L0_2[L2_2] = L3_2\n    L1_2 = L1_2 + 1\n'
+     '    return L3_2\n  end\nend\n', 1),
+    # the key-info panel (RAILhub key type/expiry under the menu header; the port has no key
+    # system) refreshed every second: ~20 pcall'd global lookups and up to 3 reads + JSON
+    # decodes of the loader's key file per refresh. Not created any more.
+    ('perf: key panel',
+     '  task.spawn(function()\n    for L3_2 = 1, 40 do\n      if L168_1() then\n        break\n'
+     '      end\n      task.wait(0.2)\n    end\n    L169_1()\n    while true do\n'
+     '      if not task.wait(1) or not pcall(L169_1) then\n        break\n      end\n    end\n'
+     '  end)\n',
+     '  -- [port] RAILhub key panel (key type / expiry) not created: no key system in the port,\n'
+     '  -- and its once-per-second refresh read the key file and ~20 globals\n', 1),
+    # Auto Prestige's kill noclip rebuilt its part list with GetDescendants on every physics
+    # step once the character died mid-fight (the DescendantAdded watcher died with it)
+    ('perf: prestige kill noclip',
+     '              for L3_5, L4_5 in ipairs(L5_2.Character:GetDescendants()) do\n'
+     '                if L4_5:IsA("BasePart") then\n                  L24_3[#L24_3 + 1] = L4_5\n'
+     '                end\n              end\n            end)\n          end\n'
+     '          for L3_4 = 1, #L24_3 do\n',
+     '              for L3_5, L4_5 in ipairs(L5_2.Character:GetDescendants()) do\n'
+     '                if L4_5:IsA("BasePart") then\n                  L24_3[#L24_3 + 1] = L4_5\n'
+     '                end\n              end\n            end)\n'
+     '            -- [port perf] watch the new character so this runs once per character\n'
+     '            pcall(function()\n'
+     '              L25_3 = L5_2.Character.DescendantAdded:Connect(function(A0_5)\n'
+     '                if A0_5:IsA("BasePart") then\n                  L24_3[#L24_3 + 1] = A0_5\n'
+     '                end\n              end)\n            end)\n'
+     '          end\n'
+     '          for L3_4 = 1, #L24_3 do\n', 1),
+    # the HUD health label was rewritten every 0.1 s even when unchanged
+    ('perf: hud health text', '                L2_3.Text = string.format("[%d/%d]", L5_3, L6_3)\n',
+     '                local L7_3 = string.format("[%d/%d]", L5_3, L6_3)\n'
+     '                if L2_3.Text ~= L7_3 then\n                  L2_3.Text = L7_3\n'
+     '                end\n', 1),
     # the Info tab's Links section held only the RAILhub Discord invite
     ('brand: links section', '  local L149_1 = L147_1:Section({Side = "Right", Name = "Links"})\n',
      '  local L149_1\n', 1),

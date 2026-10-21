@@ -80,6 +80,13 @@ Only the hub's own backend is changed; all Roblox remote calls are untouched.
    when none are left; collects Rokakaka, Mysterious and Lucky Arrows from the map; never buys
    Lucky Arrows (only the "Lucky Arrow" method does). Edits: dropdown, the main loop's
    usable-now check and needed/collected item lists, `sfUseResetItem`'s Lucky Arrow branch.
+10. Lag reductions (user request; same speed and behaviour, harness traces identical in the
+   item/stand/quest/prestige/idle scenarios): the name lowercaser `L141_1` does one gsub over the
+   letter table with a bounded cache (was a pcall + gsub per Cyrillic capital; ~190x faster,
+   identical on 20k random strings); the RAILhub key panel (key type/expiry) is not created
+   (its 1 s refresh read the key file and ~20 globals); Auto Prestige's kill noclip re-attaches
+   its part watcher after a death instead of GetDescendants every physics step; the HUD health
+   label is only written when it changes. Profile with `COVER=1-<lines>` (hit counts per line).
 Kept as in the original: safe mode (`YBA/NO_AUTOSTART.txt`), headless mode (`YBA/NO_UI.txt`), the
 key-info panel (reads key metadata the loader leaves in globals; no network), webhooks, server hop.
 The payload contains no HWID or heartbeat calls (those are in the loader, which is not shipped).

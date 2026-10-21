@@ -3240,21 +3240,27 @@ L140_1["\208\173"] = "\209\141"
 L140_1["\208\174"] = "\209\142"
 L140_1["\208\175"] = "\209\143"
 
-local function L141_1(A0_2)
-  if not A0_2 then
-    return ""
-  end
-  local L1_2 = tostring(A0_2):lower()
-  if type(L140_1) == "table" then
-    for L5_2, L6_2 in pairs(L140_1) do
-      if type(L5_2) == "string" and type(L6_2) == "string" and L6_2 ~= "" then
-        pcall(function()
-          L1_2 = L1_2:gsub(L5_2, L6_2)
-        end)
-      end
+local L141_1
+do
+  -- [port perf] one gsub over the letter table (was one pcall + gsub per letter), cached
+  local L0_2, L1_2 = {}, 0
+  function L141_1(A0_2)
+    if not A0_2 then
+      return ""
     end
+    local L2_2 = tostring(A0_2)
+    local L3_2 = L0_2[L2_2]
+    if L3_2 then
+      return L3_2
+    end
+    L3_2 = L2_2:lower():gsub("\208[\128-\191]", L140_1)
+    if 4096 <= L1_2 then
+      L0_2, L1_2 = {}, 0
+    end
+    L0_2[L2_2] = L3_2
+    L1_2 = L1_2 + 1
+    return L3_2
   end
-  return L1_2
 end
 
 L139_1.utf8Lower = L141_1
@@ -5629,7 +5635,10 @@ do
               if L4_3 then
                 local L5_3 = math.floor(L4_3.Health)
                 local L6_3 = math.floor(L4_3.MaxHealth)
-                L2_3.Text = string.format("[%d/%d]", L5_3, L6_3)
+                local L7_3 = string.format("[%d/%d]", L5_3, L6_3)
+                if L2_3.Text ~= L7_3 then
+                  L2_3.Text = L7_3
+                end
               end
             end
           end
@@ -9434,20 +9443,8 @@ do
     end
   end
   
-  task.spawn(function()
-    for L3_2 = 1, 40 do
-      if L168_1() then
-        break
-      end
-      task.wait(0.2)
-    end
-    L169_1()
-    while true do
-      if not task.wait(1) or not pcall(L169_1) then
-        break
-      end
-    end
-  end)
+  -- [port] RAILhub key panel (key type / expiry) not created: no key system in the port,
+  -- and its once-per-second refresh read the key file and ~20 globals
 end
 do
   local L144_1 = Instance.new("ScreenGui")
@@ -19143,6 +19140,14 @@ do
                   L24_3[#L24_3 + 1] = L4_5
                 end
               end
+            end)
+            -- [port perf] watch the new character so this runs once per character
+            pcall(function()
+              L25_3 = L5_2.Character.DescendantAdded:Connect(function(A0_5)
+                if A0_5:IsA("BasePart") then
+                  L24_3[#L24_3 + 1] = A0_5
+                end
+              end)
             end)
           end
           for L3_4 = 1, #L24_3 do
