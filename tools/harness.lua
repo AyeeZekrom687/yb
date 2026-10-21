@@ -25,9 +25,19 @@ local function clock() return now end
 ------------------------------------------------------------------------
 -- Instruction budget (Lua 5.1 hooks are per-thread)
 ------------------------------------------------------------------------
+-- COVER=<from>-<to>: record which SCR lines in that range execute (summary at exit)
+local COVER_LO, COVER_HI = (os.getenv("COVER") or ""):match("^(%d+)%-(%d+)$")
+COVER_LO, COVER_HI = tonumber(COVER_LO), tonumber(COVER_HI)
+local COVER_HITS = {}
 local function install_budget(co, label)
     local used = 0
-    local function hook()
+    local function hook(ev, line)
+        if ev == "line" then
+            if line >= COVER_LO and line <= COVER_HI and debug.getinfo(2, "S").source == "=SCR" then
+                COVER_HITS[line] = (COVER_HITS[line] or 0) + 1
+            end
+            return
+        end
         used = used + HOOK_EVERY
         if used > BUDGET then
             local info = debug.getinfo(2, "Sl")
@@ -35,7 +45,8 @@ local function install_budget(co, label)
             error(string.format("BUDGET exceeded in %s at line %s", label, info and info.currentline or "?"), 2)
         end
     end
-    if co then debug.sethook(co, hook, "", HOOK_EVERY) else debug.sethook(hook, "", HOOK_EVERY) end
+    local mask = COVER_LO and "l" or ""
+    if co then debug.sethook(co, hook, mask, HOOK_EVERY) else debug.sethook(hook, mask, HOOK_EVERY) end
 end
 
 ------------------------------------------------------------------------
@@ -230,6 +241,7 @@ proxy_mt.__index = function(p, k)
     if k == "Name" then return d.short end
     if STR_PROPS[k] then return STR_PROPS[k] end
     if TRUE_PROPS[k] ~= nil then return TRUE_PROPS[k] end
+    if k == "Parent" and d.parent ~= nil then return d.parent end
     local kid = d.kids[k]
     if not kid then
         kid = mkproxy(d.name .. "." .. tostring(k), k, p)
@@ -237,7 +249,14 @@ proxy_mt.__index = function(p, k)
     end
     return kid
 end
-proxy_mt.__newindex = function(p, k, v) PX[p].store[k] = v end
+local CFRAME_LOG = {}
+proxy_mt.__newindex = function(p, k, v)
+    local d = PX[p]
+    if k == "CFrame" and d.short == "HumanoidRootPart" then
+        CFRAME_LOG[#CFRAME_LOG + 1] = tostring(v and PX[v] and PX[v].name or v)
+    end
+    d.store[k] = v
+end
 proxy_mt.__tostring = function(p) return PX[p].short end
 proxy_mt.__concat = function(a, b) return tostring(a) .. tostring(b) end
 local function arith() return mkproxy("arith", "arith", nil, "Vector3") end
@@ -312,7 +331,17 @@ proxy_mt.__call = function(p, ...)
     elseif key == "GetService" then
         return is_proxy(self) and self[tostring(select(2, ...))] or nil
     elseif LIST_METHODS[key] then
+        local sd = is_proxy(self) and PX[self].store
+        local list = sd and (key == "GetDescendants" and rawget(sd, "__descendants") or rawget(sd, "__children"))
+        if list and (key == "GetChildren" or key == "GetDescendants") then
+            local out = {}
+            for i, v in ipairs(list) do out[i] = v end
+            return out
+        end
         return {}
+    elseif key == "IsA" and is_proxy(self) and rawget(PX[self].store, "ClassName") == "Model" then
+        local cls = select(2, ...)
+        return cls == "Model" or cls == "PVInstance" or cls == "Instance"
     elseif TRUE_METHODS[key] then
         return true
     elseif FALSE_METHODS[key] then
@@ -347,6 +376,12 @@ proxy_mt.__call = function(p, ...)
         return {}
     elseif key == "GenerateGUID" then
         return "00000000-0000-0000-0000-000000000000"
+    elseif (key == "FireServer" or key == "InvokeServer") and os.getenv("LOG_REMOTES") then
+        STATS[key] = STATS[key] + 1
+        local args = {}
+        for i = 2, select("#", ...) do args[#args + 1] = tostring((select(i, ...))) end
+        log("REMOTE", key .. " " .. (d.name or "?") .. " (" .. table.concat(args, ", ") .. ")")
+        return nil
     elseif key == "FireServer" or key == "InvokeServer" or key == "Kick" then
         STATS[key] = STATS[key] + 1
         return nil
@@ -356,6 +391,10 @@ proxy_mt.__call = function(p, ...)
         local tb = {}
         for line in debug.traceback("", 2):gmatch("[^\n]+") do
             if line:find("SCR:%d+:") then tb[#tb + 1] = line:match("SCR:%d+") end
+        end
+        local cur = coroutine.running()
+        for _, t in ipairs(tasks) do
+            if t.co == cur then tb[#tb + 1] = "task " .. t.label end
         end
         log("TELEPORT", key .. " called from " .. table.concat(tb, " < "))
         return nil
@@ -536,6 +575,30 @@ rawset(G, "loadstring", function(src, name)
 end)
 
 ------------------------------------------------------------------------
+-- ITEMS=<name,name,...>: item models under workspace.Item_Spawns.Items, each with a
+-- ProximityPrompt (ObjectText = name) and a part
+------------------------------------------------------------------------
+local ITEM_LIST = {}
+if os.getenv("ITEMS") then
+    local folder = game.Workspace.Item_Spawns.Items
+    local all = {}
+    for nm in os.getenv("ITEMS"):gmatch("[^,]+") do
+        local i = #ITEM_LIST + 1
+        local model = mkproxy("Workspace.Item_Spawns.Items.Item" .. i, "Item" .. i, folder)
+        PX[model].store.ClassName = "Model"
+        local prompt = model.ProximityPrompt
+        prompt.ObjectText = nm
+        local part = model.Handle
+        PX[model].store.__children = { part, prompt }
+        PX[model].store.__descendants = { part, prompt }
+        ITEM_LIST[i] = model
+        all[#all + 1] = model; all[#all + 1] = part; all[#all + 1] = prompt
+    end
+    PX[folder].store.__children = ITEM_LIST
+    PX[folder].store.__descendants = all
+end
+
+------------------------------------------------------------------------
 -- Run
 ------------------------------------------------------------------------
 local fh = assert(io.open(SCRIPT, "rb"))
@@ -583,6 +646,23 @@ if FIRE then
     table.sort(rep, function(a, b) return tonumber(a:match("%d+")) > tonumber(b:match("%d+")) end)
     log("SUMMARY", #rep .. " repeated output lines after FIRE (count x line):")
     for i = 1, math.min(#rep, 40) do real_print("   " .. rep[i]) end
+end
+if #CFRAME_LOG > 0 then
+    local agg, order = {}, {}
+    for _, v in ipairs(CFRAME_LOG) do
+        if not agg[v] then agg[v] = 0; order[#order + 1] = v end
+        agg[v] = agg[v] + 1
+    end
+    log("SUMMARY", #CFRAME_LOG .. " HumanoidRootPart.CFrame writes:")
+    for i = 1, math.min(#order, 12) do real_print(string.format("   %5d x %s", agg[order[i]], order[i])) end
+end
+if COVER_LO then
+    local ls = {}
+    for l in pairs(COVER_HITS) do ls[#ls + 1] = l end
+    table.sort(ls)
+    local out = {}
+    for _, l in ipairs(ls) do out[#out + 1] = l .. "x" .. COVER_HITS[l] end
+    log("SUMMARY", "covered lines: " .. table.concat(out, " "))
 end
 local uc = {}
 for k, v in pairs(UI_CALLS) do uc[#uc + 1] = k .. "=" .. v end
