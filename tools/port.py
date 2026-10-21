@@ -86,6 +86,34 @@ EDITS = [
      '            }\n'
      '            break\n          end\n'
      '          if L5_2.PlayerStats.Stand.Value ~= "None" then\n', 1),
+    # (user report) NPC attacks do nothing while a tool is held (an arrow or item left equipped):
+    # unequip before attacking, in the quest/NPC farm's kill loop (L194_1) and Auto Prestige's
+    # attack step (inside its kill routine L43_2)
+    ('quest farm attack unequips',
+     '      local L37_2 = game:GetService("CollectionService")\n'
+     '      if L37_2:HasTag(L6_2, "Blocking") then\n',
+     '      do\n'
+     '        -- [port fix] attacks do nothing while a tool is held\n'
+     '        local L37_2 = L2_1.Character\n'
+     '        local L38_2 = L37_2 and L37_2:FindFirstChildOfClass("Humanoid")\n'
+     '        if L38_2 and L37_2:FindFirstChildOfClass("Tool") then\n'
+     '          pcall(L38_2.UnequipTools, L38_2)\n'
+     '        end\n'
+     '      end\n'
+     '      local L37_2 = game:GetService("CollectionService")\n'
+     '      if L37_2:HasTag(L6_2, "Blocking") then\n', 1),
+    ('prestige attack unequips',
+     '        local L1_4 = L5_2.Character\n        if not L1_4 then\n          return\n        end\n'
+     '        local L2_4 = L1_4:FindFirstChild("RemoteFunction") or L10_2\n',
+     '        local L1_4 = L5_2.Character\n        if not L1_4 then\n          return\n        end\n'
+     '        do\n'
+     '          -- [port fix] attacks do nothing while a tool is held\n'
+     '          local L2_4 = L1_4:FindFirstChildOfClass("Humanoid")\n'
+     '          if L2_4 and L1_4:FindFirstChildOfClass("Tool") then\n'
+     '            pcall(L2_4.UnequipTools, L2_4)\n'
+     '          end\n'
+     '        end\n'
+     '        local L2_4 = L1_4:FindFirstChild("RemoteFunction") or L10_2\n', 1),
 ]
 
 # Coordinator checkpoints (coordinator.lua): (name, anchor, text inserted after the anchor's first

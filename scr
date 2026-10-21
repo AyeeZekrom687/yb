@@ -11918,6 +11918,14 @@ do
           end)
         end
       end
+      do
+        -- [port fix] attacks do nothing while a tool is held
+        local L37_2 = L2_1.Character
+        local L38_2 = L37_2 and L37_2:FindFirstChildOfClass("Humanoid")
+        if L38_2 and L37_2:FindFirstChildOfClass("Tool") then
+          pcall(L38_2.UnequipTools, L38_2)
+        end
+      end
       local L37_2 = game:GetService("CollectionService")
       if L37_2:HasTag(L6_2, "Blocking") then
         L30_2("InputBegan", {
@@ -18928,6 +18936,13 @@ do
         local L1_4 = L5_2.Character
         if not L1_4 then
           return
+        end
+        do
+          -- [port fix] attacks do nothing while a tool is held
+          local L2_4 = L1_4:FindFirstChildOfClass("Humanoid")
+          if L2_4 and L1_4:FindFirstChildOfClass("Tool") then
+            pcall(L2_4.UnequipTools, L2_4)
+          end
         end
         local L2_4 = L1_4:FindFirstChild("RemoteFunction") or L10_2
         local L3_4 = L1_4:FindFirstChild("RemoteEvent") or L11_2

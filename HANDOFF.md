@@ -54,6 +54,10 @@ Only the hub's own backend is changed; all Roblox remote calls are untouched.
    at level 2 and used up to 3 arrows x 20 tries, buying more. It now starts at level 4, uses one
    arrow per try, and after an arrow gives no stand waits for the next level
    (`getgenv()._YBA_ArrowRetry`). Harness `VALUES="Stand=None,Level=3,Quest="`: no arrows used.
+5. Unequip before NPC attacks (user report: auto attacks do nothing while a tool is held, e.g. an
+   arrow left equipped). The quest/NPC farm's kill loop (`L194_1`) and Auto Prestige's attack step
+   (inside its kill routine `L43_2`) call `Humanoid:UnequipTools()` when the character holds a
+   Tool. Not reachable in the harness (no NPCs in the mock); the snippet was tested standalone.
 Kept as in the original: safe mode (`YBA/NO_AUTOSTART.txt`), headless mode (`YBA/NO_UI.txt`), the
 key-info panel (reads key metadata the loader leaves in globals; no network), webhooks, server hop.
 The payload contains no HWID or heartbeat calls (those are in the loader, which is not shipped).
