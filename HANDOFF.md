@@ -71,6 +71,11 @@ Only the hub's own backend is changed; all Roblox remote calls are untouched.
    `RAILHUB_NO_HOOKS`, ...), the key loader's data and download URLs keep their names. The
    header/toggle-button image `rbxassetid://87452743189169` is unchanged (could not be viewed
    from here; it may be the RAILhub logo).
+8. Webhook filters (user report: everything off but stand notifications, still pinged for item
+   drops): the settings were loaded as `get(key, true) or true`, so every webhook toggle saved
+   off (Enable Ping, item/stand/prestige/staff/kick filters) was on again after each
+   rejoin/hop/re-execute while the UI showed it off. Now read as saved. Auto Prestige's own
+   started/stopped embeds (`L157_1`) also ignored the switch and its filter; now gated.
 Kept as in the original: safe mode (`YBA/NO_AUTOSTART.txt`), headless mode (`YBA/NO_UI.txt`), the
 key-info panel (reads key metadata the loader leaves in globals; no network), webhooks, server hop.
 The payload contains no HWID or heartbeat calls (those are in the loader, which is not shipped).

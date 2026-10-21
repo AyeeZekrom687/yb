@@ -2574,16 +2574,17 @@ local function L108_1()
 end
 
 local L109_1 = {}
-L109_1.Enabled = L28_1 and L28_1("WH_Enabled", true) or L28_1 and L28_1("WH_PingRare", true) or true
+-- [port fix] read saved webhook toggles as saved (`get(k, true) or true` made "off" on)
+L109_1.Enabled = L28_1("WH_Enabled", true) ~= false
 L109_1.Url = L108_1()
 L109_1.UserId = L28_1 and L28_1("WH_UserId", "") or ""
 L109_1.Language = L28_1 and L28_1("WH_Lang", "English") or "English"
-L109_1.HideUser = L28_1 and L28_1("WH_HideUser", false) or false
-L109_1.NotifyItem = L28_1 and L28_1("WH_NotifyItem", true) or true
-L109_1.NotifyStand = L28_1 and L28_1("WH_NotifyStand", true) or true
-L109_1.NotifyPrestige = L28_1 and L28_1("WH_NotifyPrestige", true) or true
-L109_1.NotifyStaff = L28_1 and L28_1("WH_NotifyStaff", true) or true
-L109_1.NotifyKick = L28_1 and L28_1("WH_NotifyKick", true) or true
+L109_1.HideUser = L28_1("WH_HideUser", false) == true
+L109_1.NotifyItem = L28_1("WH_NotifyItem", true) ~= false
+L109_1.NotifyStand = L28_1("WH_NotifyStand", true) ~= false
+L109_1.NotifyPrestige = L28_1("WH_NotifyPrestige", true) ~= false
+L109_1.NotifyStaff = L28_1("WH_NotifyStaff", true) ~= false
+L109_1.NotifyKick = L28_1("WH_NotifyKick", true) ~= false
 L109_1.NotifyMilestone = L28_1("WH_NotifyMilestone", true) ~= false
 
 local function L110_1()
@@ -17299,6 +17300,10 @@ do
   end
   
   local function L157_1(A0_2)
+    -- [port fix] respect the webhook switch and the Auto Prestige Progress filter
+    if not L109_1.Enabled or not L109_1.NotifyPrestige then
+      return
+    end
     local L1_2 = getgenv().webhook
     if not L1_2 or L1_2 == "" then
       return

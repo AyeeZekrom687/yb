@@ -182,6 +182,27 @@ EDITS = [
     ('brand: player label', '"RAILhubPlayerLabel"', '"YBAThingPlayerLabel"', 1),
     ('brand: item esp', '"RailHubItemESP"', '"YBAThingItemESP"', 1),
     ('brand: shiny sound', '"RAILhubShinySound"', '"YBAThingShinySound"', 1),
+    # (user report: webhook filters off, still pinged for item drops) the webhook settings were
+    # loaded as `get(key, true) or true`, so a toggle saved off was on again after every
+    # rejoin/hop/re-execute (the UI, which reads the setting itself, still showed it off)
+    ('webhook enabled load',
+     'L109_1.Enabled = L28_1 and L28_1("WH_Enabled", true) or L28_1 and L28_1("WH_PingRare", true) or true\n',
+     '-- [port fix] read saved webhook toggles as saved (`get(k, true) or true` made "off" on)\n'
+     'L109_1.Enabled = L28_1("WH_Enabled", true) ~= false\n', 1),
+    ('webhook hide user load', 'L109_1.HideUser = L28_1 and L28_1("WH_HideUser", false) or false\n',
+     'L109_1.HideUser = L28_1("WH_HideUser", false) == true\n', 1),
+] + [
+    (f'webhook {k} load', f'L109_1.Notify{k} = L28_1 and L28_1("WH_Notify{k}", true) or true\n',
+     f'L109_1.Notify{k} = L28_1("WH_Notify{k}", true) ~= false\n', 1)
+    for k in ('Item', 'Stand', 'Prestige', 'Staff', 'Kick')
+] + [
+    # Auto Prestige posted its started/stopped embeds straight to the webhook URL, ignoring the
+    # webhook switch and the Auto Prestige Progress filter
+    ('webhook prestige sender', '  local function L157_1(A0_2)\n    local L1_2 = getgenv().webhook\n',
+     '  local function L157_1(A0_2)\n'
+     '    -- [port fix] respect the webhook switch and the Auto Prestige Progress filter\n'
+     '    if not L109_1.Enabled or not L109_1.NotifyPrestige then\n      return\n    end\n'
+     '    local L1_2 = getgenv().webhook\n', 1),
     # the Info tab's Links section held only the RAILhub Discord invite
     ('brand: links section', '  local L149_1 = L147_1:Section({Side = "Right", Name = "Links"})\n',
      '  local L149_1\n', 1),
