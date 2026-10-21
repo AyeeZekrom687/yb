@@ -1,0 +1,21358 @@
+wait(5)
+local L0_1 = game:GetService("Players")
+local L1_1 = L0_1.LocalPlayer or (function()
+  local L0_2 = L0_1.LocalPlayer
+  local L1_2 = tick()
+  while not L0_2 and tick() - L1_2 < 10 do
+    L0_2 = L0_1.LocalPlayer
+    if L0_2 then
+      break
+    end
+    task.wait(0.05)
+  end
+  return L0_2
+end)()
+local L2_1 = L1_1
+local L3_1 = L1_1
+local L4_1 = L1_1 and L1_1:FindFirstChild("PlayerGui") or nil
+local L5_1 = game:GetService("HttpService")
+local L6_1 = game:GetService("RunService")
+local L7_1 = game:GetService("UserInputService")
+local L8_1 = game:GetService("TweenService")
+local L9_1 = game:GetService("VirtualInputManager")
+local L10_1 = game:GetService("Workspace")
+local L11_1 = game:GetService("CollectionService")
+local L12_1 = game:GetService("Lighting")
+local L13_1 = game:GetService("TeleportService")
+local L14_1 = game:GetService("GuiService")
+local L15_1 = game:GetService("Stats")
+local L16_1 = "RAILhubYBA/boot_log.txt"
+
+local function L17_1(A0_2)
+  pcall(function()
+    if type(makefolder) == "function" and type(isfolder) == "function" and not isfolder("RAILhubYBA") then
+      makefolder("RAILhubYBA")
+    end
+    local L0_3 = os.date("[%H:%M:%S] ") .. tostring(A0_2) .. "\n"
+    if type(appendfile) == "function" then
+      appendfile(L16_1, L0_3)
+    elseif type(writefile) == "function" then
+      local L1_3 = ""
+      if type(isfile) == "function" and isfile(L16_1) and type(readfile) == "function" then
+        L1_3 = readfile(L16_1) or ""
+      end
+      writefile(L16_1, L1_3 .. L0_3)
+    end
+  end)
+end
+
+pcall(function()
+  if type(writefile) == "function" then
+    if type(makefolder) == "function" and type(isfolder) == "function" and not isfolder("RAILhubYBA") then
+      makefolder("RAILhubYBA")
+    end
+    writefile(L16_1, os.date("=== exec start %Y-%m-%d %H:%M:%S ===\n"))
+  end
+end)
+L17_1("exec start")
+local L18_1 = "RAILhubYBA"
+local L19_1 = L18_1 .. "/custom_flags.json"
+local L20_1 = {}
+L20_1.AutoExecute = true
+L20_1.SaveSettings = true
+L20_1.AutoRetry = true
+L20_1.ItemFarmEnabled = false
+L20_1.StandFarmEnabled = false
+L20_1.PilotEnabled = false
+L20_1.AntiAfk = true
+L20_1.RemoveMap = false
+L20_1.AutoPlay = true
+L20_1.AutoPlayMethod = "Click"
+L20_1.ServerHopDelay = 3
+
+local function L21_1(A0_2, A1_2)
+  local L2_2 = type(A0_2)
+  if L2_2 == "nil" or L2_2 == "boolean" or L2_2 == "number" or L2_2 == "string" then
+    return A0_2
+  end
+  if L2_2 == "userdata" then
+    return tostring(A0_2)
+  end
+  if L2_2 ~= "table" then
+    return tostring(A0_2)
+  end
+  A1_2 = A1_2 or {}
+  if A1_2[A0_2] then
+    return nil
+  end
+  A1_2[A0_2] = true
+  local L3_2 = true
+  local L4_2 = 0
+  for L8_2 in pairs(A0_2) do
+    if type(L8_2) ~= "number" or L8_2 < 1 or L8_2 % 1 ~= 0 then
+      L3_2 = false
+      break
+    end
+    if L8_2 > L4_2 then
+      L4_2 = L8_2
+    end
+  end
+  local L5_2 = {}
+  if L3_2 then
+    for L9_2 = 1, L4_2 do
+      L5_2[L9_2] = L21_1(A0_2[L9_2], A1_2)
+    end
+  else
+    for L9_2, L10_2 in pairs(A0_2) do
+      L5_2[tostring(L9_2)] = L21_1(L10_2, A1_2)
+    end
+  end
+  A1_2[A0_2] = nil
+  return L5_2
+end
+
+local function L22_1()
+  if type(isfolder) == "function" and type(makefolder) == "function" and not isfolder(L18_1) then
+    makefolder(L18_1)
+  end
+end
+
+local function L23_1()
+  if type(readfile) ~= "function" or type(isfile) ~= "function" then
+    return nil
+  end
+  if not isfile(L19_1) then
+    return nil
+  end
+  local L0_2, L1_2 = pcall(readfile, L19_1)
+  if not L0_2 or type(L1_2) ~= "string" or L1_2 == "" then
+    return nil
+  end
+  local L2_2, L3_2 = pcall(function()
+    return L5_1:JSONDecode(L1_2)
+  end)
+  if not L2_2 or type(L3_2) ~= "table" then
+    return nil
+  end
+  return L3_2
+end
+
+local function L24_1(A0_2)
+  if type(writefile) ~= "function" then
+    return false
+  end
+  L22_1()
+  local L1_2, L2_2 = pcall(function()
+    return L5_1:JSONEncode(L21_1(A0_2 or {}))
+  end)
+  if not L1_2 or type(L2_2) ~= "string" then
+    return false
+  end
+  return pcall(writefile, L19_1, L2_2)
+end
+
+local function L25_1()
+  local L0_2 = L23_1()
+  return type(L0_2) == "table" and L0_2 or {}
+end
+
+local L26_1 = L25_1()
+L17_1("settings loaded early")
+
+local function L27_1(A0_2, A1_2)
+  L26_1[A0_2] = A1_2
+  if L20_1.SaveSettings or A0_2 == "SS" or A0_2 == "AE" or A0_2 == "AR" or A0_2 == "RemoveMap" or A0_2 == "RM" or A0_2 == "AutoPlay" or A0_2 == "AutoPlayMethod" or A0_2 == "SH_Delay" or A0_2 == "SHD" or A0_2 == "SHF" or A0_2 == "SF_HopNoItems" or A0_2 == "StandFarmKeep" or A0_2 == "StandFarmShinies" or A0_2 == "SKS" or A0_2 == "SAR" or A0_2 == "SFM" then
+    L24_1(L26_1)
+  end
+end
+
+local function L28_1(A0_2, A1_2)
+  if L26_1[A0_2] == nil then
+    return A1_2
+  end
+  return L26_1[A0_2]
+end
+
+local function L29_1()
+  if type(L26_1) == "table" then
+    if type(table.clear) == "function" then
+      table.clear(L26_1)
+    else
+      for L3_2 in pairs(L26_1) do
+        L26_1[L3_2] = nil
+      end
+    end
+  end
+  pcall(function()
+    if type(delfile) == "function" and type(isfile) == "function" and isfile(L19_1) then
+      delfile(L19_1)
+    elseif type(writefile) == "function" then
+      L24_1({})
+    end
+  end)
+  L20_1.SaveSettings = true
+  L20_1.AutoExecute = true
+  L20_1.AutoRetry = true
+  L20_1.ItemFarmEnabled = false
+  L20_1.StandFarmEnabled = false
+  L20_1.PilotEnabled = false
+  L20_1.AntiAfk = true
+  L20_1.RemoveMap = false
+  L20_1.AutoPlay = true
+  L20_1.AutoPlayMethod = "Click"
+  L20_1.ServerHopDelay = 3
+  L27_1("SH_Delay", 3)
+end
+
+local L30_1 = false
+local L31_1 = {}
+local L32_1 = {}
+local L33_1 = {}
+local L34_1 = {}
+
+local function L35_1(A0_2)
+  if not A0_2 then
+    return true
+  end
+  local L1_2 = string.lower(A0_2.Name)
+  if L1_2 == "important" or L1_2 == "oceanfloor" or L1_2 == "npcs" or L1_2 == "npc" or L1_2 == "spawns" or L1_2 == "spawn" or L1_2 == "locations" or L1_2 == "dialogues" or L1_2 == "dialogue" or L1_2 == "living" or L1_2 == "item_spawns" or L1_2 == "itemspawns" or L1_2 == "mob_spawns2" or L1_2 == "entities" or L1_2 == "enemies" or L1_2 == "mobs" or L1_2 == "whitepad" or L1_2 == "underwhitepad" or L1_2 == "yba_floatpad_farm" or L1_2 == "safeposanchor" or L1_2 == "ignoreinstances" then
+    return true
+  end
+  if A0_2:IsA("Player") or A0_2:IsA("Model") and (A0_2:FindFirstChildOfClass("Humanoid") or L0_1:GetPlayerFromCharacter(A0_2)) then
+    return true
+  end
+  return false
+end
+
+local function L36_1(A0_2)
+  if not A0_2 then
+    return
+  end
+  pcall(function()
+    if A0_2:IsA("BasePart") then
+      if L32_1[A0_2] == nil then
+        L32_1[A0_2] = A0_2.Transparency
+      end
+      if L33_1[A0_2] == nil then
+        L33_1[A0_2] = A0_2.CastShadow
+      end
+      A0_2.Transparency = 1
+      A0_2.CastShadow = false
+    elseif A0_2:IsA("Decal") or A0_2:IsA("Texture") then
+      if L32_1[A0_2] == nil then
+        L32_1[A0_2] = A0_2.Transparency
+      end
+      A0_2.Transparency = 1
+    elseif A0_2:IsA("ParticleEmitter") or A0_2:IsA("Trail") or A0_2:IsA("Beam") or A0_2:IsA("Smoke") or A0_2:IsA("Fire") or A0_2:IsA("Sparkles") or A0_2:IsA("Light") or A0_2:IsA("Highlight") or A0_2:IsA("BillboardGui") or A0_2:IsA("SurfaceGui") then
+      if L34_1[A0_2] == nil then
+        L34_1[A0_2] = A0_2.Enabled
+      end
+      A0_2.Enabled = false
+    end
+  end)
+end
+
+local function L37_1(A0_2)
+  if not A0_2 then
+    return
+  end
+  L36_1(A0_2)
+  for L4_2, L5_2 in ipairs(A0_2:GetDescendants()) do
+    L36_1(L5_2)
+  end
+end
+
+local function L38_1()
+  for L3_2, L4_2 in pairs(L32_1) do
+    pcall(function()
+      if L3_2 and L3_2.Parent then
+        L3_2.Transparency = L4_2
+      end
+    end)
+  end
+  for L3_2, L4_2 in pairs(L33_1) do
+    pcall(function()
+      if L3_2 and L3_2.Parent then
+        L3_2.CastShadow = L4_2
+      end
+    end)
+  end
+  for L3_2, L4_2 in pairs(L34_1) do
+    pcall(function()
+      if L3_2 and L3_2.Parent then
+        L3_2.Enabled = L4_2
+      end
+    end)
+  end
+  table.clear(L32_1)
+  table.clear(L33_1)
+  table.clear(L34_1)
+end
+
+local function L39_1()
+  pcall(function()
+    local L0_3 = workspace:FindFirstChild("Map")
+    if L0_3 then
+      local L1_3 = L0_3:FindFirstChild("IMPORTANT")
+      if L1_3 then
+        local L2_3 = L1_3:FindFirstChild("OceanFloor")
+        if L2_3 then
+          local L3_3 = L2_3:FindFirstChild("OceanFloor_Sand_6")
+          local L4_3 = L2_3:FindFirstChild("OceanFloor_Sand_4")
+          if L3_3 and L3_3:IsA("BasePart") then
+            L3_3.Size = Vector3.new(2048, 89, 2048)
+          end
+          if L4_3 and L4_3:IsA("BasePart") then
+            L4_3.Size = Vector3.new(2048, 89, 2048)
+          end
+        end
+      end
+    end
+  end)
+end
+
+local function L40_1()
+  pcall(function()
+    local L0_3 = game:GetService("Lighting")
+    if L0_3 then
+      L0_3.GlobalShadows = false
+      L0_3.FogEnd = 9000000000
+      L0_3.Brightness = 1
+      for L4_3, L5_3 in ipairs(L0_3:GetChildren()) do
+        if L5_3.Name ~= "LocationBlur" and (L5_3:IsA("PostProcessEffect") or L5_3:IsA("DepthOfFieldEffect") or L5_3:IsA("SunRaysEffect") or L5_3:IsA("BlurEffect") or L5_3:IsA("BloomEffect") or L5_3:IsA("ColorCorrectionEffect") or L5_3:IsA("Atmosphere") or L5_3:IsA("Clouds") or L5_3:IsA("Sky")) then
+          pcall(function()
+            if type(L5_3.Enabled) == "boolean" then
+              if L34_1[L5_3] == nil then
+                L34_1[L5_3] = L5_3.Enabled
+              end
+              L5_3.Enabled = false
+            end
+          end)
+        end
+      end
+    end
+  end)
+  pcall(function()
+    local L0_3 = workspace.Terrain
+    if L0_3 then
+      L0_3.Decoration = false
+      L0_3.WaterWaveSize = 0
+      L0_3.WaterWaveSpeed = 0
+      L0_3.WaterReflectance = 0
+      L0_3.WaterTransparency = 0
+    end
+  end)
+end
+
+local function L41_1()
+  L39_1()
+  local L0_2 = workspace:FindFirstChild("Map")
+  if L0_2 then
+    for L4_2, L5_2 in ipairs(L0_2:GetChildren()) do
+      if not L35_1(L5_2) then
+        L37_1(L5_2)
+      end
+    end
+  end
+  local L1_2 = {}
+  L1_2.buildings = true
+  L1_2.decorations = true
+  L1_2.trees = true
+  L1_2.props = true
+  L1_2.grass = true
+  L1_2.roads = true
+  L1_2.street = true
+  L1_2.houses = true
+  L1_2.visuals = true
+  L1_2.effects = true
+  L1_2.debris = true
+  for L5_2, L6_2 in ipairs(workspace:GetChildren()) do
+    local L7_2 = string.lower(L6_2.Name)
+    if L1_2[L7_2] and not L35_1(L6_2) then
+      L37_1(L6_2)
+    end
+  end
+  L40_1()
+  L39_1()
+end
+
+local function L42_1()
+  L30_1 = true
+  L17_1("applyRemoveMap: executing map invisibility (Remove Map)")
+  L41_1()
+  for L3_2, L4_2 in ipairs(L31_1) do
+    pcall(function()
+      L4_2:Disconnect()
+    end)
+  end
+  table.clear(L31_1)
+  local L0_2 = workspace:FindFirstChild("Map")
+  if L0_2 then
+    local L1_2 = L0_2.DescendantAdded:Connect(function(A0_3)
+      if not L30_1 then
+        return
+      end
+      local L1_3 = A0_3
+      local L2_3 = false
+      while L1_3 and L1_3 ~= L0_2 and L1_3 ~= workspace and L1_3 ~= game do
+        if L35_1(L1_3) then
+          L2_3 = true
+          break
+        end
+        L1_3 = L1_3.Parent
+      end
+      if not L2_3 then
+        L36_1(A0_3)
+      end
+    end)
+    table.insert(L31_1, L1_2)
+  end
+  local L1_2 = workspace.ChildAdded:Connect(function(A0_3)
+    if not L30_1 then
+      return
+    end
+    local L1_3 = string.lower(A0_3.Name)
+    if L1_3 == "map" then
+      task.defer(function()
+        if L30_1 then
+          L41_1()
+          local L0_4 = A0_3.DescendantAdded:Connect(function(A0_5)
+            if not L30_1 then
+              return
+            end
+            local L1_5 = A0_5
+            local L2_5 = false
+            while L1_5 and L1_5 ~= A0_3 and L1_5 ~= workspace and L1_5 ~= game do
+              if L35_1(L1_5) then
+                L2_5 = true
+                break
+              end
+              L1_5 = L1_5.Parent
+            end
+            if not L2_5 then
+              L36_1(A0_5)
+            end
+          end)
+          table.insert(L31_1, L0_4)
+        end
+      end)
+    elseif (L1_3 == "buildings" or L1_3 == "decorations" or L1_3 == "trees" or L1_3 == "props" or L1_3 == "grass" or L1_3 == "roads" or L1_3 == "houses" or L1_3 == "visuals" or L1_3 == "effects" or L1_3 == "debris") and not L35_1(A0_3) then
+      task.defer(function()
+        if L30_1 then
+          L37_1(A0_3)
+          local L0_4 = A0_3.DescendantAdded:Connect(function(A0_5)
+            if L30_1 then
+              L36_1(A0_5)
+            end
+          end)
+          table.insert(L31_1, L0_4)
+        end
+      end)
+    end
+  end)
+  table.insert(L31_1, L1_2)
+end
+
+local function L43_1()
+  L30_1 = false
+  for L3_2, L4_2 in ipairs(L31_1) do
+    pcall(function()
+      L4_2:Disconnect()
+    end)
+  end
+  table.clear(L31_1)
+  L38_1()
+  L17_1("stopRemoveMap: restored map visibility and stopped listeners")
+end
+
+local L44_1 = L28_1 and (L28_1("RemoveMap", false) or L28_1("RM", false)) or false
+if L44_1 then
+  L20_1.RemoveMap = true
+  L17_1("EARLY: Remove Map flag active, starting early map invisibility...")
+  task.spawn(function()
+    pcall(L42_1)
+  end)
+end
+
+local function L45_1()
+  local L0_2 = L0_1.LocalPlayer or L1_1 or L2_1 or L3_1
+  L0_2 = L0_2 or L0_1.LocalPlayer
+  return L0_2
+end
+
+local function L46_1()
+  local L0_2 = L45_1()
+  if not L0_2 then
+    return nil
+  end
+  return L0_2:FindFirstChild("PlayerGui") or L0_2.WaitForChild and L0_2:WaitForChild("PlayerGui", 5)
+end
+
+local L47_1
+local L48_1 = L28_1 and L28_1("AutoRejoin", true)
+if L48_1 == nil then
+  L48_1 = true
+end
+local L49_1 = false
+
+local function L50_1(A0_2)
+  if not L48_1 or L49_1 then
+    return
+  end
+  if not getgenv or not getgenv()._YBA_HasEverLoaded then
+    return
+  end
+  local L1_2 = tostring(A0_2 or ""):lower()
+  if L1_2:find("teleport", 1, true) or L1_2:find("http error", 1, true) or L1_2:find("processing", 1, true) then
+    return
+  end
+  L49_1 = true
+  pcall(function()
+    local L0_3 = L47_1 or getgenv and getgenv().sendReconnectKickWebhook
+    if L0_3 then
+      L0_3(tostring(A0_2 or "Auto Rejoin on Error / Kick"))
+      task.wait(0.4)
+    end
+  end)
+  pcall(function()
+    game:GetService("TeleportService"):Teleport(game.PlaceId)
+  end)
+  task.wait(10)
+  L49_1 = false
+end
+
+pcall(function()
+  game:GetService("GuiService").ErrorMessageChanged:Connect(function()
+    L50_1("ErrorMessageChanged")
+  end)
+end)
+pcall(function()
+  local L0_2 = gethui and gethui() or game:GetService("CoreGui")
+  local L1_2 = L0_2:FindFirstChild("RobloxPromptGui")
+  if L1_2 then
+    L1_2.DescendantAdded:Connect(function(A0_3)
+      if A0_3:IsA("TextLabel") and (string.find(string.lower(A0_3.Text), "kicked") or string.find(string.lower(A0_3.Text), "error") or string.find(string.lower(A0_3.Text), "disconnected")) and not string.find(string.lower(A0_3.Text), "teleport") then
+        L50_1(A0_3.Text)
+      end
+    end)
+  end
+end)
+
+local function L51_1(A0_2)
+  if not A0_2 then
+    return false
+  end
+  local L1_2 = false
+  pcall(function()
+    if type(firesignal) == "function" then
+      firesignal(A0_2)
+      L1_2 = true
+    end
+  end)
+  if not L1_2 then
+    pcall(function()
+      local L0_3 = getconnections or get_signal_cons
+      if L0_3 then
+        local L1_3 = L0_3(A0_2)
+        if L1_3 and 0 < #L1_3 then
+          for L5_3, L6_3 in ipairs(L1_3) do
+            if L6_3.Fire then
+              L6_3:Fire()
+              L1_2 = true
+            elseif L6_3.Function and type(L6_3.Function) == "function" then
+              L6_3.Function()
+              L1_2 = true
+            end
+          end
+        end
+      end
+    end)
+  end
+  return L1_2
+end
+
+local function L52_1(A0_2)
+  if not A0_2 then
+    return {}
+  end
+  local L1_2 = {}
+  pcall(function()
+    if getconnections then
+      L1_2 = getconnections(A0_2)
+    elseif A0_2.GetConnections then
+      L1_2 = A0_2:GetConnections()
+    end
+  end)
+  return L1_2 or {}
+end
+
+local function L53_1(A0_2, A1_2)
+  if type(table.find) == "function" then
+    return table.find(A0_2, A1_2)
+  end
+  if type(A0_2) ~= "table" then
+    return nil
+  end
+  for L5_2, L6_2 in ipairs(A0_2) do
+    if L6_2 == A1_2 then
+      return L5_2
+    end
+  end
+  return nil
+end
+
+local function L54_1(A0_2)
+  if not A0_2 then
+    return false
+  end
+  local L1_2 = false
+  local L2_2 = A0_2
+  if not A0_2:IsA("GuiButton") and not A0_2:IsA("TextButton") and not A0_2:IsA("ImageButton") then
+    local L3_2
+    pcall(function()
+      L3_2 = A0_2:FindFirstChildWhichIsA("GuiButton", true)
+    end)
+    if L3_2 then
+      L2_2 = L3_2
+    end
+  end
+  if type(firesignal) == "function" and L2_2:IsA("GuiButton") then
+    pcall(function()
+      if L2_2.MouseButton1Click then
+        firesignal(L2_2.MouseButton1Click)
+        L1_2 = true
+      end
+      if L2_2.Activated then
+        firesignal(L2_2.Activated)
+        L1_2 = true
+      end
+      if L2_2.MouseButton1Up then
+        firesignal(L2_2.MouseButton1Up)
+        L1_2 = true
+      end
+      if L2_2.MouseButton1Down then
+        firesignal(L2_2.MouseButton1Down)
+        L1_2 = true
+      end
+    end)
+  end
+  local L3_2 = getconnections or get_signal_cons
+  if L3_2 and L2_2:IsA("GuiButton") then
+    pcall(function()
+      for L3_3, L4_3 in ipairs({
+        "MouseButton1Click",
+        "Activated",
+        "MouseButton1Up",
+        "MouseButton1Down"
+      }) do
+        local L5_3, L6_3 = pcall(function()
+          return L2_2[L4_3]
+        end)
+        if L5_3 and L6_3 then
+          local L7_3 = L3_2(L6_3)
+          if L7_3 and 0 < #L7_3 then
+            for L11_3, L12_3 in ipairs(L7_3) do
+              if L12_3.Fire then
+                pcall(function()
+                  L12_3:Fire()
+                end)
+                L1_2 = true
+              elseif L12_3.Function and type(L12_3.Function) == "function" then
+                pcall(L12_3.Function)
+                L1_2 = true
+              end
+            end
+          end
+        end
+      end
+    end)
+  end
+  pcall(function()
+    if L2_2:IsA("GuiObject") then
+      local L0_3 = L2_2.AbsolutePosition
+      local L1_3 = L2_2.AbsoluteSize
+      if L1_3.X > 0 and 0 < L1_3.Y then
+        local L2_3 = game:GetService("VirtualInputManager")
+        if L2_3 then
+          local L3_3 = math.floor(L0_3.X + L1_3.X / 2)
+          local L4_3 = math.floor(L0_3.Y + L1_3.Y / 2)
+          L2_3:SendMouseMoveEvent(L3_3, L4_3, game)
+          L2_3:SendMouseButtonEvent(L3_3, L4_3, 0, true, game, 1)
+          task.wait(0.03)
+          L2_3:SendMouseButtonEvent(L3_3, L4_3, 0, false, game, 1)
+          local L5_3 = game:GetService("GuiService"):GetGuiInset()
+          if L5_3 and 0 < L5_3.Y then
+            local L6_3 = L4_3 + math.floor(L5_3.Y)
+            L2_3:SendMouseMoveEvent(L3_3, L6_3, game)
+            L2_3:SendMouseButtonEvent(L3_3, L6_3, 0, true, game, 1)
+            task.wait(0.03)
+            L2_3:SendMouseButtonEvent(L3_3, L6_3, 0, false, game, 1)
+          end
+          L1_2 = true
+        end
+      end
+    end
+  end)
+  pcall(function()
+    if L2_2:IsA("GuiObject") then
+      local L0_3 = game:GetService("VirtualUser")
+      if L0_3 then
+        L0_3:CaptureController()
+        local L1_3 = L2_2.AbsolutePosition
+        local L2_3 = L2_2.AbsoluteSize
+        if L2_3.X > 0 and 0 < L2_3.Y then
+          local L3_3 = Vector2.new(math.floor(L1_3.X + L2_3.X / 2), math.floor(L1_3.Y + L2_3.Y / 2))
+          L0_3:ClickButton1(L3_3)
+          L1_2 = true
+        end
+      end
+    end
+  end)
+  return L1_2
+end
+
+local function L55_1(A0_2)
+  if A0_2 then
+    return L54_1(A0_2)
+  end
+  return false
+end
+
+local function L56_1(A0_2)
+  L54_1(A0_2)
+end
+
+local function L57_1(A0_2, A1_2)
+  pcall(function()
+    if A0_2 and A0_2.Parent then
+      A0_2.AssemblyLinearVelocity = Vector3.zero
+      A0_2.AssemblyAngularVelocity = Vector3.zero
+    end
+    if A1_2 and A1_2.Parent then
+      A1_2.Jump = false
+    end
+  end)
+end
+
+local function L58_1(A0_2, A1_2)
+  if not A0_2 then
+    return
+  end
+  A1_2 = A1_2 or L2_1
+  pcall(function()
+    fireproximityprompt(A0_2)
+  end)
+  pcall(function()
+    if type(firesignal) == "function" then
+      firesignal(A0_2.Triggered, A1_2)
+      if A0_2.PromptTriggered then
+        firesignal(A0_2.PromptTriggered, A1_2)
+      end
+    end
+  end)
+end
+
+local function L59_1(A0_2)
+  if not A0_2 then
+    return false
+  end
+  if not A0_2:IsA("GuiObject") then
+    return false
+  end
+  if not A0_2.Visible then
+    return false
+  end
+  local L1_2 = workspace.CurrentCamera
+  local L2_2 = L1_2 and L1_2.ViewportSize
+  if L2_2 and L2_2.X > 50 and 50 < L2_2.Y then
+    local L3_2 = A0_2.AbsolutePosition
+    local L4_2 = A0_2.AbsoluteSize
+    if L3_2.X + L4_2.X <= -100 or L3_2.X >= L2_2.X + 100 then
+      return false
+    end
+    if L3_2.Y + L4_2.Y <= -100 or L3_2.Y >= L2_2.Y + 100 then
+      return false
+    end
+  end
+  local L3_2 = A0_2.Parent
+  local L4_2 = L45_1 and L45_1() or L2_1 or game:GetService("Players").LocalPlayer
+  local L5_2 = L46_1 and L46_1() or L4_2 and L4_2:FindFirstChild("PlayerGui")
+  while L3_2 and L3_2 ~= L5_2 and L3_2 ~= game do
+    if L3_2:IsA("ScreenGui") and not L3_2.Enabled then
+      return false
+    end
+    if L3_2:IsA("GuiObject") and not L3_2.Visible then
+      return false
+    end
+    L3_2 = L3_2.Parent
+  end
+  return true
+end
+
+local function L60_1(A0_2)
+  if not A0_2 then
+    return nil, nil
+  end
+  local L1_2 = A0_2:FindFirstChild("LoadingScreen")
+  if L1_2 and L1_2:IsA("ScreenGui") then
+    if not L1_2.Enabled then
+      L1_2.Enabled = true
+    end
+    local L2_2 = L1_2:FindFirstChild("Frames") or L1_2
+    if L2_2 then
+      if not L2_2.Visible then
+        L2_2.Visible = true
+      end
+      local L3_2 = L2_2:FindFirstChild("Gamemodes") or L2_2:FindFirstChild("GameModes")
+      if L3_2 and (L3_2.Visible or L59_1(L3_2)) then
+        local L4_2 = L3_2:FindFirstChild("MainGame") or L3_2:FindFirstChild("Main_Game") or L3_2:FindFirstChild("Main Game")
+        if L4_2 then
+          local L5_2 = L4_2:FindFirstChild("Play") or L4_2:FindFirstChildWhichIsA("GuiButton", true) or L4_2:IsA("GuiButton") and L4_2
+          if L5_2 then
+            return L5_2, 2
+          end
+          if L59_1(L4_2) then
+            return L4_2, 2
+          end
+        end
+        local L5_2 = L3_2:FindFirstChild("Play", true)
+        if L5_2 then
+          return L5_2, 2
+        end
+        for L9_2, L10_2 in ipairs(L3_2:GetDescendants()) do
+          if L10_2:IsA("GuiButton") or L10_2:IsA("TextButton") or L10_2:IsA("ImageButton") then
+            local L11_2 = L10_2.Name:lower()
+            if L11_2:find("play") or L11_2:find("main") then
+              return L10_2, 2
+            end
+          end
+        end
+      end
+      local L4_2 = L2_2:FindFirstChild("Main") or L2_2:FindFirstChild("MainMenu")
+      if L4_2 then
+        local L5_2 = L4_2:FindFirstChild("Play") or L4_2:FindFirstChild("PlayButton") or L4_2:FindFirstChild("Play_Button") or L4_2:FindFirstChildWhichIsA("GuiButton", true)
+        if L5_2 and (L5_2.Visible or L59_1(L5_2)) then
+          return L5_2, 1
+        end
+        for L9_2, L10_2 in ipairs(L4_2:GetDescendants()) do
+          if (L10_2:IsA("GuiButton") or L10_2:IsA("TextButton") or L10_2:IsA("ImageButton")) and (L10_2.Visible or L59_1(L10_2)) then
+            local L11_2 = L10_2.Name:lower()
+            local L12_2 = L10_2:IsA("TextButton") and L10_2.Text:lower() or ""
+            if L11_2:find("play") or L12_2:find("play") then
+              return L10_2, 1
+            end
+          end
+        end
+      end
+      for L8_2, L9_2 in ipairs(L2_2:GetDescendants()) do
+        if (L9_2:IsA("GuiButton") or L9_2:IsA("TextButton") or L9_2:IsA("ImageButton")) and (L9_2.Visible or L59_1(L9_2)) then
+          local L10_2 = L9_2.Name:lower()
+          local L11_2 = L9_2:IsA("TextButton") and L9_2.Text:lower() or ""
+          if L10_2 == "play" or L10_2 == "playbutton" or L11_2 == "play" or L11_2:find("^play") then
+            return L9_2, 1
+          end
+        end
+      end
+    end
+  end
+  local L2_2 = A0_2:FindFirstChild("Main Menu")
+  if L2_2 and L2_2:IsA("ScreenGui") then
+    if not L2_2.Enabled then
+      L2_2.Enabled = true
+    end
+    local L3_2 = L2_2:FindFirstChild("Buttons") or L2_2
+    local L4_2 = L3_2:FindFirstChild("Quick Play") or L3_2:FindFirstChild("Play")
+    if L4_2 and L59_1(L4_2) then
+      return L4_2, 2
+    end
+    for L8_2, L9_2 in ipairs(L3_2:GetDescendants()) do
+      if (L9_2:IsA("GuiButton") or L9_2:IsA("TextButton") or L9_2:IsA("ImageButton")) and L59_1(L9_2) then
+        local L10_2 = L9_2.Name:lower()
+        if L10_2:find("play") or L10_2:find("quick") then
+          return L9_2, 2
+        end
+      end
+    end
+  end
+  return nil, nil
+end
+
+local function L61_1(A0_2)
+  local L1_2, L2_2 = L60_1(A0_2)
+  if L1_2 then
+    return {L1_2}
+  end
+  return {}
+end
+
+local function L62_1()
+  local L0_2 = L45_1 and L45_1() or L2_1 or game:GetService("Players").LocalPlayer
+  if not L0_2 then
+    return false
+  end
+  local L1_2 = L46_1 and L46_1() or L0_2 and L0_2:FindFirstChild("PlayerGui")
+  if not L1_2 then
+    return false
+  end
+  local L2_2 = L1_2:FindFirstChild("LoadingScreen1")
+  if L2_2 and L2_2.Enabled then
+    return false
+  end
+  local L3_2 = L1_2:FindFirstChild("BlackScreen")
+  if L3_2 and L3_2.Enabled then
+    local L4_2 = L3_2:FindFirstChildWhichIsA("Frame") or L3_2:FindFirstChild("Frame")
+    if L4_2 and L4_2.Visible and (L4_2.BackgroundTransparency or 0) < 0.5 then
+      return false
+    end
+  end
+  local L4_2 = L1_2:FindFirstChild("LoadingScreen")
+  if L4_2 and L4_2.Enabled then
+    local L5_2 = L4_2:FindFirstChild("Frames")
+    if L5_2 and L5_2:IsA("GuiObject") and L5_2.Visible then
+      local L6_2 = L5_2:FindFirstChild("Main")
+      local L7_2 = L5_2:FindFirstChild("Gamemodes") or L5_2:FindFirstChild("GameModes")
+      if L6_2 and L59_1(L6_2) or L7_2 and L59_1(L7_2) then
+        return false
+      end
+    end
+  end
+  local L5_2 = L1_2:FindFirstChild("Main Menu")
+  if L5_2 and L5_2:IsA("ScreenGui") and L5_2.Enabled then
+    local L6_2 = L5_2:FindFirstChild("Buttons") or L5_2
+    if L59_1(L6_2) then
+      return false
+    end
+  end
+  local L6_2 = L1_2:FindFirstChild("HUD")
+  if not (L6_2 and L6_2:IsA("ScreenGui")) or not L6_2.Enabled then
+    return false
+  end
+  local L7_2 = workspace:FindFirstChild("Living")
+  local L8_2 = L0_2.Character or L7_2 and L7_2:FindFirstChild(L0_2.Name) or workspace:FindFirstChild(L0_2.Name)
+  if not (L8_2 and L8_2.Parent) or not L8_2:IsDescendantOf(workspace) then
+    return false
+  end
+  local L9_2 = L8_2:FindFirstChildOfClass("Humanoid")
+  local L10_2 = L8_2:FindFirstChild("HumanoidRootPart")
+  if not (L9_2 and L10_2) or 0 >= L9_2.Health then
+    return false
+  end
+  return true
+end
+
+local function L63_1()
+  return L62_1()
+end
+
+local function L64_1(A0_2)
+  pcall(function()
+    if not A0_2 then
+      return
+    end
+    L17_1(string.format("PLAY-INFO: Name=%s, Class=%s, Path=%s, Pos=(%d,%d), Size=(%d,%d)", A0_2.Name, A0_2.ClassName, A0_2:GetFullName(), A0_2.AbsolutePosition.X, A0_2.AbsolutePosition.Y, A0_2.AbsoluteSize.X, A0_2.AbsoluteSize.Y))
+  end)
+end
+
+local function L65_1()
+  local L0_2 = false
+  pcall(function()
+    local L0_3 = L45_1 and L45_1() or L2_1 or game:GetService("Players").LocalPlayer
+    if not L0_3 then
+      return
+    end
+    local L1_3 = workspace:FindFirstChild("Living")
+    local L2_3 = L0_3.Character or L1_3 and L1_3:FindFirstChild(L0_3.Name) or workspace:FindFirstChild(L0_3.Name)
+    if L2_3 then
+      local L3_3 = L2_3:FindFirstChild("RemoteEvent") or L2_3:FindFirstChildWhichIsA("RemoteEvent")
+      if L3_3 and L3_3:IsA("RemoteEvent") then
+        L3_3:FireServer("PressedPlay")
+        L0_2 = true
+        L17_1("AutoPlay: fired char.RemoteEvent PressedPlay")
+      end
+    end
+  end)
+  return L0_2
+end
+
+local function L66_1()
+  pcall(function()
+    local L0_3 = game:GetService("Lighting")
+    if L0_3 and not L0_3:FindFirstChild("LocationBlur") then
+      local L1_3 = Instance.new("BlurEffect")
+      L1_3.Name = "LocationBlur"
+      L1_3.Size = 0
+      L1_3.Enabled = false
+      L1_3.Parent = L0_3
+    end
+    for L4_3, L5_3 in ipairs(L0_3:GetChildren()) do
+      local L6_3 = false
+      pcall(function()
+        if L5_3:HasTag(".") or L5_3.Name:match("^%b{}$") then
+          L6_3 = true
+        end
+      end)
+      if not L6_3 then
+        if L5_3.Name == "LocationBlur" then
+          pcall(function()
+            L5_3.Size = 0
+          end)
+        elseif L5_3.Name:lower():find("loading") or L5_3.Name:lower():find("menu") then
+          pcall(function()
+            L5_3.Enabled = false
+          end)
+        elseif L5_3:IsA("BlurEffect") or L5_3:IsA("DepthOfFieldEffect") and L5_3.Name == "DepthOfField" then
+          pcall(function()
+            L5_3.Enabled = false
+          end)
+        elseif L5_3:IsA("ColorCorrectionEffect") then
+          local L7_3 = L5_3.Name:lower()
+          if L7_3:find("blur") or L7_3:find("load") or L7_3:find("menu") or L7_3:find("black") then
+            pcall(function()
+              L5_3.Enabled = false
+            end)
+          end
+        end
+      end
+    end
+    local L1_3 = workspace.CurrentCamera
+    if L1_3 then
+      for L5_3, L6_3 in ipairs(L1_3:GetChildren()) do
+        local L7_3 = false
+        pcall(function()
+          if L6_3:HasTag(".") or L6_3.Name:match("^%b{}$") then
+            L7_3 = true
+          end
+        end)
+        if not L7_3 and (L6_3:IsA("BlurEffect") or L6_3:IsA("DepthOfFieldEffect")) then
+          pcall(function()
+            L6_3.Enabled = false
+          end)
+        end
+      end
+    end
+  end)
+end
+
+local function L67_1()
+  pcall(function()
+    local L0_3 = L45_1 and L45_1() or L2_1 or game:GetService("Players").LocalPlayer
+    if not L0_3 then
+      return
+    end
+    local L1_3 = workspace:FindFirstChild("Living")
+    local L2_3 = L0_3.Character or L1_3 and L1_3:FindFirstChild(L0_3.Name) or workspace:FindFirstChild(L0_3.Name)
+    local L3_3 = L2_3 and L2_3:FindFirstChildOfClass("Humanoid")
+    local L4_3 = workspace.CurrentCamera
+    if L4_3 and L3_3 then
+      if L4_3.CameraType ~= Enum.CameraType.Custom then
+        L4_3.CameraType = Enum.CameraType.Custom
+      end
+      if L4_3.CameraSubject ~= L3_3 then
+        L4_3.CameraSubject = L3_3
+      end
+    end
+  end)
+end
+
+local function L68_1(A0_2, A1_2)
+  if not A0_2 or not A1_2 then
+    return
+  end
+  pcall(function()
+    local L0_3 = A1_2:IsA("BasePart") and A1_2 or A1_2:IsA("Model") and A1_2.PrimaryPart or A1_2:FindFirstChild("HumanoidRootPart") or A1_2:FindFirstChildWhichIsA("BasePart")
+    if not L0_3 then
+      return
+    end
+    local L1_3 = A0_2:FindFirstChild("FocusCam")
+    if not L1_3 then
+      L1_3 = Instance.new("ObjectValue")
+      L1_3.Value = L0_3
+      L1_3.Name = "FocusCam"
+      L1_3.Parent = A0_2
+    elseif L1_3.Value ~= L0_3 then
+      L1_3.Value = L0_3
+    end
+    local L2_3 = workspace.CurrentCamera
+    if L2_3 and L2_3.CameraSubject ~= L0_3 then
+      L2_3.CameraSubject = L0_3
+    end
+  end)
+end
+
+local function L69_1(A0_2)
+  pcall(function()
+    local L0_3 = A0_2 or L2_1 and L2_1.Character or vu81 and vu81.Character
+    if L0_3 then
+      local L1_3 = L0_3:FindFirstChild("FocusCam")
+      if L1_3 then
+        L1_3:Destroy()
+      end
+      local L2_3 = L0_3:FindFirstChildOfClass("Humanoid")
+      local L3_3 = workspace.CurrentCamera
+      if L3_3 and L2_3 and L3_3.CameraSubject ~= L2_3 then
+        L3_3.CameraSubject = L2_3
+      end
+    end
+  end)
+end
+
+local function L70_1()
+  pcall(function()
+    local L0_3 = L45_1 and L45_1() or L2_1 or game:GetService("Players").LocalPlayer
+    if not L0_3 then
+      return
+    end
+    local L1_3 = workspace:FindFirstChild("Living")
+    local L2_3 = L0_3.Character or L1_3 and L1_3:FindFirstChild(L0_3.Name) or workspace:FindFirstChild(L0_3.Name)
+    if not L2_3 then
+      return
+    end
+    local L3_3 = L2_3:FindFirstChild("HumanoidRootPart")
+    local L4_3 = L2_3:FindFirstChildOfClass("Humanoid")
+    local L5_3 = false
+    for L9_3, L10_3 in ipairs(L2_3:GetDescendants()) do
+      if L10_3:IsA("BasePart") and L10_3.Anchored then
+        L10_3.Anchored = false
+        L5_3 = true
+      end
+    end
+    if L5_3 then
+      L17_1("AutoPlay: Unanchored stuck character parts!")
+    end
+    if L4_3 and L4_3.Health > 0 then
+      local L6_3 = L4_3:GetState()
+      if L6_3 == Enum.HumanoidStateType.Physics or L6_3 == Enum.HumanoidStateType.Ragdoll or L4_3.PlatformStand then
+        L4_3.PlatformStand = false
+        L4_3:ChangeState(Enum.HumanoidStateType.GettingUp)
+      end
+    end
+    L67_1()
+    local L6_3 = L46_1 and L46_1() or L0_3 and L0_3:FindFirstChild("PlayerGui")
+    if L6_3 then
+      local L7_3 = L6_3:FindFirstChild("HUD")
+      if L7_3 and L7_3:IsA("ScreenGui") and not L7_3.Enabled then
+        L7_3.Enabled = true
+        L17_1("AutoPlay: Restored game HUD.Enabled = true")
+      end
+    end
+    L66_1()
+  end)
+end
+
+local function L71_1()
+  pcall(function()
+    local L0_3 = L45_1 and L45_1() or L2_1 or game:GetService("Players").LocalPlayer
+    local L1_3 = L46_1 and L46_1() or L0_3 and L0_3:FindFirstChild("PlayerGui")
+    if L1_3 then
+      local L2_3 = L1_3:FindFirstChild("LoadingScreen")
+      if L2_3 then
+        pcall(function()
+          L2_3.Enabled = false
+        end)
+      end
+      local L3_3 = L1_3:FindFirstChild("LoadingScreen1")
+      if L3_3 then
+        pcall(function()
+          L3_3.Enabled = false
+        end)
+      end
+      local L4_3 = L1_3:FindFirstChild("Main Menu")
+      if L4_3 then
+        pcall(function()
+          L4_3.Enabled = false
+        end)
+      end
+      local L5_3 = L1_3:FindFirstChild("BlackScreen")
+      if L5_3 then
+        pcall(function()
+          L5_3.Enabled = false
+        end)
+      end
+    end
+    pcall(function()
+      local L0_4 = workspace:FindFirstChild("LoadingScreen")
+      if L0_4 then
+        local L1_4 = L0_4:FindFirstChild("Song")
+        if L1_4 and L1_4:IsA("Sound") then
+          pcall(function()
+            L1_4:Stop()
+          end)
+        end
+        pcall(function()
+          L0_4:Destroy()
+        end)
+        L17_1("AutoPlay: Destroyed workspace.LoadingScreen (Diavolo 3D scene eradicated)")
+      end
+    end)
+    L66_1()
+    L67_1()
+    if L1_3 and not getgenv()._YBA_PlayerGuiBlockerHook then
+      getgenv()._YBA_PlayerGuiBlockerHook = true
+      L1_3.ChildAdded:Connect(function(A0_4)
+        if (A0_4.Name == "LoadingScreen" or A0_4.Name == "LoadingScreen1") and (getgenv()._YBA_HasEverLoaded or L62_1 and L62_1()) then
+          task.wait()
+          pcall(function()
+            A0_4.Enabled = false
+          end)
+          pcall(function()
+            A0_4:Destroy()
+          end)
+          L67_1()
+          L66_1()
+        end
+      end)
+    end
+    if not getgenv()._YBA_WorkspaceBlockerHook then
+      getgenv()._YBA_WorkspaceBlockerHook = true
+      workspace.ChildAdded:Connect(function(A0_4)
+        if A0_4.Name == "LoadingScreen" and (getgenv()._YBA_HasEverLoaded or L62_1 and L62_1()) then
+          task.wait()
+          pcall(function()
+            A0_4:Destroy()
+          end)
+          L67_1()
+        end
+      end)
+    end
+    if not getgenv()._YBA_CameraGuardHook then
+      getgenv()._YBA_CameraGuardHook = true
+      task.spawn(function()
+        local L0_4 = workspace.CurrentCamera
+        if L0_4 then
+          L0_4:GetPropertyChangedSignal("CameraType"):Connect(function()
+            if (getgenv()._YBA_HasEverLoaded or L62_1 and L62_1()) and L0_4.CameraType == Enum.CameraType.Scriptable then
+              task.wait()
+              L67_1()
+            end
+          end)
+        end
+      end)
+    end
+  end)
+end
+
+local function L72_1(A0_2, A1_2)
+  if not A0_2 then
+    return false
+  end
+  local L2_2 = L54_1(A0_2)
+  pcall(function()
+    local L0_3 = L45_1 and L45_1() or L2_1 or game:GetService("Players").LocalPlayer
+    local L1_3 = L46_1 and L46_1() or L0_3 and L0_3:FindFirstChild("PlayerGui")
+    local L2_3 = L1_3 and L1_3:FindFirstChild("LoadingScreen")
+    local L3_3 = L2_3 and (L2_3:FindFirstChild("Frames") or L2_3)
+    if L3_3 then
+      local L4_3 = L3_3:FindFirstChild("Gamemodes") or L3_3:FindFirstChild("GameModes")
+      if A1_2 == 1 and L4_3 then
+        task.delay(0.2, function()
+          if L4_3 and not L4_3.Visible then
+            L4_3.Visible = true
+          end
+        end)
+      end
+    end
+  end)
+  if A1_2 == 2 then
+    task.delay(0.15, function()
+      L65_1()
+    end)
+  end
+  return L2_2
+end
+
+local L73_1 = false
+
+local function L74_1()
+  if L73_1 then
+    return
+  end
+  L73_1 = true
+  if L62_1 and L62_1() then
+    if getgenv then
+      getgenv()._YBA_HasEverLoaded = true
+    end
+    L71_1()
+    L70_1()
+    L67_1()
+    L73_1 = false
+    return true
+  end
+  local L0_2 = true
+  if L26_1 and L26_1.AutoPlay ~= nil then
+    L0_2 = L26_1.AutoPlay == true
+  elseif L20_1 and L20_1.AutoPlay ~= nil then
+    L0_2 = L20_1.AutoPlay == true
+  end
+  if not L0_2 then
+    L17_1("AutoPlay: disabled by user settings")
+    L73_1 = false
+    return false
+  end
+  local L1_2 = "Click"
+  if L26_1 and L26_1.AutoPlayMethod ~= nil then
+    L1_2 = L26_1.AutoPlayMethod
+  elseif L20_1 and L20_1.AutoPlayMethod ~= nil then
+    L1_2 = L20_1.AutoPlayMethod
+  end
+  if L20_1.RemoveMap or L28_1 and (L28_1("RemoveMap", false) or L28_1("RM", false)) then
+    pcall(L42_1)
+  end
+  local L2_2 = tostring(L1_2):lower() == "skip"
+  L17_1("AutoPlay: starting with method [" .. tostring(L1_2) .. "]")
+  if not game:IsLoaded() then
+    local L3_2 = tick()
+    while not game:IsLoaded() and tick() - L3_2 < 30 do
+      if L20_1.AutoPlay == false then
+        L73_1 = false
+        return false
+      end
+      task.wait(0.2)
+    end
+  end
+  local L3_2 = L45_1 and L45_1() or L2_1 or game:GetService("Players").LocalPlayer
+  local L4_2 = L46_1 and L46_1() or L3_2 and L3_2:FindFirstChild("PlayerGui")
+  local L5_2 = tick()
+  while not L4_2 and tick() - L5_2 < 20 do
+    if L20_1.AutoPlay == false then
+      L73_1 = false
+      return false
+    end
+    task.wait(0.2)
+    L3_2 = L45_1 and L45_1() or L2_1 or game:GetService("Players").LocalPlayer
+    L4_2 = L46_1 and L46_1() or L3_2 and L3_2:FindFirstChild("PlayerGui")
+  end
+  if L62_1 and L62_1() then
+    if getgenv then
+      getgenv()._YBA_HasEverLoaded = true
+    end
+    L71_1()
+    L70_1()
+    L67_1()
+    L73_1 = false
+    return true
+  end
+  if L2_2 then
+    L17_1("AutoPlay: executing instant zero-click skip bypass...")
+    local L6_2 = tick()
+    local L7_2 = false
+    local L8_2
+    while tick() - L6_2 < 25 do
+      if L20_1.AutoPlay == false then
+        L73_1 = false
+        return false
+      end
+      L3_2 = L45_1 and L45_1() or L2_1 or game:GetService("Players").LocalPlayer
+      local L9_2 = workspace:FindFirstChild("Living")
+      local L10_2 = L3_2 and (L3_2.Character or L9_2 and L9_2:FindFirstChild(L3_2.Name) or workspace:FindFirstChild(L3_2.Name))
+      if L10_2 then
+        L8_2 = L10_2:FindFirstChild("RemoteEvent") or L10_2:FindFirstChildWhichIsA("RemoteEvent")
+        if L8_2 and L8_2:IsA("RemoteEvent") then
+          L7_2 = true
+          break
+        end
+      end
+      task.wait(0.2)
+    end
+    if L7_2 and L8_2 then
+      pcall(function()
+        L4_2 = L46_1 and L46_1() or L3_2 and L3_2:FindFirstChild("PlayerGui")
+        if L4_2 and not L4_2:FindFirstChild("HUD") then
+          local L0_3 = game:GetService("ReplicatedStorage")
+          local L1_3 = L0_3:FindFirstChild("Objects") and L0_3.Objects:FindFirstChild("HUD")
+          if L1_3 then
+            local L2_3 = L1_3:Clone()
+            L2_3.Parent = L4_2
+            L2_3.Enabled = true
+            L17_1("AutoPlay (Skip): Cloned HUD to PlayerGui")
+          end
+        elseif L4_2 and L4_2:FindFirstChild("HUD") then
+          L4_2.HUD.Enabled = true
+        end
+      end)
+      pcall(function()
+        L8_2:FireServer("PressedPlay")
+        L17_1("AutoPlay (Skip): Fired PressedPlay to server")
+      end)
+      L71_1()
+      L70_1()
+      L67_1()
+      if getgenv then
+        getgenv()._YBA_HasEverLoaded = true
+      end
+      task.spawn(function()
+        for L3_3 = 1, 30 do
+          task.wait(0.5)
+          L67_1()
+          L70_1()
+          L66_1()
+          pcall(function()
+            local L0_4 = workspace:FindFirstChild("LoadingScreen")
+            if L0_4 then
+              L0_4:Destroy()
+            end
+          end)
+        end
+      end)
+      L17_1("AutoPlay (Skip): Instant skip bypass completed successfully!")
+      L73_1 = false
+      return true
+    end
+  end
+  L4_2 = L46_1 and L46_1() or L3_2 and L3_2:FindFirstChild("PlayerGui")
+  local L6_2 = L4_2 and L4_2:FindFirstChild("LoadingScreen1")
+  if L6_2 and L6_2:IsA("ScreenGui") and L6_2.Enabled then
+    L17_1("AutoPlay: waiting for preloader (LoadingScreen1)...")
+    local L7_2 = tick()
+    while L6_2 and L6_2.Enabled and tick() - L7_2 < 35 do
+      if L20_1.AutoPlay == false then
+        L73_1 = false
+        return false
+      end
+      if L62_1 and L62_1() then
+        L71_1()
+        L70_1()
+        L67_1()
+        L73_1 = false
+        return true
+      end
+      task.wait(0.25)
+      L4_2 = L46_1 and L46_1() or L3_2 and L3_2:FindFirstChild("PlayerGui")
+      L6_2 = L4_2 and L4_2:FindFirstChild("LoadingScreen1")
+    end
+  end
+  L17_1("AutoPlay: waiting for menu to appear...")
+  local L7_2 = tick()
+  while tick() - L7_2 < 30 do
+    if L20_1.AutoPlay == false then
+      L73_1 = false
+      return false
+    end
+    if L62_1 and L62_1() then
+      L71_1()
+      L70_1()
+      L67_1()
+      L73_1 = false
+      return true
+    end
+    L4_2 = L46_1 and L46_1() or L3_2 and L3_2:FindFirstChild("PlayerGui")
+    local L8_2 = L4_2 and L4_2:FindFirstChild("LoadingScreen")
+    if L8_2 and not L8_2.Enabled then
+      L8_2.Enabled = true
+    end
+    local L9_2, L10_2 = L60_1(L4_2)
+    if L9_2 then
+      L17_1("AutoPlay: menu detected (" .. tostring(L9_2.Name) .. ")")
+      break
+    end
+    task.wait(0.25)
+  end
+  local L8_2 = 0
+  local L9_2 = 25
+  L17_1("AutoPlay: progressing through menu buttons...")
+  while L8_2 < L9_2 do
+    if L20_1.AutoPlay == false then
+      L73_1 = false
+      return false
+    end
+    if L62_1 and L62_1() then
+      L17_1("AutoPlay: successfully loaded into main game!")
+      L71_1()
+      L70_1()
+      L67_1()
+      if getgenv then
+        getgenv()._YBA_HasEverLoaded = true
+      end
+      task.spawn(function()
+        for L3_3 = 1, 20 do
+          task.wait(0.5)
+          L67_1()
+          L70_1()
+        end
+      end)
+      L73_1 = false
+      return true
+    end
+    L4_2 = L46_1 and L46_1() or L3_2 and L3_2:FindFirstChild("PlayerGui")
+    local L10_2 = L4_2 and L4_2:FindFirstChild("LoadingScreen")
+    if L10_2 and not L10_2.Enabled then
+      L10_2.Enabled = true
+    end
+    local L11_2, L12_2 = L60_1(L4_2)
+    if L11_2 then
+      L8_2 = L8_2 + 1
+      L17_1(string.format("AutoPlay: Clicking stage %d button [%s] (attempt %d)", L12_2 or 1, tostring(L11_2.Name), L8_2))
+      L72_1(L11_2, L12_2)
+      if L12_2 == 1 then
+        task.wait(0.7)
+      elseif L12_2 == 2 then
+        task.wait(1.5)
+      end
+    else
+      L8_2 = L8_2 + 1
+      task.wait(0.6)
+    end
+  end
+  local L10_2 = tick()
+  while tick() - L10_2 < 20 do
+    if L20_1.AutoPlay == false then
+      L73_1 = false
+      return false
+    end
+    if L62_1 and L62_1() then
+      if getgenv then
+        getgenv()._YBA_HasEverLoaded = true
+      end
+      L17_1("AutoPlay: successfully loaded into main game!")
+      L71_1()
+      L70_1()
+      L67_1()
+      task.spawn(function()
+        for L3_3 = 1, 20 do
+          task.wait(0.5)
+          L67_1()
+          L70_1()
+        end
+      end)
+      L73_1 = false
+      return true
+    end
+    task.wait(0.4)
+  end
+  if L62_1 and L62_1() then
+    L71_1()
+    L70_1()
+    L67_1()
+    task.spawn(function()
+      for L3_3 = 1, 20 do
+        task.wait(0.5)
+        L67_1()
+        L70_1()
+      end
+    end)
+  end
+  L73_1 = false
+  return L62_1 and L62_1() or false
+end
+
+task.spawn(function()
+  pcall(L74_1)
+end)
+task.spawn(function()
+  while true do
+    if L62_1 and L62_1() then
+      if getgenv then
+        getgenv()._YBA_HasEverLoaded = true
+      end
+      L17_1("FIRST SPAWN (strict main game) reached")
+      L70_1()
+      L66_1()
+      break
+    end
+    task.wait(0.5)
+  end
+  local L0_2 = tick()
+  while tick() - L0_2 < 12 do
+    task.wait(1)
+    L70_1()
+    L66_1()
+  end
+end)
+
+local function L75_1(A0_2, A1_2, A2_2)
+  if L62_1 and L62_1() then
+    return true
+  end
+  if getgenv()[A0_2] then
+    return false
+  end
+  getgenv()[A0_2] = true
+  if A1_2 then
+    warn("[" .. A1_2 .. "] Character / game loading, waiting before starting...")
+  end
+  task.spawn(function()
+    local L0_3 = tick()
+    while tick() - L0_3 < 180 do
+      task.wait(1)
+      if L62_1 and L62_1() then
+        break
+      end
+    end
+    getgenv()[A0_2] = false
+    if L62_1 and L62_1() then
+      A2_2()
+    elseif A1_2 then
+      warn("[" .. A1_2 .. "] Timed out waiting for game load.")
+    end
+  end)
+  return false
+end
+
+local function L76_1()
+  if not L62_1 or not L62_1() then
+    return false
+  end
+  if isAutoFarming == true then
+    return true
+  end
+  if SF and SF.standFarmRunning == true then
+    return true
+  end
+  if L20_1 and (L20_1.ItemFarmEnabled == true or L20_1.StandFarmEnabled == true) then
+    return true
+  end
+  if AutoPrestige == true or autoStoryLine == true then
+    return true
+  end
+  if sellingBusy == true or getgenv and getgenv()._YBA_SellingBusy == true then
+    return true
+  end
+  if isEatingRoka == true or getgenv and getgenv()._YBA_IsEatingRoka == true then
+    return true
+  end
+  return false
+end
+
+local function L77_1(A0_2)
+  if not A0_2 then
+    return
+  end
+  if isEatingRoka or SF and SF.isEatingRoka or getgenv()._YBA_IsEatingRoka or getgenv()._YBA_IsUsingItem then
+    return
+  end
+  pcall(function()
+    local L0_3 = A0_2:FindFirstChild("Frame") or A0_2:FindFirstChildWhichIsA("Frame") or A0_2
+    if not L0_3 or not L0_3.Visible then
+      return
+    end
+    local L1_3 = L0_3:FindFirstChild("ClickContinue", true)
+    if L1_3 and L1_3.Visible then
+      L54_1(L1_3)
+    end
+    local L2_3 = L0_3:FindFirstChild("DialogueFrame", true)
+    if L2_3 and L2_3:IsA("GuiObject") then
+      L54_1(L2_3)
+    end
+  end)
+end
+
+task.spawn(function()
+  while true do
+    task.wait(0.15)
+    pcall(function()
+      if not L76_1() then
+        return
+      end
+      if isEatingRoka or SF and SF.isEatingRoka or getgenv()._YBA_IsEatingRoka or getgenv()._YBA_IsUsingItem then
+        return
+      end
+      local L0_3 = L2_1 and (L2_1:FindFirstChild("PlayerGui") or pcall(function()
+        return L2_1.PlayerGui
+      end) and L2_1.PlayerGui)
+      if not L0_3 then
+        return
+      end
+      for L4_3, L5_3 in ipairs({
+        "DialogueGui",
+        "Dialogue",
+        "NPCDialogue"
+      }) do
+        local L6_3 = L0_3:FindFirstChild(L5_3)
+        if L6_3 and (L6_3.Enabled or L6_3:FindFirstChild("Frame") and L6_3.Frame.Visible) then
+          local L7_3 = L6_3:FindFirstChild("Frame") or L6_3
+          if L7_3 and L7_3.Visible then
+            local L8_3 = L7_3:FindFirstChild("Options")
+            local L9_3 = false
+            if L8_3 and L8_3.Visible then
+              for L13_3, L14_3 in ipairs(L8_3:GetChildren()) do
+                if L14_3:IsA("GuiObject") and L14_3.Visible and L14_3.Name ~= "UIListLayout" and L14_3.Name ~= "UIPadding" and L14_3.Name ~= "UIGridLayout" then
+                  L9_3 = true
+                  break
+                end
+              end
+            end
+            if not L9_3 then
+              L77_1(L6_3)
+            end
+          end
+        end
+      end
+    end)
+  end
+end)
+
+local function L78_1()
+  pcall(function()
+    local L0_3 = game.Players.LocalPlayer or L2_1
+    local L1_3 = L0_3 and L0_3:FindFirstChild("PlayerGui")
+    if not L1_3 then
+      return
+    end
+    for L5_3, L6_3 in ipairs({
+      "DialogueGui",
+      "Dialogue",
+      "NPCDialogue"
+    }) do
+      local L7_3 = L1_3:FindFirstChild(L6_3)
+      if L7_3 and (L7_3.Enabled or L7_3:FindFirstChild("Frame") and L7_3.Frame.Visible) then
+        local L8_3 = tick()
+        while true do
+          if not (tick() - L8_3 < 1.2 and L7_3) or not L7_3.Parent then
+            break
+          end
+          local L9_3 = L7_3:FindFirstChild("Frame") or L7_3:FindFirstChildWhichIsA("Frame")
+          if not (L9_3 and L9_3:IsA("GuiObject")) or not L9_3.Visible then
+            break
+          end
+          local L10_3 = L9_3:FindFirstChild("ClickContinue", true)
+          if L10_3 and L10_3.Visible then
+            L54_1(L10_3)
+          end
+          local L11_3 = L9_3:FindFirstChild("Options")
+          if L11_3 and L11_3.Visible then
+            local L12_3
+            for L16_3, L17_3 in ipairs(L11_3:GetChildren()) do
+              local L18_3 = L17_3:IsA("GuiButton") and L17_3 or L17_3:FindFirstChildWhichIsA("GuiButton", true)
+              if L18_3 and L18_3.Visible then
+                local L19_3 = ""
+                pcall(function()
+                  L19_3 = (L18_3:IsA("TextButton") and L18_3.Text or ""):lower()
+                  for L3_4, L4_4 in ipairs(L17_3:GetDescendants()) do
+                    if (L4_4:IsA("TextLabel") or L4_4:IsA("TextButton")) and L4_4.Text and L4_4.Text ~= "" then
+                      L19_3 = L19_3 .. " " .. L4_4.Text:lower()
+                    end
+                  end
+                end)
+                if L19_3:find("bye") or L19_3:find("goodbye") or L19_3:find("never") or L19_3:find("leave") or L19_3:find("nothing") or L19_3 == "no" or L19_3:find("no thanks", 1, true) or L19_3:find("no,", 1, true) or L19_3:find("\208\191\208\190\208\186\208\176") or L19_3:find("\209\131\208\185\209\130\208\184") or L19_3:find("\208\189\208\181\209\130") then
+                  L12_3 = L18_3
+                  break
+                end
+              end
+            end
+            if L12_3 then
+              L54_1(L12_3)
+            end
+          else
+            local L12_3 = L9_3:FindFirstChild("DialogueFrame", true)
+            if L12_3 and L12_3:IsA("GuiObject") and L12_3.Visible then
+              L54_1(L12_3)
+            end
+            if L9_3.Visible then
+              L54_1(L9_3)
+            end
+          end
+          task.wait(0.1)
+        end
+      end
+    end
+  end)
+end
+
+local L79_1
+
+local function L80_1(A0_2)
+  pcall(function()
+    if getconnections then
+      for L3_3, L4_3 in pairs(getconnections(game:GetService("Players").LocalPlayer.Idled)) do
+        if A0_2 then
+          L4_3:Disable()
+        else
+          L4_3:Enable()
+        end
+      end
+    end
+  end)
+  if A0_2 then
+    if not L79_1 then
+      L79_1 = game:GetService("Players").LocalPlayer.Idled:Connect(function()
+        pcall(function()
+          game:GetService("VirtualUser"):CaptureController()
+          game:GetService("VirtualUser"):ClickButton2(Vector2.new())
+        end)
+      end)
+    end
+  elseif L79_1 then
+    L79_1:Disconnect()
+    L79_1 = nil
+  end
+end
+
+pcall(function()
+  L80_1(L28_1 and L28_1("AA", true) or true)
+end)
+
+local function L81_1()
+  local L0_2, L1_2 = pcall(function()
+    local L0_3 = game:GetService("Stats")
+    local L1_3 = L0_3 and L0_3:FindFirstChild("Network")
+    local L2_3 = L1_3 and L1_3:FindFirstChild("ServerStatsItem")
+    local L3_3 = L2_3 and L2_3:FindFirstChild("Data Ping")
+    if L3_3 and L3_3.GetValue then
+      return L3_3:GetValue()
+    end
+  end)
+  if L0_2 and type(L1_2) == "number" and 0 < L1_2 then
+    return L1_2
+  end
+  return 100
+end
+
+local function L82_1(A0_2)
+  A0_2 = tonumber(A0_2) or 0.45
+  local L1_2 = L81_1()
+  local L2_2 = L1_2 / 1000
+  local L3_2 = L1_2 < 60 and 0.6 or 0.3
+  local L4_2 = L2_2 * L3_2
+  return A0_2 + L4_2
+end
+
+local L83_1 = L82_1
+local L84_1 = false
+local L85_1 = false
+getgenv()._YBA_SellingBusy = false
+getgenv()._YBA_IsEatingRoka = false
+do
+  local L86_1 = tick()
+  if getgenv then
+    getgenv()._YBA_LastTeleportTick = L86_1
+  end
+  
+  function recordTeleport()
+    local L0_2 = tick()
+    L86_1 = L0_2
+    if getgenv then
+      getgenv()._YBA_LastTeleportTick = L0_2
+    end
+  end
+  
+  function waitForTeleportCooldown(A0_2)
+    A0_2 = tonumber(A0_2) or 0.7
+    local L1_2 = getgenv and getgenv()._YBA_LastTeleportTick or L86_1 or 0
+    local L2_2 = tick() - L1_2
+    if A0_2 > L2_2 then
+      task.wait(A0_2 - L2_2)
+    end
+  end
+  
+  local L87_1
+  pcall(function()
+    L6_1.Heartbeat:Connect(function()
+      local L0_3 = L2_1 or game:GetService("Players") and game:GetService("Players").LocalPlayer
+      local L1_3 = L0_3 and L0_3.Character
+      local L2_3 = L1_3 and L1_3:FindFirstChild("HumanoidRootPart")
+      if L2_3 then
+        local L3_3 = L2_3.Position
+        if L87_1 then
+          local L4_3 = (L3_3 - L87_1).Magnitude
+          if 18 < L4_3 then
+            recordTeleport()
+          end
+        end
+        L87_1 = L3_3
+      else
+        L87_1 = nil
+      end
+    end)
+  end)
+end
+
+local function L86_1()
+  local L0_2 = L45_1 and L45_1() or L2_1 or game:GetService("Players").LocalPlayer
+  if not L0_2 then
+    return true
+  end
+  local L1_2 = L0_2.Character or workspace:FindFirstChild("Living") and workspace.Living:FindFirstChild(L0_2.Name) or workspace:FindFirstChild(L0_2.Name)
+  if not (L1_2 and L1_2.Parent) or not L1_2:IsDescendantOf(workspace) then
+    return true
+  end
+  local L2_2 = L1_2:FindFirstChildOfClass("Humanoid")
+  local L3_2 = L1_2:FindFirstChild("HumanoidRootPart")
+  if not (L2_2 and L3_2) or L2_2.Health <= 0 then
+    return true
+  end
+  if L2_2:GetState() == Enum.HumanoidStateType.Dead then
+    return true
+  end
+  return false
+end
+
+local function L87_1(A0_2)
+  A0_2 = A0_2 or 0.5
+  if not L86_1() then
+    return true
+  end
+  warn("[Respawn] Player is dead or despawned. Pausing farm and waiting for respawn...")
+  if cleanupItemStick then
+    pcall(cleanupItemStick)
+  end
+  if stopMoveTween then
+    pcall(stopMoveTween)
+  end
+  local L1_2 = L45_1 and L45_1() or L2_1 or game:GetService("Players").LocalPlayer
+  while L86_1() do
+    task.wait(0.1)
+  end
+  local L2_2 = false
+  local L3_2 = os.clock()
+  while not L2_2 and os.clock() - L3_2 < 15 do
+    local L4_2 = L1_2 and (L1_2.Character or workspace:FindFirstChild("Living") and workspace.Living:FindFirstChild(L1_2.Name) or workspace:FindFirstChild(L1_2.Name))
+    local L5_2 = L4_2 and L4_2:FindFirstChildOfClass("Humanoid")
+    local L6_2 = L4_2 and L4_2:FindFirstChild("HumanoidRootPart")
+    if L4_2 and L5_2 and L6_2 and L5_2.Health > 0 and L4_2:IsDescendantOf(workspace) then
+      L2_2 = true
+      break
+    end
+    task.wait(0.05)
+  end
+  task.wait(A0_2)
+  warn("[Respawn] Character fully respawned! Waited " .. tostring(A0_2) .. "s. Resuming farm.")
+  return true
+end
+
+pcall(function()
+  local function L0_2(A0_3)
+    if not A0_3 then
+      return
+    end
+    local L1_3 = A0_3:FindFirstChildOfClass("Humanoid")
+    if not L1_3 then
+      return
+    end
+    L1_3.Died:Connect(function()
+      local L0_4 = getgenv and getgenv()._YBA_LastSellItem or "?"
+      local L1_4 = -1
+      pcall(function()
+        local L0_5 = getgenv and getgenv()._YBA_LastSellTick or 0
+        L1_4 = tick() - (L0_5 or 0)
+      end)
+      local L2_4 = "?"
+      pcall(function()
+        L2_4 = L2_1.PlayerStats and L2_1.PlayerStats.Stand.Value or "?"
+      end)
+      warn(string.format("[DeathDbg] DIED selling=%s eating=%s lastSell=%s %.1fs ago stand=%s pos=%s hp=%s", tostring(L85_1 or getgenv and getgenv()._YBA_SellingBusy), tostring(L84_1 or getgenv and getgenv()._YBA_IsEatingRoka), tostring(L0_4), tonumber(L1_4) or -1, tostring(L2_4), tostring((function()
+        local L0_5 = A0_3:FindFirstChild("HumanoidRootPart")
+        return L0_5 and L0_5.Position or nil
+      end)()), tostring((function()
+        local L0_5 = A0_3:FindFirstChildOfClass("Humanoid")
+        return L0_5 and L0_5.Health .. "/" .. L0_5.MaxHealth or nil
+      end)())))
+    end)
+  end
+  
+  local L1_2 = L0_1.LocalPlayer or L2_1
+  if L1_2 then
+    if L1_2.Character then
+      L0_2(L1_2.Character)
+    end
+    L1_2.CharacterAdded:Connect(function(A0_3)
+      task.wait(0.5)
+      L0_2(A0_3)
+    end)
+  end
+end)
+local L88_1 = 0
+local L89_1 = 0
+
+local function L90_1()
+  if L84_1 or SF and SF.isEatingRoka or getgenv()._YBA_IsEatingRoka or getgenv()._YBA_IsUsingItem then
+    return true
+  end
+  if L85_1 or getgenv()._YBA_SellingBusy then
+    local L0_2 = getgenv()._YBA_LastSellTick or 0
+    if tick() - L0_2 > 6 then
+      L85_1 = false
+      getgenv()._YBA_SellingBusy = false
+    else
+      return true
+    end
+  end
+  if L86_1() then
+    return true
+  end
+  local L0_2 = L45_1 and L45_1() or L2_1 or game:GetService("Players").LocalPlayer
+  local L1_2 = L0_2 and (L0_2.Character or workspace:FindFirstChild("Living") and workspace.Living:FindFirstChild(L0_2.Name))
+  local L2_2 = L1_2 and L1_2:FindFirstChild("HumanoidRootPart")
+  if L2_2 and L2_2.Anchored == true then
+    local L3_2 = tick()
+    if L89_1 == 0 then
+      L89_1 = L3_2
+      return true
+    elseif L3_2 - L89_1 < 3.5 then
+      return true
+    else
+      pcall(function()
+        L2_2.Anchored = false
+      end)
+      if L78_1 then
+        pcall(L78_1)
+      end
+      L89_1 = 0
+      return false
+    end
+  else
+    L89_1 = 0
+  end
+  local L3_2 = L46_1 and L46_1() or L0_2 and L0_2:FindFirstChild("PlayerGui")
+  local L4_2 = L3_2 and L3_2:FindFirstChild("DialogueGui")
+  if L4_2 and L4_2.Enabled and L4_2:FindFirstChild("Frame") and L4_2.Frame.Visible then
+    local L5_2 = tick()
+    if L88_1 == 0 then
+      L88_1 = L5_2
+    elseif 3.5 < L5_2 - L88_1 then
+      if L78_1 then
+        pcall(L78_1)
+      end
+      L88_1 = 0
+      return false
+    end
+    return true
+  else
+    L88_1 = 0
+  end
+  return false
+end
+
+local function L91_1(A0_2)
+  A0_2 = tostring(A0_2 or "None")
+  if A0_2 == "Beach Boy" or A0_2 == "Anubis" then
+    return 6.8
+  end
+  return 3.8
+end
+
+if getgenv().RAILhub_YBA_Loaded then
+  local L92_1 = L46_1 and L46_1() or L4_1
+  local L93_1 = L92_1 and L92_1:FindFirstChild("HUD")
+  if L93_1 and L93_1:IsA("ScreenGui") and L93_1.Enabled then
+    local L94_1 = getgenv()._lastRunningWarn or 0
+    if 5 < tick() - L94_1 then
+      getgenv()._lastRunningWarn = tick()
+      warn("[RAILhub] Script already running.")
+    end
+    return
+  end
+end
+getgenv().RAILhub_YBA_Loaded = true
+local L92_1 = false
+pcall(function()
+  if type(isfile) == "function" and isfile(L18_1 .. "/NO_AUTOSTART.txt") then
+    L92_1 = true
+  end
+  if getgenv and getgenv().RAILHUB_SAFE_MODE then
+    L92_1 = true
+  end
+end)
+if L92_1 then
+  warn("[YBA] SAFE MODE: all autostarts disabled (NO_AUTOSTART.txt present)")
+  L17_1("SAFE MODE on: autostarts disabled")
+end
+do
+  local L93_1 = false
+  pcall(function()
+    if type(isfile) == "function" and isfile(L18_1 .. "/NO_UI.txt") then
+      L93_1 = true
+    end
+    if getgenv and getgenv().RAILHUB_HEADLESS then
+      L93_1 = true
+    end
+  end)
+  if L93_1 then
+    warn("[YBA] HEADLESS MODE: exiting, game loading untouched")
+    L17_1("HEADLESS on: exiting before MacLib/UI/hooks/farms")
+    return
+  end
+end
+
+local function L93_1()
+  return syn and syn.queue_on_teleport or fluxus and fluxus.queue_on_teleport or krnl and krnl.queue_on_teleport or delta and delta.queue_on_teleport or queue_on_teleport or getgenv and getgenv().queue_on_teleport or identifyexecutor and getgenv and getgenv().queue_on_teleport
+end
+
+local L94_1 = 0
+
+local function L95_1(A0_2)
+  local L1_2 = L28_1("AE", true)
+  L20_1.AutoExecute = L1_2
+  if not L1_2 then
+    if getgenv then
+      getgenv().RAILHUB_AUTOEXEC = nil
+    end
+    return
+  end
+  local L2_2 = tick()
+  if not A0_2 and L2_2 - L94_1 < 5 then
+    return
+  end
+  L94_1 = L2_2
+  local L3_2 = [[
+pcall(function()
+    local urls = {
+        "https://raw.githubusercontent.com/AZX0OZ/keyrh/refs/heads/main/RAILhub",
+        "https://cdn.jsdelivr.net/gh/AZX0OZ/keyrh@main/RAILhub",
+        "https://fastgit.han17.fun/AZX0OZ/keyrh/raw/main/RAILhub",
+        "https://157.22.193.72.nip.io/loader",
+        "http://157.22.193.72/loader",
+        "https://45.82.13.95.nip.io/loader"
+    }
+    for _, u in ipairs(urls) do
+        local ok, res = pcall(function() return game:HttpGet(u) end)
+        if ok and type(res) == "string" and #res > 500 and not res:find("429: Too Many Requests") and not res:find("<html") then
+            local fn = loadstring(res)
+            if fn then fn(); return end
+        end
+    end
+end)
+]]
+  local L4_2 = L3_2:gsub("\r\n", " "):gsub("\n", " "):gsub("%s+", " ")
+  if getgenv then
+    getgenv().RAILHUB_AUTOEXEC = L4_2
+  end
+  local L5_2 = L93_1()
+  if L5_2 and L4_2 then
+    pcall(function()
+      L5_2(L4_2)
+    end)
+  else
+    warn("[YBA] AutoReload: queue_on_teleport not available on this executor")
+  end
+  pcall(function()
+    if writefile and type(writefile) == "function" then
+      local L0_3 = "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/AZX0OZ/keyrh/refs/heads/main/RAILhub\"))()"
+      if makefolder and not isfolder("autoexec") then
+        pcall(makefolder, "autoexec")
+      end
+      if isfolder and isfolder("autoexec") then
+        writefile("autoexec/railhub.lua", L0_3)
+      end
+    end
+  end)
+end
+
+pcall(function()
+  local L0_2 = L45_1 and L45_1() or L2_1 or game:GetService("Players").LocalPlayer
+  if L0_2 and L0_2.OnTeleport then
+    L0_2.OnTeleport:Connect(function(A0_3)
+      if (A0_3 == Enum.TeleportState.Started or A0_3 == 0) and L95_1 then
+        pcall(L95_1, true)
+      end
+    end)
+  end
+end)
+
+function applySavedConfig()
+  local L0_2 = L26_1
+  if L0_2.SS ~= nil then
+    L20_1.SaveSettings = L0_2.SS
+  end
+  if L0_2.AE ~= nil then
+    L20_1.AutoExecute = L0_2.AE
+  end
+  if L0_2.AR ~= nil then
+    L20_1.AutoRetry = L0_2.AR
+  end
+  if L0_2.RemoveMap ~= nil then
+    L20_1.RemoveMap = L0_2.RemoveMap
+  end
+  if L0_2.RM ~= nil then
+    L20_1.RemoveMap = L0_2.RM
+  end
+  if L0_2.AutoPlay ~= nil then
+    L20_1.AutoPlay = L0_2.AutoPlay
+  end
+  if L0_2.AutoPlayMethod ~= nil then
+    L20_1.AutoPlayMethod = L0_2.AutoPlayMethod
+  end
+  if not L20_1.SaveSettings then
+    return
+  end
+  if L0_2.IF ~= nil then
+    L20_1.ItemFarmEnabled = L0_2.IF
+  end
+  if L0_2.SF ~= nil then
+    L20_1.StandFarmEnabled = L0_2.SF
+  end
+  if L0_2.PE ~= nil then
+    L20_1.PilotEnabled = L0_2.PE
+  end
+  if L0_2.AA ~= nil then
+    L20_1.AntiAfk = L0_2.AA
+  end
+  if L0_2.APWH ~= nil and type(L0_2.APWH) == "string" and L0_2.APWH ~= "" then
+    getgenv().webhook = L0_2.APWH
+  end
+  if L20_1.RemoveMap then
+    pcall(L42_1)
+  end
+end
+
+applySavedConfig()
+L95_1()
+if not L62_1 or not L62_1() then
+  L17_1("Waiting for strict main game before initializing RAILhub UI & features...")
+  local L96_1 = tick()
+  while not L62_1 or not L62_1() do
+    task.wait(0.5)
+    if tick() - L96_1 > 180 then
+      L17_1("Warning: Timed out waiting for main game, forcing UI initialization")
+      break
+    end
+  end
+end
+L17_1("In main game! Proceeding with MacLib & UI init...")
+local L96_1
+do
+  local function L97_1()
+    local L0_2 = {
+      "https://cdn.jsdelivr.net/gh/AZX0OZ/maclib@main/maclib",
+      
+      "https://raw.githubusercontent.com/AZX0OZ/maclib/refs/heads/main/maclib",
+      "https://fastgit.han17.fun/AZX0OZ/maclib/raw/main/maclib"
+    }
+    for L4_2, L5_2 in ipairs(L0_2) do
+      local L6_2, L7_2 = pcall(function()
+        return game:HttpGet(L5_2)
+      end)
+      if L6_2 and type(L7_2) == "string" and 1000 < #L7_2 and not L7_2:find("429: Too Many Requests") and not L7_2:find("<html") then
+        return L7_2
+      end
+    end
+    return nil
+  end
+  
+  L17_1("downloading maclib...")
+  local L98_1 = L97_1()
+  if not L98_1 then
+    getgenv().RAILhub_YBA_Loaded = nil
+    warn("[RAILhub] Failed to download MacLib from GitHub!")
+    return
+  end
+  L98_1 = L98_1:gsub("globe%s*=%s*\"rbxassetid://%d+\"", "globe = \"rbxassetid://4677859281\"")
+  L98_1 = L98_1:gsub("globe%s*=%s*\"%d+\"", "globe = \"rbxassetid://4677859281\"")
+  L98_1 = L98_1:gsub("isSelected%s*=%s*%(DropdownFunctions%.Settings%.Default%s*==%s*i%)%s*and%s*true%s*or%s*false", "isSelected = ((DropdownFunctions.Settings.Default == i) or (DropdownFunctions.Settings.Default == v)) and true or false")
+  L98_1 = L98_1:gsub("isSelected%s*=%s*table%.find%(DropdownFunctions%.Settings%.Default,%s*v%)%s*and%s*true%s*or%s*false", "isSelected = ((type(DropdownFunctions.Settings.Default) == \"table\" and (table.find(DropdownFunctions.Settings.Default, v) ~= nil or DropdownFunctions.Settings.Default[v] == true)) or DropdownFunctions.Settings.Default == v) and true or false")
+  L98_1 = L98_1:gsub("dropdownName%.Text%s*=%s*Settings%.Default%s*and%s*%(dName%s*%.%.%s*\"%s*\226\128\162%s*\"%s*%.%.%s*table%.concat%(Selected,%s*\",%s*\"%)%)%s*or%s*%(dName%s*%.%.%s*\"%.%.%.\"%)", "dropdownName.Text = (type(Settings.Default) == \"table\" and #Selected > 0) and (dName .. \" \226\128\162 \" .. table.concat(Selected, \", \")) or (dName .. \"...\")")
+  L98_1 = L98_1:gsub("sectionTabSwitchers%.Size%s*=%s*UDim2%.fromScale%(1,%s*1%)", [[
+sectionTabSwitchers.Size = UDim2.fromScale(1, 0)
+		sectionTabSwitchers.AutomaticSize = Enum.AutomaticSize.Y]])
+  L98_1 = L98_1:gsub("binderBox%.Text%s*=%s*binded%.Name", "binderBox.Text = (typeof(binded) == \"EnumItem\" and binded.Name) or tostring(binded or \"\")")
+  L98_1 = L98_1:gsub("binderBox%.Text%s*=%s*input%.KeyCode%.Name", "binderBox.Text = tostring(input.KeyCode.Name or \"\")")
+  L98_1 = L98_1:gsub("binderBox%.Text%s*=%s*input%.UserInputType%.Name", "binderBox.Text = tostring(input.UserInputType.Name or \"\")")
+  L96_1 = loadstring(L98_1)()
+  L17_1("maclib loaded")
+end
+local L97_1 = getgenv and getgenv() or _G
+getgenv().ItemStickConnections = getgenv().ItemStickConnections or {}
+getgenv().InstantMethod = L28_1 and L28_1("FarmPosMethod", "Up") or getgenv().InstantMethod or "Up"
+getgenv().SafePlaceCollectionMode = getgenv().SafePlaceCollectionMode or "Batch Collect"
+local L98_1 = getgenv and getgenv() or _G
+local L99_1 = "__YBA_RUNTIME"
+local L100_1 = L98_1[L99_1]
+if type(L100_1) == "table" and type(L100_1.Shutdown) == "function" then
+  pcall(function()
+    L100_1:Shutdown()
+  end)
+end
+local L101_1 = {}
+L101_1.Stopped = false
+L101_1.Guis = {}
+L98_1[L99_1] = L101_1
+
+function L101_1.Shutdown(A0_2)
+  local L1_2 = type(A0_2) == "table" and A0_2 or L101_1
+  if type(L1_2) ~= "table" or L1_2.Stopped then
+    return
+  end
+  pcall(function()
+    if type(L1_2._itemFarmStop) == "function" then
+      L1_2._itemFarmStop()
+    end
+  end)
+  L1_2.Stopped = true
+  if type(L1_2.Guis) == "table" then
+    for L5_2, L6_2 in ipairs(L1_2.Guis) do
+      if L6_2 and L6_2.Parent then
+        pcall(function()
+          L6_2:Destroy()
+        end)
+      end
+    end
+  end
+end
+
+local L102_1 = {}
+L102_1[#L102_1 + 1] = gethui and gethui() or game:GetService("CoreGui")
+local L103_1 = L2_1 and L2_1:FindFirstChildOfClass("PlayerGui")
+if L103_1 then
+  L102_1[#L102_1 + 1] = L103_1
+end
+for L107_1, L108_1 in ipairs(L102_1) do
+  for L112_1, L113_1 in ipairs(L108_1:GetChildren()) do
+    if L113_1:IsA("ScreenGui") and (L113_1.Name == "RAILhubToggle" or L113_1.Name == "RAILhubWatermark") then
+      L113_1:Destroy()
+    end
+  end
+end
+
+function L102_1(A0_2)
+  if type(A0_2) ~= "string" then
+    return nil
+  end
+  local L1_2 = A0_2:gsub("^%s+", ""):gsub("%s+$", "")
+  L1_2 = L1_2:gsub("^https?://", ""):gsub("^www%.", "")
+  L1_2 = L1_2:gsub("^discord%.gg/", ""):gsub("^discord%.com/invite/", "")
+  L1_2 = L1_2:gsub("^invite/", "")
+  L1_2 = L1_2:gsub("[/?#].*$", "")
+  if L1_2 == "" then
+    return nil
+  end
+  return L1_2
+end
+
+function L103_1(A0_2)
+  if type(A0_2) ~= "string" or A0_2 == "" then
+    return false
+  end
+  local L1_2 = syn and syn.request or http_request or request or http and http.request
+  local L2_2 = openbrowser or syn and syn.open_url
+  if L1_2 then
+    local L3_2 = L5_1:JSONEncode({
+      cmd = "INVITE_BROWSER",
+      nonce = L5_1:GenerateGUID(false),
+      args = {code = A0_2}
+    })
+    for L7_2 = 6463, 6472 do
+      local L8_2, L9_2 = pcall(function()
+        return L1_2({
+          Url = ("http://127.0.0.1:%d/rpc?v=1"):format(L7_2),
+          Method = "POST",
+          Headers = {
+            ["Content-Type"] = "application/json",
+            Origin = "https://discord.com"
+          },
+          Body = L3_2
+        })
+      end)
+      if L8_2 and L9_2 and (L9_2.StatusCode == 200 or L9_2.StatusCode == 204) then
+        return true
+      end
+    end
+  end
+  if L2_2 then
+    L2_2("https://discord.gg/" .. A0_2)
+    return true
+  end
+  return false
+end
+
+local function L104_1(A0_2)
+  if A0_2 and A0_2 ~= "" then
+    if setclipboard then
+      setclipboard(A0_2)
+    elseif toclipboard then
+      toclipboard(A0_2)
+    end
+    local L1_2 = L102_1(A0_2)
+    if L1_2 then
+      L103_1(L1_2)
+    end
+  end
+end
+
+local L105_1, L106_1
+
+local function L107_1(A0_2, A1_2)
+  local L2_2 = L105_1 or getgenv().RAILhubWindow or _G.RAILhubWindow
+  if L2_2 and type(L2_2.Notify) == "function" then
+    pcall(function()
+      L2_2:Notify({
+        Title = tostring(A0_2 or "RAIL Hub"),
+        Description = tostring(A1_2 or ""),
+        Lifetime = 5
+      })
+    end)
+  end
+end
+
+local function L108_1()
+  local L0_2 = L28_1 and L28_1("WH_Url", "")
+  if L0_2 and L0_2 ~= "" then
+    return tostring(L0_2):gsub("^%s+", ""):gsub("%s+$", "")
+  end
+  L0_2 = L28_1 and L28_1("APWH", "")
+  if L0_2 and L0_2 ~= "" then
+    return tostring(L0_2):gsub("^%s+", ""):gsub("%s+$", "")
+  end
+  if getgenv and getgenv().webhook and type(getgenv().webhook) == "string" and getgenv().webhook ~= "" then
+    return tostring(getgenv().webhook):gsub("^%s+", ""):gsub("%s+$", "")
+  end
+  return ""
+end
+
+local L109_1 = {}
+L109_1.Enabled = L28_1 and L28_1("WH_Enabled", true) or L28_1 and L28_1("WH_PingRare", true) or true
+L109_1.Url = L108_1()
+L109_1.UserId = L28_1 and L28_1("WH_UserId", "") or ""
+L109_1.Language = L28_1 and L28_1("WH_Lang", "English") or "English"
+L109_1.HideUser = L28_1 and L28_1("WH_HideUser", false) or false
+L109_1.NotifyItem = L28_1 and L28_1("WH_NotifyItem", true) or true
+L109_1.NotifyStand = L28_1 and L28_1("WH_NotifyStand", true) or true
+L109_1.NotifyPrestige = L28_1 and L28_1("WH_NotifyPrestige", true) or true
+L109_1.NotifyStaff = L28_1 and L28_1("WH_NotifyStaff", true) or true
+L109_1.NotifyKick = L28_1 and L28_1("WH_NotifyKick", true) or true
+L109_1.NotifyMilestone = L28_1("WH_NotifyMilestone", true) ~= false
+
+local function L110_1()
+  return L109_1.Language == "\208\160\209\131\209\129\209\129\208\186\208\184\208\185"
+end
+
+local L111_1 = {}
+local L112_1 = false
+
+local function L113_1()
+  return request or http_request or syn and syn.request or http and http.request or fluxus and fluxus.request or getgenv and (getgenv().request or getgenv().http_request)
+end
+
+local function L114_1(A0_2, A1_2)
+  local L2_2 = L113_1()
+  if not L2_2 then
+    warn("[RAIL Hub Webhook] No HTTP request function available in this executor.")
+    return false, "No HTTP request function available"
+  end
+  A0_2 = tostring(A0_2 or ""):gsub("^%s+", ""):gsub("%s+$", "")
+  if A0_2 == "" or not A0_2:find("^https?://") then
+    return false, "Invalid URL"
+  end
+  local L3_2 = ""
+  local L4_2, L5_2 = pcall(function()
+    return L5_1:JSONEncode(A1_2)
+  end)
+  if not L4_2 or not L5_2 then
+    warn("[RAIL Hub Webhook] JSONEncode error: " .. tostring(L5_2))
+    return false, "JSONEncode failed"
+  end
+  L3_2 = L5_2
+  local L6_2, L7_2 = pcall(function()
+    return L2_2({
+      Url = A0_2,
+      url = A0_2,
+      Method = "POST",
+      method = "POST",
+      Headers = {
+        ["Content-Type"] = "application/json"
+      },
+      headers = {
+        ["Content-Type"] = "application/json"
+      },
+      Body = L3_2,
+      body = L3_2
+    })
+  end)
+  return L6_2, L7_2
+end
+
+local function L115_1()
+  if L112_1 or #L111_1 == 0 then
+    return
+  end
+  L112_1 = true
+  task.spawn(function()
+    while 0 < #L111_1 do
+      do
+        local L0_3 = table.remove(L111_1, 1)
+        local L1_3 = L109_1.Url and L109_1.Url ~= "" and L109_1.Url or getgenv and getgenv().webhook
+        if L1_3 and type(L1_3) == "string" and L1_3:find("^https?://") then
+          pcall(function()
+            L114_1(L1_3, L0_3)
+          end)
+        end
+        task.wait(0.5)
+      end
+    end
+    L112_1 = false
+  end)
+end
+
+local function L116_1(A0_2, A1_2)
+  if not L109_1.Enabled then
+    return
+  end
+  local L2_2 = L109_1.Url and L109_1.Url ~= "" and L109_1.Url or getgenv and getgenv().webhook
+  if not L2_2 or L2_2 == "" or not tostring(L2_2):find("^https?://") then
+    return
+  end
+  if A1_2 then
+    pcall(function()
+      L114_1(L2_2, A0_2)
+    end)
+  else
+    table.insert(L111_1, A0_2)
+    L115_1()
+  end
+end
+
+local function L117_1()
+  local L0_2 = game:GetService("Players").LocalPlayer or L2_1 or L3_1
+  local L1_2 = L0_2 and L0_2.Name or "Unknown"
+  local L2_2 = L0_2 and L0_2.DisplayName or L1_2
+  if L109_1.HideUser then
+    return ("||%s (%s)||"):format(L1_2, L2_2)
+  end
+  return ("%s (%s)"):format(L1_2, L2_2)
+end
+
+local function L118_1(A0_2)
+  local L1_2 = tostring(tonumber(A0_2) or 0)
+  while true do
+    local L2_2, L3_2 = L1_2:gsub("^(-?%d+)(%d%d%d)", "%1,%2")
+    L1_2 = L2_2
+    if not L3_2 or L3_2 == 0 then
+      break
+    end
+  end
+  return L1_2
+end
+
+local function L119_1()
+  local L0_2 = game:GetService("Players").LocalPlayer or L2_1 or L3_1
+  local L1_2 = L0_2 and L0_2:FindFirstChild("PlayerStats")
+  local L2_2 = L1_2 and L1_2:FindFirstChild("Money")
+  return L2_2 and L2_2.Value or 0
+end
+
+local function L120_1()
+  local L0_2 = 0
+  local L1_2 = game:GetService("Players").LocalPlayer or L2_1 or L3_1
+  if L1_2 then
+    local L2_2 = L1_2:FindFirstChild("Backpack")
+    if L2_2 then
+      local L3_2, L4_2 = pcall(function()
+        return L2_2:GetChildren()
+      end)
+      if L3_2 and L4_2 then
+        for L8_2, L9_2 in ipairs(L4_2) do
+          if L9_2 and L9_2.Name == "Lucky Arrow" then
+            L0_2 = L0_2 + 1
+          end
+        end
+      end
+    end
+    local L3_2 = L1_2.Character
+    if L3_2 then
+      local L4_2, L5_2 = pcall(function()
+        return L3_2:GetChildren()
+      end)
+      if L4_2 and L5_2 then
+        for L9_2, L10_2 in ipairs(L5_2) do
+          if L10_2 and L10_2:IsA("Tool") and L10_2.Name == "Lucky Arrow" then
+            L0_2 = L0_2 + 1
+          end
+        end
+      end
+    end
+  end
+  return L0_2
+end
+
+local function L121_1(A0_2)
+  local L1_2 = A0_2 and A0_2:FindFirstChild("StandMorph")
+  if not L1_2 then
+    return nil
+  end
+  return L1_2.PrimaryPart or L1_2:FindFirstChild("HumanoidRootPart") or L1_2:FindFirstChild("StandAttach") or L1_2:FindFirstChildWhichIsA("BasePart")
+end
+
+local function L122_1(A0_2, A1_2)
+  local L2_2, L3_2
+  if type(A0_2) == "boolean" then
+    L2_2 = L2_1 and L2_1.Character
+    L3_2 = A0_2
+  else
+    L2_2 = A0_2 or L2_1 and L2_1.Character
+    L3_2 = A1_2
+  end
+  local L4_2 = L2_2 and L2_2:FindFirstChild("StandMorph")
+  local L5_2 = L121_1(L2_2)
+  local L6_2 = L5_2 and (L5_2:FindFirstChild("StandAttach") or L4_2:FindFirstChild("StandAttach", true)) or L4_2 and L4_2.PrimaryPart and L4_2.PrimaryPart:FindFirstChild("StandAttach") or L4_2 and L4_2:FindFirstChild("StandAttach", true)
+  if L6_2 then
+    local L7_2 = L6_2:FindFirstChildOfClass("AlignPosition")
+    local L8_2 = L6_2:FindFirstChildOfClass("AlignOrientation")
+    if L7_2 then
+      L7_2.Enabled = L3_2
+    end
+    if L8_2 then
+      L8_2.Enabled = L3_2
+    end
+  end
+end
+
+local L123_1 = L122_1
+local L124_1 = false
+
+local function L125_1(A0_2)
+  if L124_1 then
+    return
+  end
+  L124_1 = true
+  local L1_2 = tostring(A0_2 or "Auto Leave triggered.")
+  pcall(function()
+    if _G.YBAItemFarm and _G.YBAItemFarm.stopFarming then
+      _G.YBAItemFarm.stopFarming()
+    end
+  end)
+  pcall(function()
+    if L107_1 then
+      L107_1("Auto Leave", L1_2)
+    end
+  end)
+  pcall(function()
+    local L0_3 = L47_1 or getgenv and getgenv().sendReconnectKickWebhook
+    if L0_3 then
+      L0_3(L1_2, "Auto Leave")
+    end
+  end)
+  task.spawn(function()
+    task.wait(0.5)
+    pcall(function()
+      local L0_4 = L2_1 or game:GetService("Players").LocalPlayer
+      if L0_4 and L0_4.Kick then
+        L0_4:Kick(L1_2)
+      end
+    end)
+    task.wait(0.2)
+    pcall(function()
+      if game.Shutdown then
+        game:Shutdown()
+      end
+    end)
+  end)
+  task.delay(10, function()
+    L124_1 = false
+  end)
+end
+
+getgenv()._YBA_SafeLeaveGame = L125_1
+
+local function L126_1()
+  if not L28_1 or not L28_1("AutoLeaveItemFarm", false) then
+    return false
+  end
+  local L0_2 = L119_1 and L119_1() or 0
+  local L1_2 = L120_1 and L120_1() or 0
+  if 1000000 <= L0_2 and 9 <= L1_2 then
+    L125_1("Item Farm reached $1,000,000 and 9 Lucky Arrows!")
+    return true
+  end
+  return false
+end
+
+getgenv()._YBA_CheckItemFarmAutoLeave = L126_1
+
+local function L127_1()
+  if not L28_1 or not L28_1("AutoLeavePrestige", false) then
+    return false
+  end
+  local L0_2 = game:GetService("Players").LocalPlayer
+  local L1_2 = L0_2 and L0_2:FindFirstChild("PlayerStats")
+  local L2_2 = L1_2 and L1_2:FindFirstChild("Level") and L1_2.Level.Value or 0
+  local L3_2 = L1_2 and L1_2:FindFirstChild("Prestige") and L1_2.Prestige.Value or 0
+  if 50 <= L2_2 and 3 <= L3_2 then
+    L125_1("Auto Prestige reached Prestige 3 Level 50!")
+    return true
+  end
+  return false
+end
+
+getgenv()._YBA_CheckAutoPrestigeLeave = L127_1
+
+local function L128_1(A0_2, A1_2, A2_2)
+  if not L109_1.Enabled then
+    return
+  end
+  local L3_2 = {}
+  L3_2.username = "RAIL Hub"
+  L3_2.embeds = {A0_2}
+  if A1_2 and L109_1.UserId and L109_1.UserId ~= "" then
+    L3_2.content = ("<@%s>"):format(L109_1.UserId)
+  end
+  L116_1(L3_2, A2_2)
+end
+
+local function L129_1()
+  local L0_2 = L110_1()
+  local L1_2 = {}
+  L1_2.title = L0_2 and "[RAIL Hub] \208\146\208\181\208\177\209\133\209\131\208\186 \208\191\208\190\208\180\208\186\208\187\209\142\209\135\208\181\208\189" or "[RAIL Hub] Webhook Connected"
+  L1_2.color = 3066993
+  L1_2.fields = {
+    {
+      name = L0_2 and "\208\161\209\130\208\176\209\130\209\131\209\129" or "Status",
+      value = L0_2 and "\208\163\209\129\208\191\208\181\209\136\208\189\208\190 \208\191\208\190\208\180\208\186\208\187\209\142\209\135\208\181\208\189\208\190" or "Connected successfully",
+      inline = true
+    },
+    {
+      name = L0_2 and "\208\152\208\179\209\128\208\190\208\186" or "Player",
+      value = L117_1(),
+      inline = true
+    },
+    {
+      name = L0_2 and "\208\145\208\176\208\187\208\176\208\189\209\129" or "Balance",
+      value = ("$%s"):format(L118_1(L119_1())),
+      inline = true
+    },
+    {
+      name = L0_2 and "\208\152\208\179\209\128\208\176" or "Game",
+      value = "Your Bizarre Adventure",
+      inline = true
+    },
+    {
+      name = L0_2 and "\208\161\208\181\209\128\208\178\208\181\209\128" or "Server",
+      value = game.JobId ~= "" and game.JobId or "Unknown",
+      inline = false
+    }
+  }
+  L1_2.footer = {
+    text = "RAIL Hub | Your Bizarre Adventure"
+  }
+  L1_2.timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
+  L128_1(L1_2, true, false)
+  return true
+end
+
+local function L130_1(A0_2, A1_2, A2_2, A3_2)
+  local L4_2 = L110_1()
+  local L5_2 = {}
+  if A2_2 then
+    for L9_2, L10_2 in ipairs(A2_2) do
+      table.insert(L5_2, L10_2)
+    end
+  end
+  if A3_2 ~= false then
+    table.insert(L5_2, {
+      name = L4_2 and "\208\145\208\176\208\187\208\176\208\189\209\129" or "Balance",
+      value = ("$%s"):format(L118_1(L119_1())),
+      inline = true
+    })
+    table.insert(L5_2, {
+      name = L4_2 and "\208\152\208\179\209\128\208\190\208\186" or "Player",
+      value = L117_1(),
+      inline = true
+    })
+    table.insert(L5_2, {
+      name = L4_2 and "\208\161\208\181\209\128\208\178\208\181\209\128" or "Server",
+      value = game.JobId ~= "" and game.JobId or "Unknown",
+      inline = false
+    })
+  end
+  return {
+    title = A0_2,
+    color = A1_2,
+    fields = L5_2,
+    footer = {
+      text = "RAIL Hub | Your Bizarre Adventure"
+    },
+    timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
+  }
+end
+
+local function L131_1(A0_2, A1_2, A2_2)
+  if not L109_1.NotifyItem then
+    return
+  end
+  local L3_2 = A0_2 == "Lucky Arrow" or A0_2 == "Lucky Stone Mask" or A0_2 == "Heart of the Saint's Corpse" or A0_2 == "Pelvis of the Saint's Corpse" or A0_2 == "Left Arm of the Saint's Corpse" or A0_2 == "Requiem Arrow" or A0_2 == "Pure Rokakaka"
+  if not L3_2 then
+    return
+  end
+  local L4_2 = L110_1()
+  local L5_2 = L130_1(L4_2 and "[RAIL Hub] \208\160\208\181\208\180\208\186\208\184\208\185 / \208\155\208\181\208\179\208\181\208\189\208\180\208\176\209\128\208\189\209\139\208\185 \208\191\209\128\208\181\208\180\208\188\208\181\209\130" or "[RAIL Hub] Rare / Legendary Item", 15844367, {
+    {
+      name = L4_2 and "\208\159\209\128\208\181\208\180\208\188\208\181\209\130" or "Item",
+      value = tostring(A0_2),
+      inline = true
+    },
+    {
+      name = L4_2 and "\208\154\208\190\208\187\208\184\209\135\208\181\209\129\209\130\208\178\208\190" or "Amount",
+      value = ("%d / %d"):format(A1_2 or 1, A2_2 or 9),
+      inline = true
+    }
+  })
+  L128_1(L5_2, true)
+end
+
+local function L132_1(A0_2, A1_2)
+  if not L109_1.NotifyStand then
+    return
+  end
+  if not A0_2 or A0_2 == "None" or A0_2 == "" then
+    return
+  end
+  local L2_2 = A1_2 and A1_2 ~= "None" and A1_2 ~= "" and A1_2 ~= A0_2
+  local L3_2 = L110_1()
+  local L4_2 = L130_1(L2_2 and (L3_2 and "[RAIL Hub] \208\146\209\139\208\177\208\184\209\130 \209\129\208\186\208\184\208\189" or "[RAIL Hub] Shiny Stand") or L3_2 and "[RAIL Hub] \208\146\209\139\208\177\208\184\209\130 \209\129\209\130\208\181\208\189\208\180" or "[RAIL Hub] Stand Obtained", L2_2 and 10181046 or 3447003, {
+    {
+      name = L3_2 and "\208\161\209\130\208\181\208\189\208\180" or "Stand",
+      value = tostring(A0_2 or "None"),
+      inline = true
+    },
+    {
+      name = L3_2 and "\208\161\208\186\208\184\208\189" or "Skin",
+      value = tostring(L2_2 and A1_2 or L3_2 and "\208\158\208\177\209\139\209\135\208\189\209\139\208\185 (\208\177\208\181\208\183 \209\129\208\186\208\184\208\189\208\176)" or "Default / None"),
+      inline = true
+    }
+  })
+  L128_1(L4_2, L2_2 or true)
+end
+
+local function L133_1(A0_2, A1_2)
+  if not L109_1.NotifyMilestone then
+    return
+  end
+  local L2_2 = L110_1()
+  local L3_2 = L130_1(L2_2 and "[RAIL Hub] \208\166\208\181\208\187\209\140 \208\180\208\190\209\129\209\130\208\184\208\179\208\189\209\131\209\130\208\176: 9 Lucky + $1M" or "[RAIL Hub] Goal Reached: 9 Lucky + $1M", 15844367, {
+    {
+      name = L2_2 and "\208\161\209\130\209\128\208\181\208\187\209\139 \209\131\208\180\208\176\209\135\208\184" or "Lucky Arrows",
+      value = ("%d / 9"):format(A0_2 or 9),
+      inline = true
+    }
+  })
+  L128_1(L3_2, true)
+end
+
+task.spawn(function()
+  while true do
+    task.wait(10)
+    pcall(function()
+      if not L109_1.Enabled then
+        getgenv()._YBA_MilestonePinged = false
+        return
+      end
+      if not L109_1.NotifyMilestone then
+        getgenv()._YBA_MilestonePinged = false
+        return
+      end
+      local L0_3 = L109_1.Url and L109_1.Url ~= "" and L109_1.Url or getgenv and getgenv().webhook
+      if not L0_3 or L0_3 == "" then
+        return
+      end
+      local L1_3 = L120_1 and L120_1() or 0
+      local L2_3 = L119_1 and L119_1() or 0
+      if 9 <= L1_3 and 1000000 <= L2_3 then
+        if not getgenv()._YBA_MilestonePinged then
+          getgenv()._YBA_MilestonePinged = true
+          L133_1(L1_3, L2_3)
+        end
+      else
+        getgenv()._YBA_MilestonePinged = false
+      end
+    end)
+  end
+end)
+
+local function L134_1(A0_2)
+  if not L109_1.NotifyStaff then
+    return
+  end
+  local L1_2 = typeof(A0_2) == "Instance" and A0_2.Name or tostring(A0_2 or "Unknown")
+  local L2_2 = L110_1()
+  local L3_2 = L130_1(L2_2 and "[RAIL Hub] \208\158\208\177\208\189\208\176\209\128\209\131\208\182\208\181\208\189 \209\129\209\130\208\176\209\132\209\132" or "[RAIL Hub] Staff Detected", 15158332, {
+    {
+      name = L2_2 and "\208\161\209\130\208\176\209\132\209\132" or "Staff Member",
+      value = L1_2,
+      inline = true
+    },
+    {
+      name = L2_2 and "\208\148\208\181\208\185\209\129\209\130\208\178\208\184\208\181" or "Action",
+      value = L2_2 and "\208\159\209\128\208\181\208\180\209\131\208\191\209\128\208\181\208\182\208\180\208\181\208\189\208\184\208\181 \208\177\208\181\208\183\208\190\208\191\208\176\209\129\208\189\208\190\209\129\209\130\208\184" or "Security Alert",
+      inline = true
+    }
+  })
+  L128_1(L3_2, true)
+end
+
+local function L135_1(A0_2, A1_2, A2_2, A3_2)
+  if not L109_1.NotifyPrestige then
+    return
+  end
+  local L4_2 = L110_1()
+  local L5_2
+  if A2_2 then
+    L5_2 = L130_1(L4_2 and "[RAIL Hub] Auto Prestige \208\151\208\176\208\178\208\181\209\128\209\136\209\145\208\189" or "[RAIL Hub] Auto Prestige Completed", 15844367, {
+      {
+        name = L4_2 and "\208\161\209\130\208\176\209\130\209\131\209\129" or "Status",
+        value = L4_2 and "\208\156\208\176\208\186\209\129 \209\131\209\128\208\190\208\178\208\181\208\189\209\140 50 / \208\159\209\128\208\181\209\129\209\130\208\184\208\182 3 (50/3)" or "Max Level 50 / Prestige 3 (50/3)",
+        inline = true
+      },
+      {
+        name = L4_2 and "\208\146\209\128\208\181\208\188\209\143 \209\132\208\176\209\128\208\188\208\176" or "Time Taken",
+        value = tostring(A3_2 or "Unknown"),
+        inline = true
+      }
+    })
+  else
+    L5_2 = L130_1(L4_2 and "[RAIL Hub] Auto Prestige \208\159\209\128\208\190\208\179\209\128\208\181\209\129\209\129" or "[RAIL Hub] Auto Prestige Progress", 3066993, {
+      {
+        name = L4_2 and "\208\159\209\128\208\181\209\129\209\130\208\184\208\182" or "Prestige",
+        value = tostring(A0_2 or "Unknown"),
+        inline = true
+      },
+      {
+        name = L4_2 and "\208\163\209\128\208\190\208\178\208\181\208\189\209\140" or "Level",
+        value = tostring(A1_2 or "Unknown"),
+        inline = true
+      }
+    })
+  end
+  L128_1(L5_2, true)
+end
+
+function L47_1(A0_2, A1_2)
+  if not L109_1.NotifyKick then
+    return
+  end
+  local L2_2 = L110_1()
+  local L3_2 = A1_2 or A0_2 and tostring(A0_2):find("Server") and "Server Hopping" or "Kicked / Reconnecting"
+  local L4_2 = {}
+  L4_2.title = L2_2 and "[RAIL Hub] \208\160\208\181\208\186\208\190\208\189\208\189\208\181\208\186\209\130 / \208\154\208\184\208\186" or "[RAIL Hub] Reconnect / Kick"
+  L4_2.color = 15105570
+  L4_2.fields = {
+    {
+      name = L2_2 and "\208\148\208\181\208\185\209\129\209\130\208\178\208\184\208\181" or "Action",
+      value = tostring(L3_2),
+      inline = true
+    },
+    {
+      name = L2_2 and "\208\159\209\128\208\184\209\135\208\184\208\189\208\176" or "Reason",
+      value = tostring(A0_2 or "Auto Reconnect"),
+      inline = true
+    },
+    {
+      name = L2_2 and "\208\145\208\176\208\187\208\176\208\189\209\129" or "Balance",
+      value = ("$%s"):format(L118_1(L119_1())),
+      inline = true
+    },
+    {
+      name = L2_2 and "\208\155\208\176\208\186\208\184 \209\129\209\130\209\128\208\181\208\187\209\139" or "Lucky Arrows",
+      value = ("%d / 9"):format(L120_1()),
+      inline = true
+    },
+    {
+      name = L2_2 and "\208\152\208\179\209\128\208\190\208\186" or "Player",
+      value = L117_1(),
+      inline = true
+    },
+    {
+      name = L2_2 and "\208\161\208\181\209\128\208\178\208\181\209\128" or "Server",
+      value = game.JobId ~= "" and game.JobId or "Unknown",
+      inline = false
+    }
+  }
+  L4_2.footer = {
+    text = "RAIL Hub | Your Bizarre Adventure"
+  }
+  L4_2.timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
+  L128_1(L4_2, false, true)
+end
+
+getgenv().sendItemPickupWebhook = L131_1
+getgenv().sendStandWebhook = L132_1
+getgenv().sendMilestoneWebhook = L133_1
+getgenv().sendStaffDetectedWebhook = L134_1
+getgenv().sendPrestigeWebhook = L135_1
+getgenv().sendReconnectKickWebhook = L47_1
+getgenv().sendTestWebhook = L129_1
+local L136_1
+
+local function L137_1()
+  pcall(function()
+    local L0_3 = getconnections or get_signal_cons
+    if L0_3 and L2_1 and L2_1.Idled then
+      for L4_3, L5_3 in pairs(L0_3(L2_1.Idled)) do
+        if L5_3.Disable then
+          L5_3:Disable()
+        elseif L5_3.Disconnect then
+          L5_3:Disconnect()
+        end
+      end
+    end
+  end)
+  if L136_1 then
+    L136_1:Disconnect()
+    L136_1 = nil
+  end
+  if L2_1 and L2_1.Idled then
+    L136_1 = L2_1.Idled:Connect(function()
+      pcall(function()
+        local L0_4 = game:GetService("VirtualUser")
+        if L0_4 then
+          L0_4:CaptureController()
+          L0_4:ClickButton2(Vector2.zero)
+        end
+      end)
+    end)
+  end
+end
+
+local function L138_1()
+  if L136_1 then
+    L136_1:Disconnect()
+    L136_1 = nil
+  end
+  pcall(function()
+    local L0_3 = getconnections or get_signal_cons
+    if L0_3 and L2_1 and L2_1.Idled then
+      for L4_3, L5_3 in pairs(L0_3(L2_1.Idled)) do
+        if L5_3.Enable then
+          L5_3:Enable()
+        end
+      end
+    end
+  end)
+end
+
+getgenv().enableAntiAfk = L137_1
+getgenv().disableAntiAfk = L138_1
+task.spawn(function()
+  task.wait(1)
+  local L0_2, L1_2 = pcall(function()
+    return L28_1("AA", true)
+  end)
+  if L0_2 and L1_2 and type(L137_1) == "function" then
+    pcall(L137_1)
+  end
+end)
+local L139_1 = {}
+local L140_1 = {}
+L140_1["\208\144"] = "\208\176"
+L140_1["\208\145"] = "\208\177"
+L140_1["\208\146"] = "\208\178"
+L140_1["\208\147"] = "\208\179"
+L140_1["\208\148"] = "\208\180"
+L140_1["\208\149"] = "\208\181"
+L140_1["\208\129"] = "\209\145"
+L140_1["\208\150"] = "\208\182"
+L140_1["\208\151"] = "\208\183"
+L140_1["\208\152"] = "\208\184"
+L140_1["\208\153"] = "\208\185"
+L140_1["\208\154"] = "\208\186"
+L140_1["\208\155"] = "\208\187"
+L140_1["\208\156"] = "\208\188"
+L140_1["\208\157"] = "\208\189"
+L140_1["\208\158"] = "\208\190"
+L140_1["\208\159"] = "\208\191"
+L140_1["\208\160"] = "\209\128"
+L140_1["\208\161"] = "\209\129"
+L140_1["\208\162"] = "\209\130"
+L140_1["\208\163"] = "\209\131"
+L140_1["\208\164"] = "\209\132"
+L140_1["\208\165"] = "\209\133"
+L140_1["\208\166"] = "\209\134"
+L140_1["\208\167"] = "\209\135"
+L140_1["\208\168"] = "\209\136"
+L140_1["\208\169"] = "\209\137"
+L140_1["\208\170"] = "\209\138"
+L140_1["\208\171"] = "\209\139"
+L140_1["\208\172"] = "\209\140"
+L140_1["\208\173"] = "\209\141"
+L140_1["\208\174"] = "\209\142"
+L140_1["\208\175"] = "\209\143"
+
+local function L141_1(A0_2)
+  if not A0_2 then
+    return ""
+  end
+  local L1_2 = tostring(A0_2):lower()
+  if type(L140_1) == "table" then
+    for L5_2, L6_2 in pairs(L140_1) do
+      if type(L5_2) == "string" and type(L6_2) == "string" and L6_2 ~= "" then
+        pcall(function()
+          L1_2 = L1_2:gsub(L5_2, L6_2)
+        end)
+      end
+    end
+  end
+  return L1_2
+end
+
+L139_1.utf8Lower = L141_1
+local L142_1 = {}
+
+local function L143_1(A0_2)
+  if not A0_2 then
+    return ""
+  end
+  local L1_2 = typeof(A0_2) == "Instance" and A0_2.Name or tostring(A0_2)
+  local L2_2 = L142_1[L1_2]
+  if L2_2 then
+    return L2_2
+  end
+  local L3_2 = L1_2:gsub("^%s+", ""):gsub("%s+$", "")
+  local L4_2 = L141_1(L3_2)
+  local L5_2 = L3_2
+  if L4_2:find("redeem", 1, true) then
+    L5_2 = "(Redeemed Items)"
+  elseif L4_2:find("lucky", 1, true) and L4_2:find("arrow", 1, true) or L4_2:find("\209\129\209\135\208\176\209\129\209\130\208\187\208\184\208\178", 1, true) and L4_2:find("\209\129\209\130\209\128\208\181\208\187", 1, true) then
+    L5_2 = "Lucky Arrow"
+  elseif L4_2:find("lucky", 1, true) and L4_2:find("mask", 1, true) or L4_2:find("\209\129\209\135\208\176\209\129\209\130\208\187\208\184\208\178", 1, true) and L4_2:find("\208\188\208\176\209\129\208\186", 1, true) then
+    L5_2 = "Lucky Stone Mask"
+  elseif L4_2:find("requiem", 1, true) and L4_2:find("arrow", 1, true) or L4_2:find("\209\128\208\176\208\180\209\131\208\182\208\189", 1, true) or L4_2:find("\209\128\208\181\208\186\208\178\208\184\208\181\208\188", 1, true) then
+    L5_2 = "Requiem Arrow"
+  elseif not (L4_2 ~= "stand arrow" and not L4_2:find("stand arrow", 1, true) and not L4_2:find("standarrow", 1, true) and (not (L4_2:find("stand", 1, true) and L4_2:find("arrow", 1, true)) or L4_2:find("mysterious", 1, true))) or L4_2:find("quest arrow", 1, true) or L4_2:find("questarrow", 1, true) or L4_2:find("\209\129\209\130\208\181\208\189\208\180", 1, true) and L4_2:find("\209\129\209\130\209\128\208\181\208\187", 1, true) or L4_2:find("\209\129\209\130\209\128\208\181\208\187\208\176 \209\129\209\130\208\181\208\189\208\180\208\176", 1, true) or L4_2:find("\209\129\209\130\208\181\208\189\208\180\208\190\208\178\208\176\209\143", 1, true) or L4_2:find("\209\129\209\130\208\181\208\189\208\180 \209\129\209\130\209\128\208\181\208\187\208\176", 1, true) then
+    L5_2 = "Stand Arrow"
+  elseif not (not L4_2:find("mysterious bow", 1, true) and (not L4_2:find("bow", 1, true) or L4_2:find("rainbow", 1, true))) or L4_2:find("\208\187\209\131\208\186", 1, true) then
+    L5_2 = "Mysterious Bow"
+  elseif L4_2:find("left arm", 1, true) or L4_2:find("\208\187\208\181\208\178\208\176\209\143 \209\128\209\131\208\186\208\176", 1, true) or L4_2:find("\209\128\209\131\208\186\208\176", 1, true) and L4_2:find("\209\130\209\128\209\131\208\191", 1, true) then
+    L5_2 = "Left Arm of The Saint's Corpse"
+  elseif L4_2:find("heart", 1, true) or L4_2:find("\209\129\208\181\209\128\208\180\209\134", 1, true) and (L4_2:find("\209\130\209\128\209\131\208\191", 1, true) or L4_2:find("\209\129\208\178\209\143\209\130", 1, true)) then
+    L5_2 = "Heart of The Saint's Corpse"
+  elseif L4_2:find("pelvis", 1, true) or L4_2:find("\209\130\208\176\208\183", 1, true) and (L4_2:find("\209\130\209\128\209\131\208\191", 1, true) or L4_2:find("\209\129\208\178\209\143\209\130", 1, true)) then
+    L5_2 = "Pelvis of The Saint's Corpse"
+  elseif L4_2:find("eye of", 1, true) or L4_2:find("\208\179\208\187\208\176\208\183", 1, true) and (L4_2:find("\209\130\209\128\209\131\208\191", 1, true) or L4_2:find("\209\129\208\178\209\143\209\130", 1, true)) or L4_2:find("\208\190\208\186\208\190", 1, true) then
+    L5_2 = "Eye of The Saint's Corpse"
+  elseif L4_2:find("pure", 1, true) and (L4_2:find("roka", 1, true) or L4_2:find("fruit", 1, true)) or L4_2:find("\209\135\208\184\209\129\209\130", 1, true) and L4_2:find("\209\128\208\190\208\186\208\176", 1, true) then
+    L5_2 = "Pure Rokakaka"
+  elseif L4_2:find("roka", 1, true) or L4_2:find("\209\128\208\190\208\186\208\176", 1, true) then
+    L5_2 = "Rokakaka"
+  elseif L4_2:find("rib cage", 1, true) or L4_2:find("ribcage", 1, true) or L4_2 == "rib" or L4_2 == "ribs" or L4_2:find("\209\128\208\181\208\177\209\128", 1, true) or L4_2:find("\208\186\208\187\208\181\209\130\208\186", 1, true) then
+    L5_2 = "Rib Cage of The Saint's Corpse"
+  elseif not (L4_2 ~= "arrow" and L4_2 ~= "arrows" and L4_2 ~= "mysterious arrow" and not L4_2:find("mysterious arrow", 1, true) and (not L4_2:find("mysterious", 1, true) or L4_2:find("bow", 1, true))) or L4_2:find("\208\188\208\184\209\129\209\130\208\184\209\135\208\181\209\129\208\186", 1, true) or L4_2:find("\208\188\208\184\209\129\209\130\208\181\209\128\208\184", 1, true) or L4_2:find("\209\129\209\130\208\190\209\143\209\135\208\176\209\143", 1, true) then
+    L5_2 = "Mysterious Arrow"
+  elseif L4_2:find("stone mask", 1, true) or L4_2:find("vampire mask", 1, true) or L4_2:find("\208\188\208\176\209\129\208\186\208\176", 1, true) or L4_2 == "mask" then
+    L5_2 = "Stone Mask"
+  elseif not (not L4_2:find("dio's bone", 1, true) and not L4_2:find("dios bone", 1, true) and (not L4_2:find("bone", 1, true) or L4_2:find("steel", 1, true))) or L4_2:find("\208\186\208\190\209\129\209\130\209\140", 1, true) then
+    L5_2 = "DIO's Bone"
+  elseif L4_2:find("jotaro's disc", 1, true) or L4_2:find("jotaros disc", 1, true) or L4_2:find("disc", 1, true) or L4_2:find("\208\180\208\184\209\129\208\186", 1, true) then
+    L5_2 = "Jotaro's Disc"
+  elseif L4_2:find("dio's", 1, true) or L4_2:find("diary", 1, true) or L4_2:find("\208\180\208\184\208\190", 1, true) or L4_2:find("\208\180\208\189\208\181\208\178\208\189\208\184\208\186", 1, true) then
+    L5_2 = "Dio's Diary"
+  elseif L4_2:find("boxing", 1, true) or L4_2:find("\208\177\208\190\208\186\209\129", 1, true) then
+    L5_2 = "Boxing Gloves"
+  elseif L4_2:find("quinton", 1, true) or L4_2:find("\208\186\208\178\208\184\208\189\209\130\208\190\208\189", 1, true) or L4_2:find("\208\191\208\181\209\128\209\135\208\176\209\130\208\186", 1, true) and not L4_2:find("\208\177\208\190\208\186\209\129", 1, true) then
+    L5_2 = "Quinton's Glove"
+  elseif L4_2:find("ancient scroll", 1, true) or L4_2 == "scroll" or L4_2:find("\209\129\208\178\208\184\209\130\208\190\208\186", 1, true) then
+    L5_2 = "Ancient Scroll"
+  elseif L4_2:find("steel", 1, true) or L4_2 == "ball" or L4_2 == "balls" or L4_2:find("\209\129\209\130\208\176\208\187\209\140\208\189", 1, true) or L4_2:find("\209\136\208\176\209\128", 1, true) then
+    L5_2 = "Steel Ball"
+  elseif L4_2:find("clacker", 1, true) or L4_2:find("\208\186\208\187\208\176\208\186\208\181\209\128", 1, true) then
+    L5_2 = "Clackers"
+  elseif L4_2:find("zeppeli", 1, true) and L4_2:find("hat", 1, true) or L4_2:find("\209\136\208\187\209\143\208\191", 1, true) and L4_2:find("\209\134\208\181\208\191\208\191\208\181\208\187", 1, true) then
+    L5_2 = "Zeppeli's Hat"
+  elseif L4_2:find("zepellin", 1, true) and L4_2:find("headband", 1, true) or L4_2:find("\208\191\208\190\208\178\209\143\208\183\208\186", 1, true) and L4_2:find("\209\134\208\181\208\191\208\191\208\181\208\187", 1, true) then
+    L5_2 = "Zepellin's Headband"
+  elseif L4_2:find("caesar", 1, true) or L4_2:find("\209\134\208\181\208\183\208\176\209\128", 1, true) then
+    L5_2 = "Caesar's Headband"
+  elseif L4_2:find("gold coin", 1, true) or L4_2 == "coin" or L4_2 == "coins" or L4_2:find("\208\188\208\190\208\189\208\181\209\130", 1, true) then
+    L5_2 = "Gold Coin"
+  elseif L4_2:find("diamond", 1, true) or L4_2:find("\208\177\209\128\208\184\208\187\208\187\208\184\208\176\208\189\209\130", 1, true) or L4_2:find("\208\176\208\187\208\188\208\176\208\183", 1, true) then
+    L5_2 = "Diamond"
+  elseif L4_2:find("gold umbrella", 1, true) then
+    L5_2 = "Gold Umbrella"
+  elseif L4_2:find("umbrella", 1, true) or L4_2:find("\208\183\208\190\208\189\209\130", 1, true) then
+    L5_2 = "Umbrella"
+  elseif L4_2:find("present", 1, true) or L4_2:find("\208\191\208\190\208\180\208\176\209\128\208\190\208\186", 1, true) or L4_2:find("gift", 1, true) then
+    L5_2 = "Christmas Present"
+  elseif L4_2:find("blue candy", 1, true) or L4_2:find("\209\129\208\184\208\189", 1, true) and L4_2:find("\208\186\208\190\208\189\209\132\208\181\209\130", 1, true) or L4_2:find("\208\179\208\190\208\187\209\131\208\177", 1, true) and L4_2:find("\208\186\208\190\208\189\209\132\208\181\209\130", 1, true) then
+    L5_2 = "Blue Candy"
+  elseif L4_2:find("red candy", 1, true) or L4_2:find("\208\186\209\128\208\176\209\129\208\189", 1, true) and L4_2:find("\208\186\208\190\208\189\209\132\208\181\209\130", 1, true) then
+    L5_2 = "Red Candy"
+  elseif L4_2:find("green candy", 1, true) or L4_2:find("\208\183\208\181\208\187\208\181\208\189", 1, true) and L4_2:find("\208\186\208\190\208\189\209\132\208\181\209\130", 1, true) or L4_2:find("\208\183\208\181\208\187\209\145\208\189", 1, true) and L4_2:find("\208\186\208\190\208\189\209\132\208\181\209\130", 1, true) then
+    L5_2 = "Green Candy"
+  elseif L4_2:find("yellow candy", 1, true) or L4_2:find("\208\182\208\181\208\187\209\130", 1, true) and L4_2:find("\208\186\208\190\208\189\209\132\208\181\209\130", 1, true) or L4_2:find("\208\182\209\145\208\187\209\130", 1, true) and L4_2:find("\208\186\208\190\208\189\209\132\208\181\209\130", 1, true) then
+    L5_2 = "Yellow Candy"
+  elseif L4_2:find("candy", 1, true) or L4_2:find("\208\186\208\190\208\189\209\132\208\181\209\130", 1, true) or L4_2:find("\208\187\208\181\208\180\208\181\208\189", 1, true) then
+    L5_2 = "Candy"
+  elseif L4_2 == "tea" or L4_2:find("tea", 1, true) or L4_2:find("\209\135\208\176\208\185", 1, true) then
+    L5_2 = "Tea"
+  elseif L4_2 == "pizza" or L4_2:find("pizza", 1, true) or L4_2:find("\208\191\208\184\209\134\209\134", 1, true) then
+    L5_2 = "Pizza"
+  elseif L4_2 == "bat" or L4_2:find("bat", 1, true) or L4_2:find("\208\177\208\184\209\130\208\176", 1, true) or L4_2:find("\208\177\208\184\209\130\209\131", 1, true) then
+    L5_2 = "Bat"
+  elseif L4_2:find("bottle of blood", 1, true) or L4_2:find("blood", 1, true) or L4_2:find("\208\186\209\128\208\190\208\178", 1, true) then
+    L5_2 = "Bottle of Blood"
+  elseif L4_2 == "pluck" or L4_2:find("pluck", 1, true) or L4_2:find("\208\191\208\187\208\176\208\186", 1, true) then
+    L5_2 = "Pluck"
+  elseif L4_2:find("koichi", 1, true) or L4_2:find("suitcase", 1, true) or L4_2:find("\209\135\208\181\208\188\208\190\208\180\208\176\208\189", 1, true) then
+    L5_2 = "Koichi's Suitcase"
+  elseif L4_2:find("lighter", 1, true) or L4_2:find("\208\183\208\176\208\182\208\184\208\179\208\176\208\187\208\186", 1, true) then
+    L5_2 = "Lighter"
+  elseif L4_2:find("green baby", 1, true) or L4_2:find("baby", 1, true) or L4_2:find("\208\183\208\181\208\187\208\181\208\189\209\139\208\185 \209\128\208\181\208\177\208\181\208\189\208\190\208\186", 1, true) or L4_2:find("\208\183\208\181\208\187\209\145\208\189\209\139\208\185 \209\128\208\181\208\177\208\181\208\189\208\190\208\186", 1, true) or L4_2:find("\208\183\208\181\208\187\208\181\208\189\209\139\208\185 \209\128\208\181\208\177\209\145\208\189\208\190\208\186", 1, true) or L4_2:find("\208\183\208\181\208\187\209\145\208\189\209\139\208\185 \209\128\208\181\208\177\209\145\208\189\208\190\208\186", 1, true) then
+    L5_2 = "Green Baby"
+  elseif L4_2:find("item notifier", 1, true) or L4_2:find("notifier", 1, true) then
+    L5_2 = "Item Notifier"
+  elseif L4_2:find("pose", 1, true) or L4_2:find("\208\191\208\190\208\183", 1, true) then
+    L5_2 = "Select Pose"
+  elseif L4_2:find("voiceline", 1, true) or L4_2:find("\208\178\208\190\208\185\209\129", 1, true) then
+    L5_2 = "Voicelines"
+  elseif L4_2:find("luca", 1, true) or L4_2:find("shovel", 1, true) or L4_2:find("\208\187\208\190\208\191\208\176\209\130", 1, true) then
+    L5_2 = "Leaky Eye Luca's Shovel"
+  end
+  L142_1[L1_2] = L5_2
+  return L5_2
+end
+
+L139_1.normalizeItemName = L143_1
+do
+  local L144_1 = {}
+  local L145_1 = {}
+  L145_1["Mysterious Arrow"] = 25
+  L145_1.Rokakaka = 25
+  L145_1["Gold Coin"] = 45
+  L145_1.Diamond = 25
+  L145_1["Pure Rokakaka"] = 10
+  L145_1["Quinton's Glove"] = 10
+  L145_1["Steel Ball"] = 10
+  L145_1["Rib Cage of The Saint's Corpse"] = 10
+  L145_1["Zepellin's Headband"] = 10
+  L145_1["Zeppeli's Hat"] = 10
+  L145_1["Caesar's Headband"] = 10
+  L145_1.Clackers = 10
+  L145_1["Stone Mask"] = 10
+  L145_1["Ancient Scroll"] = 10
+  L145_1["Dio's Diary"] = 10
+  L145_1["Lucky Stone Mask"] = 9
+  L145_1["Lucky Arrow"] = 9
+  L145_1["Gold Umbrella"] = 999
+  L145_1["Christmas Present"] = 999
+  L145_1.Candy = 45
+  L145_1["Blue Candy"] = 45
+  L145_1["Red Candy"] = 45
+  L145_1["Green Candy"] = 45
+  L145_1["Yellow Candy"] = 45
+  L145_1["Halloween Candy"] = 45
+  L139_1.maxLimits = L145_1
+  L139_1.nonFarmableItems = {
+    ["Pelvis of The Saint's Corpse"] = true,
+    ["Requiem Arrow"] = true,
+    ["Stand Arrow"] = true,
+    Umbrella = true,
+    ["Eye of The Saint's Corpse"] = true,
+    ["Gold Umbrella"] = true,
+    ["Heart of The Saint's Corpse"] = true,
+    ["Left Arm of The Saint's Corpse"] = true,
+    Tea = true,
+    Pizza = true,
+    Bat = true,
+    ["Mysterious Bow"] = true,
+    ["Bottle of Blood"] = true,
+    ["Boxing Gloves"] = true,
+    Pluck = true,
+    ["Koichi's Suitcase"] = true,
+    Lighter = true,
+    ["Green Baby"] = true,
+    ["DIO's Bone"] = true,
+    ["Jotaro's Disc"] = true,
+    ["Item Notifier"] = true,
+    ["Select Pose"] = true,
+    Voicelines = true,
+    ["Leaky Eye Luca's Shovel"] = true,
+    ["(Redeemed Items)"] = true,
+    ["Spectral Marrow"] = true
+  }
+  local L146_1 = {
+    "Mysterious Arrow",
+    "Rokakaka",
+    "Gold Coin",
+    "Diamond",
+    "Pure Rokakaka",
+    "Quinton's Glove",
+    "Steel Ball",
+    "Rib Cage of The Saint's Corpse",
+    "Zepellin's Headband",
+    "Zeppeli's Hat",
+    "Caesar's Headband",
+    "Clackers",
+    "Stone Mask",
+    "Ancient Scroll",
+    "Dio's Diary"
+  }
+  L139_1.sellableItems = L146_1
+  local L147_1 = {}
+  L147_1["mysterious arrow"] = true
+  L147_1.arrow = true
+  L147_1.rokakaka = true
+  L147_1.roka = true
+  L147_1["gold coin"] = true
+  L147_1.coin = true
+  L147_1.diamond = true
+  L147_1["pure rokakaka"] = true
+  L147_1["pure roka"] = true
+  L147_1["quinton's glove"] = true
+  L147_1["quintons glove"] = true
+  L147_1["steel ball"] = true
+  L147_1["rib cage of the saint's corpse"] = true
+  L147_1["rib cage"] = true
+  L147_1.rib = true
+  L147_1["zeppeli's hat"] = true
+  L147_1["zeppelis hat"] = true
+  L147_1["zepellin's headband"] = true
+  L147_1["zepellins headband"] = true
+  L147_1["caesar's headband"] = true
+  L147_1["caesars headband"] = true
+  L147_1.clackers = true
+  L147_1["stone mask"] = true
+  L147_1["vampire mask"] = true
+  L147_1["ancient scroll"] = true
+  L147_1["dio's diary"] = true
+  L147_1["dios diary"] = true
+  for L151_1, L152_1 in ipairs(L146_1) do
+    L147_1[L141_1(L152_1)] = true
+    L147_1[L152_1:lower()] = true
+  end
+  local L148_1 = {
+    "Blue Candy",
+    "Red Candy",
+    "Green Candy",
+    "Yellow Candy",
+    "Candy",
+    "Lucky Arrow",
+    "Lucky Stone Mask",
+    "Christmas Present",
+    "Gold Umbrella",
+    "Umbrella",
+    "Requiem Arrow",
+    "Stand Arrow",
+    "Left Arm of The Saint's Corpse",
+    "Heart of The Saint's Corpse",
+    "Pelvis of The Saint's Corpse",
+    "Eye of The Saint's Corpse",
+    "Tea",
+    "Pizza",
+    "Bat",
+    "Mysterious Bow",
+    "Bottle of Blood",
+    "Boxing Gloves",
+    "Pluck",
+    "Koichi's Suitcase",
+    "Lighter",
+    "Green Baby",
+    "DIO's Bone",
+    "Jotaro's Disc",
+    "Item Notifier",
+    "Select Pose",
+    "Voicelines",
+    "Leaky Eye Luca's Shovel",
+    "(Redeemed Items)"
+  }
+  local L149_1 = {}
+  for L153_1, L154_1 in ipairs(L148_1) do
+    L149_1[L154_1] = true
+    L149_1[L154_1:lower()] = true
+    L149_1[L141_1(L154_1)] = true
+  end
+  
+  local function L150_1(A0_2)
+    if not A0_2 then
+      return false
+    end
+    local L1_2 = tostring(typeof(A0_2) == "Instance" and A0_2.Name or A0_2)
+    local L2_2 = L141_1(L1_2)
+    if L2_2:find("candy", 1, true) or L2_2:find("\208\186\208\190\208\189\209\132\208\181\209\130", 1, true) or L2_2:find("\208\187\208\181\208\180\208\181\208\189", 1, true) then
+      return true
+    end
+    if L143_1 then
+      local L3_2 = tostring(L143_1(A0_2))
+      local L4_2 = L141_1(L3_2)
+      if L4_2:find("candy", 1, true) or L4_2:find("\208\186\208\190\208\189\209\132\208\181\209\130", 1, true) or L4_2:find("\208\187\208\181\208\180\208\181\208\189", 1, true) then
+        return true
+      end
+    end
+    return false
+  end
+  
+  L139_1.isCandyItem = L150_1
+  
+  local function L151_1(A0_2)
+    if not A0_2 then
+      return 0
+    end
+    local L1_2 = L143_1(A0_2)
+    local L2_2 = 0
+    local L3_2 = game:GetService("Players").LocalPlayer or L2_1 or L3_1
+    if L3_2 then
+      local L4_2 = L3_2:FindFirstChild("Backpack") or pcall(function()
+        return L3_2.Backpack
+      end) and L3_2.Backpack
+      if L4_2 then
+        local L5_2, L6_2 = pcall(function()
+          return L4_2:GetChildren()
+        end)
+        if L5_2 and L6_2 then
+          for L10_2, L11_2 in ipairs(L6_2) do
+            if L11_2 and (L11_2:IsA("Tool") or L11_2.Name) and L143_1(L11_2.Name) == L1_2 then
+              L2_2 = L2_2 + 1
+            end
+          end
+        end
+      end
+      local L5_2 = L3_2.Character
+      if L5_2 then
+        local L6_2, L7_2 = pcall(function()
+          return L5_2:GetChildren()
+        end)
+        if L6_2 and L7_2 then
+          for L11_2, L12_2 in ipairs(L7_2) do
+            if L12_2 and L12_2:IsA("Tool") and L143_1(L12_2.Name) == L1_2 then
+              L2_2 = L2_2 + 1
+            end
+          end
+        end
+      end
+    end
+    return L2_2
+  end
+  
+  L139_1.sfCountItem = L151_1
+  
+  local function L152_1(A0_2)
+    if not A0_2 then
+      return false
+    end
+    local L1_2, L2_2 = pcall(function()
+      if L150_1(A0_2) then
+        return false
+      end
+      local L0_3 = tostring(typeof(A0_2) == "Instance" and A0_2.Name or A0_2)
+      if L150_1(L0_3) then
+        return false
+      end
+      local L1_3 = L141_1(L0_3)
+      local L2_3 = L143_1 and L143_1(A0_2) or L0_3
+      local L3_3 = L141_1(L2_3)
+      if L150_1(L2_3) or L150_1(L3_3) then
+        return false
+      end
+      if L149_1[L0_3] or L149_1[L1_3] or L149_1[L2_3] or L149_1[L3_3] then
+        return false
+      end
+      if L147_1[L1_3] or L147_1[L3_3] or L147_1[L2_3] then
+        return true
+      end
+      for L7_3, L8_3 in ipairs(L146_1) do
+        if L8_3 == L2_3 or L141_1(L8_3) == L1_3 or L141_1(L8_3) == L3_3 then
+          return true
+        end
+      end
+      return false
+    end)
+    return L1_2 and L2_2 or false
+  end
+  
+  L139_1.isSellableItem = L152_1
+  
+  local function L153_1(A0_2)
+    if L150_1(A0_2) then
+      return true
+    end
+    return not L152_1(A0_2)
+  end
+  
+  L139_1.isProtectedItem = L153_1
+  itemOptions = {}
+  local L154_1 = {}
+  for L158_1 in pairs(L145_1) do
+    if L158_1 ~= "Arrow" then
+      table.insert(itemOptions, L158_1)
+      L154_1[L158_1] = true
+    end
+  end
+  for L158_1, L159_1 in ipairs(L148_1) do
+    if not L154_1[L159_1] then
+      table.insert(itemOptions, L159_1)
+      L154_1[L159_1] = true
+    end
+  end
+  table.sort(itemOptions)
+  for L158_1 = #itemOptions, 1, -1 do
+    local L159_1 = L143_1 and L143_1(itemOptions[L158_1]) or itemOptions[L158_1]
+    if L139_1 and L139_1.nonFarmableItems and L139_1.nonFarmableItems[L159_1] then
+      table.remove(itemOptions, L158_1)
+    end
+  end
+  sellSpecificOptions = {}
+  for L158_1, L159_1 in ipairs(L146_1) do
+    if not table.find(sellSpecificOptions, L159_1) then
+      table.insert(sellSpecificOptions, L159_1)
+    end
+  end
+  table.sort(sellSpecificOptions)
+  sellBlacklistOptions = {}
+  for L158_1, L159_1 in ipairs(L146_1) do
+    if not table.find(sellBlacklistOptions, L159_1) then
+      table.insert(sellBlacklistOptions, L159_1)
+    end
+  end
+  table.sort(sellBlacklistOptions)
+  
+  local function L155_1()
+    L144_1 = {}
+    if L145_1 then
+      for L3_2 in pairs(L145_1) do
+        L144_1[L3_2] = 0
+      end
+    end
+    
+    local function L0_2(A0_3, A1_3)
+      if not A0_3 or typeof(A0_3) ~= "Instance" then
+        return
+      end
+      local L2_3, L3_3 = pcall(function()
+        return A0_3:GetChildren()
+      end)
+      if not L2_3 or not L3_3 then
+        return
+      end
+      for L7_3, L8_3 in ipairs(L3_3) do
+        if L8_3 and L8_3.Name and (not A1_3 or L8_3:IsA("Tool")) then
+          local L9_3 = L143_1(L8_3.Name)
+          L144_1[L9_3] = (L144_1[L9_3] or 0) + 1
+        end
+      end
+    end
+    
+    local L1_2 = game:GetService("Players").LocalPlayer or L3_1 or L2_1
+    if L1_2 then
+      local L2_2 = L1_2:FindFirstChild("Backpack") or pcall(function()
+        return L1_2.Backpack
+      end) and L1_2.Backpack
+      if L2_2 then
+        L0_2(L2_2, false)
+      end
+      local L3_2 = L1_2.Character
+      if L3_2 then
+        L0_2(L3_2, true)
+      end
+    end
+  end
+  
+  local function L156_1()
+    local L0_2 = game:GetService("Players").LocalPlayer or L3_1 or L2_1
+    local L1_2 = {}
+    local L2_2 = {}
+    
+    local function L3_2(A0_3, A1_3)
+      if not A0_3 or typeof(A0_3) ~= "Instance" then
+        return
+      end
+      local L2_3, L3_3 = pcall(function()
+        return A0_3:GetChildren()
+      end)
+      if not L2_3 or not L3_3 then
+        return
+      end
+      for L7_3, L8_3 in ipairs(L3_3) do
+        if L8_3 and L8_3:IsA("Tool") and L8_3.Name then
+          local L9_3 = L8_3.Name
+          local L10_3 = L143_1(L9_3)
+          if not L150_1(L9_3) and not L150_1(L10_3) and (L152_1(L9_3) or L152_1(L10_3)) then
+            if not L2_2[L10_3] then
+              local L11_3 = {}
+              L11_3.normName = L10_3
+              L11_3.rawName = L9_3
+              L11_3.count = 0
+              L2_2[L10_3] = L11_3
+              table.insert(L1_2, L11_3)
+            end
+            L2_2[L10_3].count = L2_2[L10_3].count + 1
+          end
+        end
+      end
+    end
+    
+    if L0_2 then
+      local L4_2 = L0_2:FindFirstChild("Backpack") or pcall(function()
+        return L0_2.Backpack
+      end) and L0_2.Backpack
+      if L4_2 then
+        L3_2(L4_2, false)
+      end
+      local L5_2 = L0_2.Character
+      if L5_2 then
+        L3_2(L5_2, true)
+      end
+    end
+    return L1_2
+  end
+  
+  local function L157_1(A0_2, A1_2)
+    local L2_2 = A0_2.PlayerGui:FindFirstChild("DialogueGui")
+    local L3_2 = L2_2 and L2_2.Enabled and L2_2:FindFirstChild("Frame")
+    if L3_2 and L3_2.Visible then
+      local L4_2 = L3_2:FindFirstChild("ClickContinue")
+      if L4_2 and L4_2.Visible then
+        A1_2(L4_2)
+      end
+    end
+  end
+  
+  pcall(function()
+    local L0_2 = workspace:FindFirstChild("Dialogues")
+    if L0_2 then
+      for L4_2, L5_2 in ipairs(L0_2:GetDescendants()) do
+        if L5_2:IsA("ProximityPrompt") and L5_2.MaxActivationDistance > 32 then
+          L5_2.MaxActivationDistance = 10
+          L5_2.RequiresLineOfSight = true
+        end
+      end
+    end
+  end)
+  
+  local function L158_1()
+    local L0_2 = workspace:FindFirstChild("Dialogues")
+    if L0_2 then
+      local L1_2 = L0_2:FindFirstChild("ShiftPlox, The Travelling Merchant")
+      if L1_2 then
+        return L1_2
+      end
+      for L5_2, L6_2 in ipairs(L0_2:GetChildren()) do
+        if L6_2.Name:find("ShiftPlox") or L6_2.Name:find("Merchant") then
+          return L6_2
+        end
+      end
+    end
+    return workspace:FindFirstChild("ShiftPlox, The Travelling Merchant")
+  end
+  
+  function sellItem(A0_2, A1_2, A2_2)
+    if not A0_2 then
+      return false, "No item provided"
+    end
+    if L150_1(A0_2) then
+      return false, "Candies cannot be sold to merchant"
+    end
+    local L3_2 = typeof(A0_2) == "Instance" and A0_2.Name or tostring(A0_2)
+    if L150_1(L3_2) then
+      return false, "Candies cannot be sold to merchant"
+    end
+    if L85_1 then
+      local L4_2 = os.clock()
+      while L85_1 and os.clock() - L4_2 < 1 do
+        L6_1.Heartbeat:Wait()
+      end
+      if L85_1 then
+        return false, "Selling already in progress"
+      end
+    end
+    if L84_1 or getgenv and getgenv()._YBA_IsEatingRoka or SF and SF.isEatingRoka then
+      local L4_2 = os.clock()
+      while (L84_1 or getgenv and getgenv()._YBA_IsEatingRoka or SF and SF.isEatingRoka) and os.clock() - L4_2 < 2 do
+        L6_1.Heartbeat:Wait()
+      end
+      if L84_1 or getgenv and getgenv()._YBA_IsEatingRoka or SF and SF.isEatingRoka then
+        return false, "Roka in use, sale skipped"
+      end
+    end
+    L85_1 = true
+    getgenv()._YBA_SellingBusy = true
+    getgenv()._YBA_LastSellItem = tostring(A0_2)
+    getgenv()._YBA_LastSellTick = tick()
+    if cleanupItemStick then
+      cleanupItemStick()
+    end
+    if stopMoveTween then
+      stopMoveTween()
+    end
+    if waitForTeleportCooldown then
+      waitForTeleportCooldown(0.7)
+    end
+    local L4_2, L5_2 = pcall(function()
+      local L0_3 = typeof(A0_2) == "Instance" and A0_2.Name or tostring(A0_2)
+      local L1_3 = L143_1 and L143_1(L0_3) or L0_3
+      if L150_1(L0_3) or L150_1(L1_3) then
+        return false, "Candies cannot be sold to merchant"
+      end
+      if not L152_1(L0_3) and not L152_1(L1_3) then
+        if L107_1 then
+          L107_1("YBA Script", "Cannot sell " .. tostring(L1_3) .. " (Item is not sellable).")
+        end
+        return false, "Item is not sellable"
+      end
+      local L2_3 = game.Players.LocalPlayer or L2_1
+      if not L2_3 then
+        return false, "Local player not found"
+      end
+      local L3_3 = L2_3.Character
+      if not L3_3 then
+        return false, "Character not found"
+      end
+      local L4_3 = L3_3:FindFirstChildOfClass("Humanoid") or L3_3:FindFirstChild("Humanoid")
+      if not L4_3 or L4_3.Health <= 0 then
+        return false, "Humanoid not found"
+      end
+      local L5_3 = L3_3:FindFirstChild("HumanoidRootPart")
+      if not L5_3 then
+        return false, "HumanoidRootPart not found"
+      end
+      local L6_3 = L3_3:FindFirstChild("RemoteEvent")
+      if not L6_3 then
+        return false, "RemoteEvent not found"
+      end
+      local L7_3
+      if typeof(A0_2) == "Instance" then
+        if not L150_1(A0_2) and not L150_1(A0_2.Name) and L152_1(A0_2) and L152_1(A0_2.Name) then
+          L7_3 = A0_2
+        end
+      elseif typeof(A0_2) == "string" then
+        for L11_3, L12_3 in ipairs({
+          L2_3.Backpack,
+          L3_3
+        }) do
+          if L12_3 then
+            do
+              local L13_3 = L12_3:FindFirstChild(L0_3)
+              if L13_3 and L13_3:IsA("Tool") and not L150_1(L13_3) and not L150_1(L13_3.Name) and L152_1(L13_3) and L152_1(L13_3.Name) then
+                L7_3 = L13_3
+                break
+              end
+              local L14_3 = L12_3:FindFirstChild(L1_3)
+              if L14_3 and L14_3:IsA("Tool") and not L150_1(L14_3) and not L150_1(L14_3.Name) and L152_1(L14_3) and L152_1(L14_3.Name) then
+                L7_3 = L14_3
+                break
+              end
+              for L18_3, L19_3 in ipairs(L12_3:GetChildren()) do
+                if L19_3:IsA("Tool") and not L150_1(L19_3) and not L150_1(L19_3.Name) and L152_1(L19_3) and L152_1(L19_3.Name) and L143_1 and L143_1(L19_3.Name) == L1_3 then
+                  L7_3 = L19_3
+                  break
+                end
+              end
+            end
+            if L7_3 then
+              break
+            end
+          end
+        end
+      end
+      if not L7_3 or not L7_3.Parent then
+        return false, "Item not found"
+      end
+      if L150_1(L7_3) or L150_1(L7_3.Name) then
+        return false, "Candies cannot be sold to merchant"
+      end
+      if not L152_1(L7_3) or not L152_1(L7_3.Name) then
+        return false, "Item is not sellable"
+      end
+      local L8_3 = game:GetService("ReplicatedStorage")
+      local L9_3 = L8_3:FindFirstChild("Dialogue") and L8_3.Dialogue:FindFirstChild("Merchant") or L8_3:FindFirstChild("NewDialogue") and L8_3.NewDialogue:FindFirstChild("Merchant")
+      local L10_3 = L158_1 and L158_1() or workspace:FindFirstChild("Dialogues") and workspace.Dialogues:FindFirstChild("ShiftPlox, The Travelling Merchant")
+      if not L10_3 and not L9_3 then
+        return false, "Merchant NPC not found"
+      end
+      local L11_3 = L10_3 and L10_3:FindFirstChildWhichIsA("ProximityPrompt", true)
+      if waitForTeleportCooldown then
+        waitForTeleportCooldown(0.7)
+      end
+      
+      local function L12_3(A0_4)
+        if not A0_4 then
+          return ""
+        end
+        local L1_4 = {}
+        pcall(function()
+          if A0_4:IsA("TextLabel") or A0_4:IsA("TextButton") then
+            table.insert(L1_4, A0_4.Text or "")
+          end
+          for L3_5, L4_5 in ipairs(A0_4:GetDescendants()) do
+            if (L4_5:IsA("TextLabel") or L4_5:IsA("TextButton")) and L4_5.Text and L4_5.Text ~= "" then
+              table.insert(L1_4, L4_5.Text)
+            end
+          end
+        end)
+        return table.concat(L1_4, " "):lower()
+      end
+      
+      local function L13_3(A0_4)
+        if not A0_4 then
+          return false
+        end
+        local L1_4 = A0_4
+        pcall(function()
+          if not L1_4:IsA("GuiButton") then
+            L1_4 = L1_4:FindFirstChildWhichIsA("GuiButton", true) or L1_4
+          end
+        end)
+        if L1_4:IsA("GuiButton") then
+          if type(firesignal) == "function" then
+            local L2_4 = pcall(function()
+              firesignal(L1_4.MouseButton1Click)
+            end)
+            if L2_4 then
+              return true
+            end
+            if L1_4.Activated then
+              L2_4 = pcall(function()
+                firesignal(L1_4.Activated)
+              end)
+              if L2_4 then
+                return true
+              end
+            end
+          end
+          if L54_1 then
+            pcall(function()
+              L54_1(L1_4)
+            end)
+            return true
+          end
+        end
+        return false
+      end
+      
+      local function L14_3(A0_4)
+        if not A0_4 then
+          return false
+        end
+        for L4_4, L5_4 in ipairs(A0_4:GetDescendants()) do
+          if L5_4:IsA("TextLabel") and L5_4.Visible and L5_4.Text then
+            local L6_4 = L5_4.Text:lower()
+            if L6_4:find("worthiness") or L6_4:find("mysterious arrow") or L6_4:find("requiem arrow") or L6_4:find("eat") or L6_4:find("consume") or L6_4:find("use the") then
+              return true
+            end
+          end
+        end
+        return false
+      end
+      
+      local L15_3 = L2_3.PlayerGui:FindFirstChild("DialogueGui")
+      if L15_3 and L15_3:FindFirstChild("Frame") and L15_3.Frame.Visible then
+        pcall(function()
+          if L78_1 then
+            L78_1()
+          else
+            L15_3.Frame.Visible = false
+            L15_3.Enabled = false
+          end
+        end)
+        L6_1.Heartbeat:Wait()
+      end
+      if L7_3.Parent ~= L3_3 then
+        L4_3:EquipTool(L7_3)
+        local L16_3 = os.clock()
+        while L7_3.Parent ~= L3_3 and os.clock() - L16_3 < 1 do
+          L6_1.Heartbeat:Wait()
+        end
+      end
+      if L7_3.Parent ~= L3_3 then
+        return false, "Failed to equip item"
+      end
+      task.wait(0.1)
+      
+      local function L16_3()
+        if L9_3 and L6_3 then
+          pcall(function()
+            L6_3:FireServer("PromptTriggered", L9_3)
+          end)
+        end
+        if L11_3 then
+          pcall(function()
+            if L11_3.MaxActivationDistance > 32 then
+              L11_3.MaxActivationDistance = 10
+            end
+            L11_3.RequiresLineOfSight = true
+          end)
+          if L6_3 then
+            pcall(function()
+              L6_3:FireServer("PromptTriggered", L11_3)
+            end)
+          end
+          if type(fireproximityprompt) == "function" then
+            pcall(function()
+              fireproximityprompt(L11_3, 0, true)
+            end)
+            pcall(function()
+              fireproximityprompt(L11_3)
+            end)
+          end
+          if type(firesignal) == "function" then
+            pcall(function()
+              firesignal(L11_3.Triggered, L2_3)
+              if L11_3.PromptTriggered then
+                firesignal(L11_3.PromptTriggered, L2_3)
+              end
+            end)
+          end
+        end
+      end
+      
+      L16_3()
+      
+      local function L17_3(A0_4)
+        A0_4 = tostring(A0_4 or ""):lower()
+        if A0_4 == "no" or A0_4 == "\208\189\208\181\209\130" then
+          return true
+        end
+        local L1_4 = {
+          "no ",
+          "not ",
+          "don't",
+          "do not",
+          "never",
+          "cancel",
+          "decline",
+          "back",
+          "leave",
+          "exit",
+          "close",
+          "nothing",
+          "refuse"
+        }
+        for L5_4, L6_4 in ipairs(L1_4) do
+          if A0_4:find(L6_4, 1, true) then
+            return true
+          end
+        end
+        local L2_4 = {
+          "\208\189\208\181 \208\189\208\176\208\180\208\190",
+          "\208\189\208\181\209\130",
+          "\208\190\209\130\208\186\208\176\208\183",
+          "\208\189\208\176\208\183\208\176\208\180",
+          "\208\190\209\130\208\188\208\181\208\189",
+          "\208\183\208\176\208\186\209\128\209\139",
+          "\208\178\209\139\208\185\209\130\208\184",
+          "\208\189\208\181 "
+        }
+        for L6_4, L7_4 in ipairs(L2_4) do
+          if A0_4:find(L7_4, 1, true) then
+            return true
+          end
+        end
+        return false
+      end
+      
+      local function L18_3()
+        local L0_4 = os.clock()
+        while os.clock() - L0_4 < 1.6 do
+          local L1_4 = L2_3.PlayerGui:FindFirstChild("DialogueGui")
+          if not L1_4 or not L1_4.Enabled then
+            return true
+          end
+          local L2_4 = L1_4:FindFirstChild("Frame")
+          if not L2_4 or not L2_4.Visible then
+            return true
+          end
+          local L3_4 = L2_4:FindFirstChild("Options")
+          if L3_4 and L3_4.Visible then
+            local L4_4 = false
+            for L8_4, L9_4 in ipairs(L3_4:GetChildren()) do
+              local L10_4 = L9_4:FindFirstChild("TextButton", true) or L9_4
+              if L10_4 and L10_4.Visible and L17_3(L12_3(L9_4)) then
+                L13_3(L10_4)
+                L4_4 = true
+                break
+              end
+            end
+            if not L4_4 then
+              local L5_4 = L2_4:FindFirstChild("ClickContinue")
+              if L5_4 and L5_4.Visible then
+                L13_3(L5_4)
+              end
+            end
+          else
+            local L4_4 = L2_4:FindFirstChild("ClickContinue")
+            if L4_4 and L4_4.Visible then
+              L13_3(L4_4)
+            end
+          end
+          task.wait(0.12)
+        end
+        return false
+      end
+      
+      local L19_3 = 1
+      local L20_3 = os.clock() + 5
+      local L21_3 = 0
+      local L22_3
+      
+      local function L23_3()
+        pcall(function()
+          if L4_3 and L3_3:FindFirstChildOfClass("Tool") then
+            L4_3:UnequipTools()
+          end
+        end)
+        L18_3()
+        if L78_1 then
+          pcall(L78_1)
+        end
+        L21_3 = L21_3 + 1
+        if 3 <= L21_3 then
+          return false
+        end
+        if L7_3 and L7_3.Parent == L2_3.Backpack then
+          pcall(function()
+            L4_3:EquipTool(L7_3)
+          end)
+          local L0_4 = os.clock()
+          while L7_3.Parent ~= L3_3 and os.clock() - L0_4 < 0.8 do
+            L6_1.Heartbeat:Wait()
+          end
+        end
+        L19_3 = 1
+        L22_3 = nil
+        L20_3 = os.clock() + 5
+        task.wait(0.25)
+        L16_3()
+        task.wait(0.15)
+        return true
+      end
+      
+      local L24_3 = A1_2 ~= false and "all" or "one"
+      while L20_3 > os.clock() and L19_3 <= 3 do
+        local L25_3 = false
+        local L26_3 = L2_3.PlayerGui:FindFirstChild("DialogueGui")
+        local L27_3 = L26_3 and L26_3.Enabled and L26_3:FindFirstChild("Frame")
+        while true do
+          if not L27_3 or not L27_3.Visible then
+            if 3 <= L19_3 then
+              L25_3 = true
+              break
+            end
+            L16_3()
+            task.wait(0.12)
+            break
+          end
+          if L14_3(L27_3) then
+            if L23_3() then
+              break
+            end
+            return false, "Aborted: item use dialogue detected"
+          end
+          local L28_3 = L27_3:FindFirstChild("Options")
+          local L29_3 = L28_3 and L28_3.Visible
+          if L29_3 then
+            if L19_3 == 1 then
+              local L30_3
+              for L34_3, L35_3 in ipairs(L28_3:GetChildren()) do
+                local L36_3 = L35_3:FindFirstChild("TextButton", true) or L35_3
+                local L37_3 = L12_3(L35_3)
+                if L37_3:find("sell") or L37_3:find("\208\191\209\128\208\190\208\180\208\176\209\130\209\140") or L37_3:find("\208\191\209\128\208\190\208\180\208\176\208\188") or L37_3:find("buy") then
+                  L30_3 = L36_3
+                  break
+                end
+              end
+              if L30_3 then
+                L22_3 = nil
+                L13_3(L30_3)
+                L19_3 = 2
+                task.wait(0.18)
+                local L31_3 = L2_3.PlayerGui:FindFirstChild("DialogueGui")
+                local L32_3 = L31_3 and L31_3.Enabled and L31_3:FindFirstChild("Frame")
+                local L33_3 = L32_3 and L32_3:FindFirstChild("ClickContinue")
+                if L33_3 and L33_3.Visible and (not L32_3:FindFirstChild("Options") or not L32_3.Options.Visible) then
+                  L13_3(L33_3)
+                end
+              elseif not L22_3 then
+                L22_3 = os.clock()
+              elseif os.clock() - L22_3 > 1.2 then
+                L22_3 = nil
+                if L23_3() then
+                  break
+                end
+                return false, "Aborted: unexpected dialogue options"
+              end
+            elseif L19_3 == 2 then
+              local L30_3
+              for L34_3, L35_3 in ipairs(L28_3:GetChildren()) do
+                local L36_3 = L35_3:FindFirstChild("TextButton", true) or L35_3
+                local L37_3 = L12_3(L35_3)
+                if L37_3:find("deal") or L37_3:find("\209\129\208\180\208\181\208\187\208\186\208\176") or L37_3:find("\209\129\208\190\208\179\208\187\208\176\209\129") or L37_3:find("\208\180\208\190\208\179\208\190\208\178\208\190\209\128") or L37_3:find("\208\180\208\176") then
+                  L30_3 = L36_3
+                  break
+                end
+              end
+              if L30_3 then
+                L13_3(L30_3)
+                L19_3 = 3
+                task.wait(0.18)
+                local L31_3 = L2_3.PlayerGui:FindFirstChild("DialogueGui")
+                local L32_3 = L31_3 and L31_3.Enabled and L31_3:FindFirstChild("Frame")
+                local L33_3 = L32_3 and L32_3:FindFirstChild("ClickContinue")
+                if L33_3 and L33_3.Visible and (not L32_3:FindFirstChild("Options") or not L32_3.Options.Visible) then
+                  L13_3(L33_3)
+                end
+              end
+            elseif L19_3 == 3 then
+              local L30_3
+              for L34_3, L35_3 in ipairs(L28_3:GetChildren()) do
+                local L36_3 = L35_3:FindFirstChild("TextButton", true) or L35_3
+                local L37_3 = L12_3(L35_3)
+                if L37_3:find(L24_3) or L24_3 == "all" and (L37_3:find("\208\178\209\129\208\181") or L37_3:find("\208\178\209\129\209\145")) or L24_3 == "one" and (L37_3:find("\208\190\208\180\208\184\208\189") or L37_3:find("\208\190\208\180\208\189\209\131")) then
+                  L30_3 = L36_3
+                  break
+                end
+              end
+              if not L30_3 and A1_2 ~= false then
+                local L31_3 = L28_3:FindFirstChild("Option6")
+                local L32_3 = L31_3 and L31_3:FindFirstChild("TextButton")
+                if L32_3 and (L12_3(L31_3):find("all") or L12_3(L31_3):find("\208\178\209\129\208\181")) then
+                  L30_3 = L32_3
+                end
+              end
+              if L30_3 then
+                L13_3(L30_3)
+                L19_3 = 4
+                task.wait(0.18)
+                local L31_3 = L2_3.PlayerGui:FindFirstChild("DialogueGui")
+                local L32_3 = L31_3 and L31_3.Enabled and L31_3:FindFirstChild("Frame")
+                local L33_3 = L32_3 and L32_3:FindFirstChild("ClickContinue")
+                if L33_3 and L33_3.Visible then
+                  L13_3(L33_3)
+                end
+                L25_3 = true
+                break
+              end
+            end
+          else
+            local L30_3 = L27_3:FindFirstChild("ClickContinue")
+            if L30_3 and L30_3.Visible then
+              L13_3(L30_3)
+            end
+          end
+          L6_1.Heartbeat:Wait()
+          break
+        end
+        if L25_3 then
+          break
+        end
+      end
+      local L25_3 = L2_3.PlayerGui:FindFirstChild("DialogueGui")
+      local L26_3 = L25_3 and L25_3.Enabled and L25_3:FindFirstChild("Frame")
+      if L26_3 then
+        local L27_3 = L26_3:FindFirstChild("ClickContinue")
+        if L27_3 and L27_3.Visible then
+          L13_3(L27_3)
+        end
+      end
+      local L27_3 = os.clock()
+      local L28_3 = false
+      while os.clock() - L27_3 < 3 do
+        local L29_3 = L7_3 and L7_3.Parent and (L7_3.Parent == L3_3 or L7_3.Parent == L2_3.Backpack)
+        if not L29_3 then
+          L28_3 = true
+          break
+        end
+        local L30_3 = L2_3.PlayerGui:FindFirstChild("DialogueGui")
+        local L31_3 = L30_3 and L30_3.Enabled and L30_3:FindFirstChild("Frame")
+        if L31_3 and L31_3.Visible then
+          local L32_3 = L31_3:FindFirstChild("ClickContinue")
+          if L32_3 and L32_3.Visible then
+            L13_3(L32_3)
+          end
+        elseif not L29_3 then
+          L28_3 = true
+          break
+        end
+        task.wait(0.08)
+      end
+      local L29_3 = L7_3 and L7_3.Parent and (L7_3.Parent == L3_3 or L7_3.Parent == L2_3.Backpack)
+      if not L29_3 then
+        L28_3 = true
+      end
+      pcall(function()
+        local L0_4 = L2_3.PlayerGui:FindFirstChild("DialogueGui")
+        if L0_4 and L0_4:FindFirstChild("Frame") and L0_4.Frame.Visible then
+          local L1_4 = L0_4.Frame:FindFirstChild("ClickContinue")
+          if L1_4 and L1_4.Visible then
+            L13_3(L1_4)
+            task.wait(0.06)
+          end
+          if L0_4:FindFirstChild("Frame") and L0_4.Frame.Visible then
+            local L2_4 = L0_4.Frame:FindFirstChild("DialogueFrame", true)
+            if L2_4 and L2_4:IsA("GuiObject") and L2_4.Visible and L54_1 then
+              L54_1(L2_4)
+              task.wait(0.06)
+            end
+          end
+          if L0_4:FindFirstChild("Frame") and L0_4.Frame.Visible and L54_1 then
+            L54_1(L0_4.Frame)
+          end
+        end
+      end)
+      pcall(function()
+        if L4_3 and L3_3:FindFirstChildOfClass("Tool") then
+          L4_3:UnequipTools()
+        end
+      end)
+      return L28_3 or not L29_3 or 4 <= L19_3
+    end)
+    L85_1 = false
+    getgenv()._YBA_SellingBusy = false
+    if L4_2 then
+      return L5_2
+    else
+      return false, L5_2
+    end
+  end
+  
+  autoSellMax = L28_1("ASM", false)
+  autoBuyLuckyArrow = L28_1("ABLA", false)
+  local L159_1 = 9
+  local L160_1 = 75000
+  
+  function checkAndBuyLuckyArrow()
+    if not autoBuyLuckyArrow then
+      return
+    end
+    local L0_2 = game:GetService("Players").LocalPlayer or L3_1 or L2_1
+    local L1_2 = L0_2 and L0_2:FindFirstChild("PlayerStats")
+    local L2_2 = L1_2 and L1_2:FindFirstChild("Money") and L1_2.Money.Value or 0
+    if L2_2 < L160_1 then
+      return
+    end
+    local L3_2 = L0_2 and L0_2.Character
+    local L4_2 = L3_2 and L3_2:FindFirstChild("RemoteEvent")
+    if not L4_2 then
+      return
+    end
+    
+    local function L5_2()
+      local L0_3 = 0
+      local L1_3 = L0_2 and L0_2:FindFirstChild("Backpack")
+      if L1_3 then
+        local L2_3, L3_3 = pcall(function()
+          return L1_3:GetChildren()
+        end)
+        if L2_3 and L3_3 then
+          for L7_3, L8_3 in ipairs(L3_3) do
+            if L8_3 and L143_1(L8_3.Name) == "Lucky Arrow" then
+              L0_3 = L0_3 + 1
+            end
+          end
+        end
+      end
+      if L3_2 then
+        local L2_3, L3_3 = pcall(function()
+          return L3_2:GetChildren()
+        end)
+        if L2_3 and L3_3 then
+          for L7_3, L8_3 in ipairs(L3_3) do
+            if L8_3 and L8_3:IsA("Tool") and L143_1(L8_3.Name) == "Lucky Arrow" then
+              L0_3 = L0_3 + 1
+            end
+          end
+        end
+      end
+      return L0_3
+    end
+    
+    local L6_2 = L5_2()
+    if L6_2 >= L159_1 then
+      return
+    end
+    local L7_2 = math.min(math.floor(L2_2 / L160_1), L159_1 - L6_2)
+    if L7_2 <= 0 then
+      return
+    end
+    if L107_1 then
+      L107_1("YBA Script", "Buying " .. L7_2 .. "x Lucky Arrow (" .. L6_2 .. "/" .. L159_1 .. ")")
+    end
+    for L11_2 = 1, L7_2 do
+      pcall(function()
+        L4_2:FireServer("PurchaseShopItem", {
+          ItemName = "1x Lucky Arrow"
+        }, 1, 2)
+      end)
+      task.wait(0.15)
+    end
+  end
+  
+  function isAutoSellBlacklisted(A0_2)
+    local L1_2 = sellBlacklist or _G.YBAItemFarm and _G.YBAItemFarm.sellBlacklist
+    if not L1_2 or #L1_2 == 0 then
+      return false
+    end
+    local L2_2 = L143_1 and L143_1(A0_2) or A0_2
+    for L6_2, L7_2 in ipairs(L1_2) do
+      if L7_2 == A0_2 or L143_1 and L143_1(L7_2) == L2_2 then
+        return true
+      end
+    end
+    return false
+  end
+  
+  local L161_1 = 0
+  
+  function checkAndSellMax()
+    local L0_2, L1_2 = pcall(function()
+      if L126_1 and L126_1() then
+        return
+      end
+      if not autoSellMax then
+        return
+      end
+      if tick() - L161_1 < 20 then
+        return
+      end
+      local L0_3 = L119_1 and L119_1() or 0
+      if 1000000 <= L0_3 then
+        return
+      end
+      if L155_1 then
+        L155_1()
+      end
+      if not L144_1 or not L145_1 then
+        return
+      end
+      local L1_3 = {}
+      for L5_3, L6_3 in pairs(L144_1) do
+        local L7_3 = L145_1[L5_3] or 25
+        if not L150_1(L5_3) and L6_3 >= L7_3 and L152_1(L5_3) and not isAutoSellBlacklisted(L5_3) then
+          table.insert(L1_3, {name = L5_3, count = L6_3})
+        end
+      end
+      if #L1_3 == 0 then
+        return
+      end
+      if waitForTeleportCooldown then
+        waitForTeleportCooldown(0.7)
+      end
+      local L2_3 = game.Players.LocalPlayer or L2_1
+      local L3_3 = L2_3 and L2_3.Character
+      local L4_3 = L3_3 and L3_3:FindFirstChild("HumanoidRootPart")
+      local L5_3 = L3_3 and L3_3:FindFirstChildOfClass("Humanoid")
+      local L6_3 = game:GetService("ReplicatedStorage")
+      local L7_3 = L6_3:FindFirstChild("Dialogue") and L6_3.Dialogue:FindFirstChild("Merchant") or L6_3:FindFirstChild("NewDialogue") and L6_3.NewDialogue:FindFirstChild("Merchant")
+      local L8_3 = L158_1 and L158_1() or workspace:FindFirstChild("Dialogues") and workspace.Dialogues:FindFirstChild("ShiftPlox, The Travelling Merchant")
+      if not (L4_3 and L5_3) or not L8_3 and not L7_3 then
+        L161_1 = tick()
+        return
+      end
+      if waitForTeleportCooldown then
+        waitForTeleportCooldown(0.7)
+      end
+      local L9_3 = {}
+      local L10_3 = 0
+      for L14_3, L15_3 in ipairs(L1_3) do
+        local L16_3 = L15_3.name
+        local L17_3 = L15_3.count
+        if not L150_1(L16_3) and L152_1(L16_3) then
+          do
+            local L18_3 = sellItem and sellItem(L16_3, true, true)
+            if L18_3 then
+              L9_3[L16_3] = L17_3
+              L10_3 = L10_3 + L17_3
+              getgenv()._YBA_SellingBusy = true
+              task.wait(0.2)
+            else
+              L161_1 = tick()
+              break
+            end
+          end
+        end
+      end
+      pcall(function()
+        if L5_3 and L3_3 and L3_3:FindFirstChildOfClass("Tool") then
+          L5_3:UnequipTools()
+        end
+      end)
+      pcall(function()
+        if L78_1 then
+          L78_1()
+        else
+          local L0_4 = L2_3.PlayerGui:FindFirstChild("DialogueGui")
+          if L0_4 and L0_4:FindFirstChild("Frame") then
+            L0_4.Frame.Visible = false
+            L0_4.Enabled = false
+          end
+        end
+      end)
+      if 0 < L10_3 then
+        local L11_3 = {}
+        for L15_3, L16_3 in pairs(L9_3) do
+          table.insert(L11_3, L16_3 .. "x " .. L15_3)
+        end
+        if L107_1 then
+          L107_1("YBA Script", "Auto sold: " .. table.concat(L11_3, ", "))
+        end
+        if L126_1 then
+          L126_1()
+        end
+      end
+    end)
+    L85_1 = false
+    getgenv()._YBA_SellingBusy = false
+    if not L0_2 and L1_2 then
+      warn("[AutoSell] Error in checkAndSellMax: " .. tostring(L1_2))
+    end
+  end
+  
+  local L162_1 = {
+    "Gold Coin",
+    "Diamond",
+    "Quinton's Glove",
+    "Zeppeli's Hat",
+    "Caesar's Headband",
+    "Ancient Scroll"
+  }
+  
+  function sellAll(A0_2)
+    if not A0_2 or A0_2 == "" then
+      return
+    end
+    if L150_1(A0_2) then
+      if L107_1 then
+        L107_1("YBA Script", "Candies cannot be sold to the Merchant! Turn them in to Jack.")
+      end
+      return
+    end
+    local L1_2 = L143_1(A0_2)
+    if L150_1(L1_2) then
+      if L107_1 then
+        L107_1("YBA Script", "Candies cannot be sold to the Merchant! Turn them in to Jack.")
+      end
+      return
+    end
+    if L155_1 then
+      L155_1()
+    end
+    local L2_2 = L151_1 and L151_1(L1_2) or L144_1 and L144_1[L1_2] or 0
+    if L2_2 == 0 then
+      if L107_1 then
+        L107_1("YBA Script", "No " .. tostring(L1_2) .. " found.")
+      end
+      return
+    end
+    if not L152_1(L1_2) and not L152_1(A0_2) then
+      if L107_1 then
+        L107_1("YBA Script", "Cannot sell " .. tostring(L1_2) .. " (Item is not sellable).")
+      end
+      return
+    end
+    local L3_2 = sellItem and sellItem(L1_2, true)
+    local L4_2
+    if L3_2 then
+      if L107_1 then
+        L107_1("YBA Script", "Sold all (" .. L2_2 .. ") " .. tostring(L1_2) .. (1 < L2_2 and "s" or "") .. ".")
+      end
+      task.wait(0.05)
+    elseif L107_1 then
+      L107_1("YBA Script", "Failed to sell " .. tostring(L1_2) .. ": " .. tostring(L4_2 or "unknown"))
+    end
+  end
+  
+  function sellAllSelected(A0_2)
+    if L155_1 then
+      L155_1()
+    end
+    local L1_2 = 0
+    local L2_2 = {}
+    if A0_2 then
+      for L6_2, L7_2 in ipairs(A0_2) do
+        local L8_2 = L143_1(L7_2)
+        if not L150_1(L7_2) and not L150_1(L8_2) then
+          local L9_2 = L151_1 and L151_1(L8_2) or L144_1 and L144_1[L8_2] or 0
+          if 0 < L9_2 and (L152_1(L8_2) or L152_1(L7_2)) then
+            local L10_2 = sellItem and sellItem(L8_2, true)
+            local L11_2 = L151_1 and L151_1(L8_2) or 0
+            local L12_2 = L9_2 - L11_2
+            if L12_2 <= 0 and L10_2 then
+              L12_2 = L9_2
+            end
+            if 0 < L12_2 or L10_2 then
+              L1_2 = L1_2 + (0 < L12_2 and L12_2 or 1)
+              table.insert(L2_2, (0 < L12_2 and L12_2 or 1) .. "x " .. L8_2)
+              getgenv()._YBA_SellingBusy = true
+              task.wait(0.05)
+            end
+          end
+        end
+      end
+    end
+    L85_1 = false
+    getgenv()._YBA_SellingBusy = false
+    if L1_2 == 0 then
+      if L107_1 then
+        L107_1("YBA Script", "No selected items found to sell.")
+      end
+    elseif L107_1 then
+      L107_1("YBA Script", "Sold selected items: " .. table.concat(L2_2, ", "))
+    end
+  end
+  
+  function sellAllWorthless()
+    sellAllSelected(L162_1)
+  end
+  
+  function sellInventory()
+    if L155_1 then
+      L155_1()
+    end
+    local L0_2 = L156_1 and L156_1() or {}
+    if #L0_2 == 0 and L144_1 then
+      for L4_2, L5_2 in pairs(L144_1) do
+        if 0 < L5_2 and not L150_1(L4_2) and L152_1(L4_2) then
+          table.insert(L0_2, {
+            normName = L4_2,
+            rawName = L4_2,
+            count = L5_2
+          })
+        end
+      end
+    end
+    if #L0_2 == 0 then
+      if L107_1 then
+        L107_1("YBA Script", "No sellable items in inventory.")
+      end
+      return
+    end
+    local L1_2 = 0
+    local L2_2 = {}
+    for L6_2, L7_2 in ipairs(L0_2) do
+      local L8_2 = L7_2.normName
+      local L9_2 = L7_2.rawName or L8_2
+      if not L150_1(L8_2) and not L150_1(L9_2) and (L152_1(L8_2) or L152_1(L9_2)) then
+        if L86_1 and L86_1() then
+          L87_1(0.5)
+        end
+        local L10_2 = L151_1 and L151_1(L8_2) or L7_2.count or 0
+        if 0 < L10_2 then
+          local L11_2 = sellItem and sellItem(L8_2, true)
+          local L12_2 = L151_1 and L151_1(L8_2) or 0
+          local L13_2 = L10_2 - L12_2
+          if L13_2 <= 0 and L11_2 then
+            L13_2 = L10_2
+          end
+          if 0 < L13_2 or L11_2 then
+            L1_2 = L1_2 + (0 < L13_2 and L13_2 or 1)
+            table.insert(L2_2, (0 < L13_2 and L13_2 or 1) .. "x " .. L8_2)
+            getgenv()._YBA_SellingBusy = true
+            task.wait(0.08)
+          end
+        end
+      end
+    end
+    if L155_1 then
+      L155_1()
+    end
+    L85_1 = false
+    getgenv()._YBA_SellingBusy = false
+    if L1_2 == 0 then
+      if L107_1 then
+        L107_1("YBA Script", "No sellable items were sold.")
+      end
+    elseif L107_1 then
+      L107_1("YBA Script", "Sold from inventory: " .. table.concat(L2_2, ", "))
+    end
+  end
+  
+  local L163_1 = false
+  
+  local function L164_1()
+    if L163_1 then
+      return
+    end
+    L163_1 = true
+    local L0_2 = 0
+    
+    local function L1_2(A0_3)
+      if A0_3 and A0_3:IsA("Tool") then
+        local L1_3 = A0_3.Name
+        local L2_3 = L143_1 and L143_1(L1_3) or L1_3
+        if L131_1 and L1_3 then
+          local L3_3 = L151_1 and L151_1(L2_3) or 1
+          local L4_3 = L145_1 and (L145_1[L2_3] or L145_1[L1_3]) or 25
+          L131_1(L2_3, L3_3, L4_3)
+        end
+        if autoSellMax and not L150_1(L1_3) and not L150_1(L2_3) and (L119_1 and L119_1() or 0) < 1000000 and not L85_1 and not getgenv()._YBA_SellingBusy and tick() - L0_2 > 3 and L152_1(L2_3) and L145_1 and (L145_1[L2_3] or L145_1[L1_3]) then
+          L0_2 = tick()
+          task.spawn(function()
+            task.wait(0.5)
+            if not L85_1 and not getgenv()._YBA_SellingBusy then
+              pcall(checkAndSellMax)
+            end
+          end)
+        end
+      end
+    end
+    
+    local function L2_2(A0_3)
+      if not A0_3 then
+        return
+      end
+      A0_3.ChildAdded:Connect(L1_2)
+    end
+    
+    L2_2(L3_1:FindFirstChild("Backpack") or L3_1:WaitForChild("Backpack", 3))
+    L3_1.CharacterAdded:Connect(function(A0_3)
+      task.wait(0.5)
+      L2_2(L3_1:FindFirstChild("Backpack"))
+    end)
+    task.spawn(function()
+      while true do
+        task.wait(3)
+        if autoSellMax and not L85_1 and not getgenv()._YBA_SellingBusy then
+          pcall(checkAndSellMax)
+        end
+      end
+    end)
+  end
+  
+  L164_1()
+  L139_1.itemOptions = itemOptions
+  L139_1.sellSpecificOptions = sellSpecificOptions
+  L139_1.sellBlacklistOptions = sellBlacklistOptions
+  L139_1.sellableItems = L146_1
+  L139_1.isSellableItem = L152_1
+  L139_1.isProtectedItem = L153_1
+  L139_1.sellItem = sellItem
+  L139_1.sellAll = sellAll
+  L139_1.sellAllSelected = sellAllSelected
+  L139_1.sellAllWorthless = sellAllWorthless
+  L139_1.sellInventory = sellInventory
+  L139_1.checkAndBuyLuckyArrow = checkAndBuyLuckyArrow
+  L139_1.checkAndSellMax = checkAndSellMax
+end
+do
+  local L144_1 = false
+  local L145_1
+  local L146_1 = 0.5
+  local L147_1 = false
+  local L148_1 = 0
+  local L149_1 = 0.35
+  local L150_1 = 12
+  
+  local function L151_1()
+    local L0_2 = game.Workspace:FindFirstChild("Item_Spawns")
+    if not L0_2 then
+      return nil
+    end
+    return L0_2:FindFirstChild("Items")
+  end
+  
+  local function L152_1(A0_2)
+    local L1_2 = L151_1()
+    if not L1_2 then
+      return
+    end
+    for L5_2, L6_2 in pairs(L1_2:GetChildren()) do
+      local L7_2 = L6_2:FindFirstChild("ProximityPrompt")
+      if L7_2 then
+        pcall(function()
+          L7_2.HoldDuration = L146_1
+        end)
+      end
+    end
+  end
+  
+  function enableInstantPickup()
+    L144_1 = true
+    L152_1(true)
+    local L0_2 = L151_1()
+    if L0_2 then
+      L145_1 = L0_2.ChildAdded:Connect(function(A0_3)
+        task.wait(0.05)
+        if not L144_1 or L147_1 or tick() - L148_1 < L149_1 then
+          return
+        end
+        if L85_1 or getgenv()._YBA_SellingBusy then
+          return
+        end
+        local L1_3, L2_3 = findItemPartAndPrompt(A0_3)
+        if L2_3 and L1_3 then
+          local L3_3 = L2_3.ObjectText and L2_3.ObjectText ~= "" and L2_3.ObjectText or A0_3.Name
+          local L4_3 = L143_1 and L143_1(L3_3) or L3_3
+          if L139_1 and L139_1.nonFarmableItems and L139_1.nonFarmableItems[L4_3] then
+            return
+          end
+          local L5_3 = L3_1.Character and L3_1.Character:FindFirstChild("HumanoidRootPart")
+          if not L5_3 or (L1_3.Position - L5_3.Position).Magnitude > L150_1 then
+            return
+          end
+          L147_1 = true
+          L148_1 = tick()
+          pcall(function()
+            activatePrompt(L2_3, L146_1, true)
+          end)
+          L147_1 = false
+        end
+      end)
+    end
+  end
+  
+  function disableInstantPickup()
+    L144_1 = false
+    L147_1 = false
+    L152_1(false)
+    if L145_1 then
+      L145_1:Disconnect()
+      L145_1 = nil
+    end
+  end
+  
+  getgenv().ItemESPData = getgenv().ItemESPData or {
+    enabled = false,
+    guis = {},
+    conns = {},
+    selected = {},
+    selectedLookup = {},
+    hasFilter = false
+  }
+  getgenv().ItemESPData.textSize = tonumber(L28_1 and L28_1("IESPSize", 14)) or 14
+  
+  local function L153_1(A0_2)
+    local L1_2 = {}
+    local L2_2 = false
+    if A0_2 and 0 < #A0_2 then
+      for L6_2, L7_2 in ipairs(A0_2) do
+        local L8_2 = L143_1(L7_2)
+        L1_2[L8_2] = true
+        L1_2[tostring(L7_2)] = true
+        L2_2 = true
+      end
+    end
+    getgenv().ItemESPData.selectedLookup = L1_2
+    getgenv().ItemESPData.hasFilter = L2_2
+  end
+  
+  local function L154_1(A0_2)
+    local L1_2 = getgenv().ItemESPData
+    if not L1_2.hasFilter then
+      return true
+    end
+    local L2_2 = L143_1(A0_2)
+    return L1_2.selectedLookup[L2_2] == true or L1_2.selectedLookup[A0_2] == true
+  end
+  
+  local function L155_1(A0_2)
+    if isItemAvailable then
+      local L1_2, L2_2 = pcall(isItemAvailable, A0_2)
+      if L1_2 then
+        return L2_2 and true or false
+      end
+    end
+    return true
+  end
+  
+  local function L156_1(A0_2)
+    local L1_2 = tostring(A0_2 or ""):lower()
+    return L1_2:find("lucky", 1, true) ~= nil or L1_2:find("candy", 1, true) ~= nil
+  end
+  
+  function findItemPartAndPrompt(A0_2)
+    local L1_2 = A0_2:FindFirstChildWhichIsA("ProximityPrompt", true) or A0_2.Parent and A0_2.Parent:FindFirstChildWhichIsA("ProximityPrompt", true)
+    local L2_2
+    if A0_2:IsA("BasePart") then
+      L2_2 = A0_2
+    elseif A0_2:IsA("Model") and A0_2.PrimaryPart then
+      L2_2 = A0_2.PrimaryPart
+    else
+      for L6_2, L7_2 in ipairs(A0_2:GetChildren()) do
+        if L7_2:IsA("BasePart") and L7_2.Transparency < 1 then
+          L2_2 = L7_2
+          break
+        end
+      end
+      if not L2_2 and L1_2 and L1_2.Parent and L1_2.Parent:IsA("BasePart") then
+        L2_2 = L1_2.Parent
+      else
+        L2_2 = L2_2 or A0_2:FindFirstChildWhichIsA("BasePart", true)
+      end
+    end
+    return L2_2, L1_2
+  end
+  
+  local function L157_1(A0_2)
+    local L1_2 = getgenv().ItemESPData
+    local L2_2 = L1_2.guis[A0_2]
+    if L2_2 then
+      pcall(L2_2.Destroy, L2_2)
+      L1_2.guis[A0_2] = nil
+    end
+  end
+  
+  function getEspParent()
+    local L0_2
+    pcall(function()
+      local L0_3 = game:GetService("Players").LocalPlayer
+      L0_2 = L0_3 and L0_3:FindFirstChildOfClass("PlayerGui")
+    end)
+    if L0_2 then
+      return L0_2
+    end
+    local L1_2
+    pcall(function()
+      L1_2 = gethui and gethui() or get_hidden_gui and get_hidden_gui()
+    end)
+    if L1_2 and typeof(L1_2) == "Instance" then
+      return L1_2
+    end
+    return game:GetService("CoreGui")
+  end
+  
+  function parentEspGui(A0_2)
+    if not A0_2 then
+      return false
+    end
+    pcall(function()
+      A0_2.Parent = getEspParent()
+    end)
+    if A0_2.Parent == nil then
+      pcall(function()
+        local L0_3 = gethui and gethui() or get_hidden_gui and get_hidden_gui()
+        if L0_3 and typeof(L0_3) == "Instance" then
+          A0_2.Parent = L0_3
+        end
+      end)
+    end
+    if A0_2.Parent == nil then
+      pcall(function()
+        A0_2.Parent = game:GetService("CoreGui")
+      end)
+    end
+    return A0_2.Parent ~= nil
+  end
+  
+  local function L158_1(A0_2)
+    local L1_2 = getgenv().ItemESPData
+    if not (L1_2.enabled and A0_2) or not A0_2.Parent then
+      return
+    end
+    if not L155_1(A0_2) then
+      L157_1(A0_2)
+      return
+    end
+    local L2_2 = L1_2.guis[A0_2]
+    if L2_2 and L2_2.Parent then
+      return
+    end
+    local L3_2, L4_2, L5_2
+    if getItemComponents then
+      local L6_2, L7_2, L8_2, L9_2 = pcall(getItemComponents, A0_2)
+      if L6_2 and L7_2 and L8_2 then
+        local L10_2 = L7_2
+        local L11_2 = L8_2
+        L5_2 = L9_2
+        L4_2 = L11_2
+        L3_2 = L10_2
+      end
+    end
+    if not L4_2 or not L3_2 then
+      L3_2, L4_2 = findItemPartAndPrompt(A0_2)
+    end
+    if not L4_2 or not L3_2 then
+      L157_1(A0_2)
+      return
+    end
+    if L4_2.Enabled == false or L3_2.Transparency >= 1 or not L3_2:IsDescendantOf(workspace) then
+      L157_1(A0_2)
+      return
+    end
+    local L6_2 = L5_2 or L4_2.ObjectText and L4_2.ObjectText ~= "" and L4_2.ObjectText or A0_2.Name
+    local L7_2 = L143_1(L6_2)
+    if not L154_1(L7_2) then
+      L157_1(A0_2)
+      return
+    end
+    local L8_2 = L156_1(L7_2)
+    local L9_2 = L8_2 and Color3.fromRGB(255, 220, 0) or Color3.fromRGB(255, 255, 255)
+    local L10_2 = L1_2.textSize or 14
+    L2_2 = Instance.new("BillboardGui")
+    L2_2.Name = "RailHubItemESP"
+    L2_2.Size = UDim2.fromOffset(200, L10_2 + 12)
+    L2_2.StudsOffset = Vector3.new(0, 2.5, 0)
+    L2_2.AlwaysOnTop = true
+    L2_2.Adornee = L3_2
+    local L11_2 = Instance.new("TextLabel")
+    L11_2.Name = "Label"
+    L11_2.BackgroundTransparency = 1
+    L11_2.Size = UDim2.fromScale(1, 1)
+    L11_2.Font = Enum.Font.GothamBold
+    L11_2.TextColor3 = L9_2
+    L11_2.TextStrokeTransparency = 0
+    L11_2.TextScaled = false
+    L11_2.TextSize = L10_2
+    L11_2.Text = L7_2
+    L11_2.Parent = L2_2
+    if parentEspGui(L2_2) then
+      L1_2.guis[A0_2] = L2_2
+    else
+      pcall(L2_2.Destroy, L2_2)
+    end
+  end
+  
+  function clearItemESP()
+    local L0_2 = getgenv().ItemESPData
+    for L4_2, L5_2 in pairs(L0_2.guis) do
+      if L5_2 then
+        pcall(L5_2.Destroy, L5_2)
+      end
+      L0_2.guis[L4_2] = nil
+    end
+    for L4_2, L5_2 in pairs(L0_2.conns) do
+      if L5_2 then
+        pcall(L5_2.Disconnect, L5_2)
+      end
+      L0_2.conns[L4_2] = nil
+    end
+  end
+  
+  function refreshItemESP()
+    local L0_2 = getgenv().ItemESPData
+    local L1_2 = L151_1()
+    if not L0_2.enabled or not L1_2 then
+      clearItemESP()
+      return
+    end
+    L153_1(L0_2.selected)
+    local L2_2 = {}
+    for L6_2, L7_2 in ipairs(L1_2:GetChildren()) do
+      L2_2[L7_2] = true
+      L158_1(L7_2)
+    end
+    for L6_2, L7_2 in pairs(L0_2.guis) do
+      if not L2_2[L6_2] or not L6_2.Parent then
+        if L7_2 then
+          pcall(L7_2.Destroy, L7_2)
+        end
+        L0_2.guis[L6_2] = nil
+      end
+    end
+  end
+  
+  function setItemESPFilter(A0_2)
+    getgenv().ItemESPData.selected = A0_2 or {}
+    L153_1(getgenv().ItemESPData.selected)
+    clearItemESP()
+    task.defer(refreshItemESP)
+  end
+  
+  function setItemESPTextSize(A0_2)
+    A0_2 = math.clamp(math.floor(tonumber(A0_2) or 14), 8, 28)
+    local L1_2 = getgenv().ItemESPData
+    if L1_2 then
+      L1_2.textSize = A0_2
+      for L5_2, L6_2 in pairs(L1_2.guis) do
+        pcall(function()
+          L6_2.Size = UDim2.fromOffset(200, A0_2 + 12)
+          local L0_3 = L6_2:FindFirstChild("Label")
+          if L0_3 then
+            L0_3.TextSize = A0_2
+          end
+        end)
+      end
+    end
+    pcall(function()
+      L27_1("IESPSize", A0_2)
+    end)
+    return A0_2
+  end
+  
+  function setItemESP(A0_2)
+    local L1_2 = getgenv().ItemESPData
+    L1_2.enabled = A0_2
+    clearItemESP()
+    if not A0_2 then
+      L1_2.loopRunning = false
+      return
+    end
+    L153_1(L1_2.selected)
+    refreshItemESP()
+    local L2_2 = L151_1()
+    if L2_2 then
+      table.insert(L1_2.conns, L2_2.ChildAdded:Connect(function(A0_3)
+        task.delay(0.05, function()
+          if L1_2.enabled and A0_3 and A0_3.Parent then
+            L158_1(A0_3)
+          end
+        end)
+      end))
+      table.insert(L1_2.conns, L2_2.ChildRemoved:Connect(function(A0_3)
+        L157_1(A0_3)
+      end))
+    end
+    if not L1_2.loopRunning then
+      L1_2.loopRunning = true
+      task.spawn(function()
+        while L1_2.enabled do
+          task.wait(2)
+          if L1_2.enabled then
+            pcall(refreshItemESP)
+          end
+        end
+        L1_2.loopRunning = false
+      end)
+    end
+  end
+  
+  L139_1.enableInstantPickup = enableInstantPickup
+  L139_1.disableInstantPickup = disableInstantPickup
+  L139_1.clearItemESP = clearItemESP
+  L139_1.refreshItemESP = refreshItemESP
+  L139_1.setItemESPFilter = setItemESPFilter
+  L139_1.setItemESP = setItemESP
+  L139_1.setItemESPTextSize = setItemESPTextSize
+end
+do
+  local L144_1 = {
+    "UzuKee",
+    "BLOODTARO",
+    "Dxscape",
+    "Myst_Ari",
+    "eurycIea",
+    "v_cks",
+    "ezguap",
+    "Tsuzutou",
+    "ReferToWithered",
+    "Illus0",
+    "Pyreiz",
+    "VoidedFlame",
+    "ROUXABOUT",
+    "mixeriiiiiing",
+    "MichDrajo",
+    "hayst4",
+    "ElmoNYC",
+    "Core_CorruptionF",
+    "Brillcake",
+    "AxionTheRevenant",
+    "sammyj0n",
+    "ViveLesPatat",
+    "Zimvasion",
+    "vertiify",
+    "redfoxP",
+    "cakesucker05",
+    "00kamiMio",
+    "itscanii",
+    "SirDeviloper",
+    "0nkka",
+    "Ramdharam",
+    "Olliebutheskenny",
+    "cswag_code",
+    "TwoGio",
+    "KoleRTX2",
+    "Wilpuri",
+    "remendyy",
+    "SpaceNuggies",
+    "CrimsonBeheIit",
+    "warycoolio"
+  }
+  local L145_1 = {}
+  for L149_1, L150_1 in ipairs(L144_1) do
+    L145_1[L150_1:lower()] = true
+  end
+  
+  local function L146_1(A0_2)
+    if not A0_2 then
+      return false
+    end
+    local L1_2 = tostring(A0_2.Name):lower()
+    local L2_2 = tostring(A0_2.DisplayName):lower()
+    return L145_1[L1_2] == true or L145_1[L2_2] == true
+  end
+  
+  getgenv().StaffDetectorData = getgenv().StaffDetectorData or {
+    autoKick = L28_1("StaffAutoKick", true),
+    espEnabled = L28_1("StaffESP", true),
+    highlights = {},
+    labels = {},
+    conns = {}
+  }
+  
+  function checkStaffMember(A0_2)
+    if not A0_2 or A0_2 == L2_1 then
+      return
+    end
+    if L146_1(A0_2) then
+      if L134_1 then
+        L134_1(A0_2)
+      end
+      if getgenv().StaffDetectorData.autoKick then
+        local L1_2 = A0_2.Name
+        task.delay(0.1, function()
+          L2_1:Kick("Found Mod: " .. L1_2 .. " | Reason: Anti-Staff Auto Kick")
+        end)
+      end
+    end
+  end
+  
+  getgenv().StabilityControlEnabled = L28_1("StabilityControl", true)
+  local L147_1 = 30
+  local L148_1 = table.create(L147_1, 0.016)
+  local L149_1 = 0
+  local L150_1 = 0
+  L6_1.Heartbeat:Connect(function(A0_2)
+    L149_1 = L149_1 % L147_1 + 1
+    L148_1[L149_1] = A0_2
+    if L150_1 < L147_1 then
+      L150_1 = L150_1 + 1
+    end
+  end)
+  
+  local function L151_1()
+    if not getgenv().StabilityControlEnabled then
+      return true
+    end
+    if L150_1 < 10 then
+      return false
+    end
+    local L0_2 = 0
+    local L1_2 = 0
+    for L5_2 = 1, L150_1 do
+      local L6_2 = L148_1[L5_2]
+      L0_2 = L0_2 + L6_2
+      if 0.1 < L6_2 then
+        L1_2 = L1_2 + 1
+      end
+    end
+    L0_2 = L0_2 / L150_1
+    if 0.08 < L0_2 or 2 < L1_2 then
+      return false
+    end
+    return true
+  end
+  
+  local function L152_1()
+    local L0_2 = getgenv().StaffDetectorData
+    for L4_2, L5_2 in pairs(L0_2.highlights) do
+      if L5_2 then
+        pcall(L5_2.Destroy, L5_2)
+      end
+    end
+    for L4_2, L5_2 in pairs(L0_2.labels) do
+      if L5_2 then
+        pcall(L5_2.Destroy, L5_2)
+      end
+    end
+    L0_2.highlights = {}
+    L0_2.labels = {}
+  end
+  
+  function refreshStaffESP()
+    local L0_2 = getgenv().StaffDetectorData
+    if not L0_2.espEnabled or getgenv().PlayerESPData and getgenv().PlayerESPData.enabled then
+      L152_1()
+      return
+    end
+    local L1_2 = {}
+    for L5_2, L6_2 in ipairs(L0_1:GetPlayers()) do
+      if L6_2 ~= L2_1 and L146_1(L6_2) then
+        L1_2[L6_2] = true
+        local L7_2 = L6_2.Character
+        local L8_2 = L7_2 and L7_2:FindFirstChild("HumanoidRootPart")
+        local L9_2 = L7_2 and L7_2:FindFirstChildOfClass("Humanoid")
+        local L10_2 = L7_2 and L7_2:FindFirstChild("Head")
+        if L8_2 and L9_2 and L9_2.Health > 0 then
+          local L11_2 = L0_2.highlights[L6_2]
+          if not L11_2 or not L11_2.Parent then
+            L11_2 = Instance.new("Highlight")
+            L11_2.Name = "RAILhubStaffESP"
+            L11_2.FillColor = Color3.fromRGB(255, 0, 0)
+            L11_2.OutlineColor = Color3.fromRGB(255, 40, 40)
+            L11_2.FillTransparency = 0.35
+            L11_2.OutlineTransparency = 0
+            L11_2.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+            L11_2.Adornee = L7_2
+            if parentEspGui(L11_2) then
+              L0_2.highlights[L6_2] = L11_2
+            else
+              pcall(L11_2.Destroy, L11_2)
+            end
+          else
+            L11_2.Adornee = L7_2
+          end
+          L11_2.Enabled = true
+          local L12_2 = L0_2.labels[L6_2]
+          if not L12_2 or not L12_2.Parent then
+            L12_2 = Instance.new("BillboardGui")
+            L12_2.Name = "RAILhubStaffLabel"
+            L12_2.Size = UDim2.fromOffset(200, 50)
+            L12_2.StudsOffset = Vector3.new(0, 3.5, 0)
+            L12_2.AlwaysOnTop = true
+            L12_2.Adornee = L10_2 or L8_2
+            local L13_2 = Instance.new("TextLabel")
+            L13_2.Name = "Label"
+            L13_2.BackgroundTransparency = 1
+            L13_2.Size = UDim2.fromScale(1, 1)
+            L13_2.Font = Enum.Font.GothamBold
+            L13_2.TextColor3 = Color3.fromRGB(255, 40, 40)
+            L13_2.TextStrokeTransparency = 0
+            L13_2.TextSize = 15
+            L13_2.Text = "\240\159\154\168 ADMIN \240\159\154\168\n" .. L6_2.Name
+            L13_2.Parent = L12_2
+            if parentEspGui(L12_2) then
+              L0_2.labels[L6_2] = L12_2
+            else
+              pcall(L12_2.Destroy, L12_2)
+            end
+          else
+            L12_2.Adornee = L10_2 or L8_2
+          end
+          L12_2.Enabled = true
+        else
+          if L0_2.highlights[L6_2] then
+            pcall(L0_2.highlights[L6_2].Destroy, L0_2.highlights[L6_2])
+            L0_2.highlights[L6_2] = nil
+          end
+          if L0_2.labels[L6_2] then
+            pcall(L0_2.labels[L6_2].Destroy, L0_2.labels[L6_2])
+            L0_2.labels[L6_2] = nil
+          end
+        end
+      end
+    end
+    for L5_2, L6_2 in pairs(L0_2.highlights) do
+      if not L1_2[L5_2] then
+        if L6_2 then
+          pcall(L6_2.Destroy, L6_2)
+        end
+        L0_2.highlights[L5_2] = nil
+      end
+    end
+    for L5_2, L6_2 in pairs(L0_2.labels) do
+      if not L1_2[L5_2] then
+        if L6_2 then
+          pcall(L6_2.Destroy, L6_2)
+        end
+        L0_2.labels[L5_2] = nil
+      end
+    end
+  end
+  
+  for L156_1, L157_1 in ipairs(L0_1:GetPlayers()) do
+    checkStaffMember(L157_1)
+  end
+  L0_1.PlayerAdded:Connect(function(A0_2)
+    checkStaffMember(A0_2)
+    A0_2.CharacterAdded:Connect(function()
+      task.delay(0.5, function()
+        checkStaffMember(A0_2)
+        if getgenv().StaffDetectorData.espEnabled then
+          refreshStaffESP()
+        end
+      end)
+    end)
+  end)
+  getgenv().PlayerESPData = getgenv().PlayerESPData or {
+    enabled = false,
+    showChams = L28_1("PESP_CH", true),
+    showNames = L28_1("PESP_NM", true),
+    showDistance = L28_1("PESP_DS", true),
+    showStand = L28_1("PESP_ST", true),
+    showSpec = L28_1("PESP_SP", true),
+    showHealth = L28_1("PESP_HP", true),
+    highlights = {},
+    labels = {},
+    conns = {}
+  }
+  
+  local function L153_1()
+    local L0_2 = getgenv().PlayerESPData
+    for L4_2, L5_2 in pairs(L0_2.highlights) do
+      if L5_2 then
+        pcall(L5_2.Destroy, L5_2)
+      end
+    end
+    for L4_2, L5_2 in pairs(L0_2.labels) do
+      if L5_2 then
+        pcall(L5_2.Destroy, L5_2)
+      end
+    end
+    for L4_2, L5_2 in pairs(L0_2.conns) do
+      if L5_2 then
+        pcall(L5_2.Disconnect, L5_2)
+      end
+    end
+    L0_2.highlights = {}
+    L0_2.labels = {}
+    L0_2.conns = {}
+  end
+  
+  local function L154_1(A0_2, A1_2)
+    local L2_2 = getgenv().PlayerESPData
+    if not L2_2.enabled or A0_2 == L2_1 then
+      return
+    end
+    local L3_2 = A0_2.Character
+    local L4_2 = L3_2 and L3_2:FindFirstChild("HumanoidRootPart")
+    local L5_2 = L3_2 and L3_2:FindFirstChildOfClass("Humanoid")
+    local L6_2 = L3_2 and L3_2:FindFirstChild("Head")
+    local L7_2 = L4_2 and L5_2 and L5_2.Health > 0
+    if not L7_2 then
+      if L2_2.highlights[A0_2] then
+        pcall(L2_2.highlights[A0_2].Destroy, L2_2.highlights[A0_2])
+        L2_2.highlights[A0_2] = nil
+      end
+      if L2_2.labels[A0_2] then
+        pcall(L2_2.labels[A0_2].Destroy, L2_2.labels[A0_2])
+        L2_2.labels[A0_2] = nil
+      end
+      return
+    end
+    local L8_2 = L146_1(A0_2)
+    local L9_2 = L2_2.highlights[A0_2]
+    if not L9_2 or not L9_2.Parent then
+      L9_2 = Instance.new("Highlight")
+      L9_2.Name = "RAILhubPlayerESP"
+      L9_2.FillColor = L8_2 and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(255, 90, 90)
+      L9_2.OutlineColor = L8_2 and Color3.fromRGB(255, 40, 40) or Color3.fromRGB(255, 255, 255)
+      L9_2.FillTransparency = L8_2 and 0.35 or 0.65
+      L9_2.OutlineTransparency = L8_2 and 0 or 0.1
+      L9_2.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+      L9_2.Adornee = L3_2
+      if parentEspGui(L9_2) then
+        L2_2.highlights[A0_2] = L9_2
+      else
+        pcall(L9_2.Destroy, L9_2)
+      end
+    else
+      L9_2.FillColor = L8_2 and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(255, 90, 90)
+      L9_2.OutlineColor = L8_2 and Color3.fromRGB(255, 40, 40) or Color3.fromRGB(255, 255, 255)
+      L9_2.FillTransparency = L8_2 and 0.35 or 0.65
+      L9_2.OutlineTransparency = L8_2 and 0 or 0.1
+      L9_2.Adornee = L3_2
+    end
+    L9_2.Enabled = L2_2.showChams == true or L8_2
+    local L10_2 = L2_2.labels[A0_2]
+    if not L10_2 or not L10_2.Parent then
+      L10_2 = Instance.new("BillboardGui")
+      L10_2.Name = "RAILhubPlayerLabel"
+      L10_2.Size = UDim2.fromOffset(200, 60)
+      L10_2.StudsOffset = Vector3.new(0, 3, 0)
+      L10_2.AlwaysOnTop = true
+      L10_2.Adornee = L6_2 or L4_2
+      local L11_2 = Instance.new("TextLabel")
+      L11_2.Name = "Label"
+      L11_2.BackgroundTransparency = 1
+      L11_2.Size = UDim2.fromScale(1, 1)
+      L11_2.Font = Enum.Font.GothamBold
+      L11_2.TextColor3 = L8_2 and Color3.fromRGB(255, 40, 40) or Color3.fromRGB(255, 255, 255)
+      L11_2.TextStrokeTransparency = 0
+      L11_2.TextScaled = false
+      L11_2.TextSize = L8_2 and 15 or 13
+      L11_2.Parent = L10_2
+      if parentEspGui(L10_2) then
+        L2_2.labels[A0_2] = L10_2
+      else
+        pcall(L10_2.Destroy, L10_2)
+      end
+    else
+      L10_2.Adornee = L6_2 or L4_2
+      local L11_2 = L10_2:FindFirstChild("Label")
+      if L11_2 then
+        L11_2.TextColor3 = L8_2 and Color3.fromRGB(255, 40, 40) or Color3.fromRGB(255, 255, 255)
+        L11_2.TextSize = L8_2 and 15 or 13
+      end
+    end
+    local L11_2 = {}
+    if L8_2 then
+      table.insert(L11_2, "\240\159\154\168 ADMIN \240\159\154\168")
+    end
+    if L2_2.showNames then
+      table.insert(L11_2, A0_2.Name)
+    end
+    if L2_2.showHealth then
+      table.insert(L11_2, string.format("HP: [%d/%d]", math.floor(L5_2.Health), math.floor(L5_2.MaxHealth)))
+    end
+    local L12_2 = A0_2:FindFirstChild("PlayerStats")
+    if L12_2 then
+      local L13_2 = L12_2:FindFirstChild("Stand")
+      local L14_2 = L12_2:FindFirstChild("Spec")
+      local L15_2 = L2_2.showStand and L13_2 and L13_2.Value and L13_2.Value ~= "None" and L13_2.Value ~= "" and L13_2.Value or nil
+      local L16_2 = L2_2.showSpec and L14_2 and L14_2.Value and L14_2.Value ~= "None" and L14_2.Value ~= "" and L14_2.Value or nil
+      if L15_2 and L16_2 then
+        table.insert(L11_2, string.format("[%s | %s]", L15_2, L16_2))
+      elseif L15_2 then
+        table.insert(L11_2, string.format("[%s]", L15_2))
+      elseif L16_2 then
+        table.insert(L11_2, string.format("[%s]", L16_2))
+      end
+    end
+    if L2_2.showDistance and A1_2 then
+      local L13_2 = math.floor((L4_2.Position - A1_2.Position).Magnitude)
+      table.insert(L11_2, string.format("[%dm]", L13_2))
+    end
+    local L13_2 = L10_2:FindFirstChild("Label")
+    if L13_2 then
+      L13_2.Text = table.concat(L11_2, "\n")
+    end
+    L10_2.Enabled = 0 < #L11_2
+  end
+  
+  function refreshPlayerESP()
+    local L0_2 = getgenv().PlayerESPData
+    if not L0_2.enabled then
+      L153_1()
+      return
+    end
+    local L1_2 = L2_1.Character
+    local L2_2 = L1_2 and L1_2:FindFirstChild("HumanoidRootPart")
+    local L3_2 = {}
+    for L7_2, L8_2 in ipairs(L0_1:GetPlayers()) do
+      if L8_2 ~= L2_1 then
+        L3_2[L8_2] = true
+        L154_1(L8_2, L2_2)
+      end
+    end
+    for L7_2, L8_2 in pairs(L0_2.highlights) do
+      if not L3_2[L7_2] then
+        if L8_2 then
+          pcall(L8_2.Destroy, L8_2)
+        end
+        L0_2.highlights[L7_2] = nil
+      end
+    end
+    for L7_2, L8_2 in pairs(L0_2.labels) do
+      if not L3_2[L7_2] then
+        if L8_2 then
+          pcall(L8_2.Destroy, L8_2)
+        end
+        L0_2.labels[L7_2] = nil
+      end
+    end
+  end
+  
+  function setPlayerESP(A0_2)
+    local L1_2 = getgenv().PlayerESPData
+    L1_2.enabled = A0_2
+    L153_1()
+    if not A0_2 then
+      if getgenv().StaffDetectorData.espEnabled then
+        refreshStaffESP()
+      end
+      return
+    end
+    refreshPlayerESP()
+    table.insert(L1_2.conns, L0_1.PlayerAdded:Connect(function()
+      task.defer(refreshPlayerESP)
+    end))
+    table.insert(L1_2.conns, L0_1.PlayerRemoving:Connect(function(A0_3)
+      if L1_2.highlights[A0_3] then
+        pcall(L1_2.highlights[A0_3].Destroy, L1_2.highlights[A0_3])
+        L1_2.highlights[A0_3] = nil
+      end
+      if L1_2.labels[A0_3] then
+        pcall(L1_2.labels[A0_3].Destroy, L1_2.labels[A0_3])
+        L1_2.labels[A0_3] = nil
+      end
+    end))
+    task.spawn(function()
+      while L1_2.enabled do
+        refreshPlayerESP()
+        task.wait(0.25)
+      end
+    end)
+  end
+  
+  getgenv().HUDHealthEnabled = L28_1("HUD_HP", true)
+  task.spawn(function()
+    local L0_2 = false
+    while true do
+      if getgenv().HUDHealthEnabled then
+        L0_2 = true
+        pcall(function()
+          local L0_3 = L2_1.PlayerGui:FindFirstChild("HUD") and L2_1.PlayerGui.HUD:FindFirstChild("Main") and L2_1.PlayerGui.HUD.Main:FindFirstChild("Indicators") and L2_1.PlayerGui.HUD.Main.Indicators:FindFirstChild("Bars")
+          if L0_3 then
+            local L1_3 = L0_3:GetChildren()
+            local L2_3 = L1_3[6]
+            if L2_3 and L2_3:IsA("TextLabel") then
+              local L3_3 = L2_1.Character
+              local L4_3 = L3_3 and L3_3:FindFirstChildOfClass("Humanoid")
+              if L4_3 then
+                local L5_3 = math.floor(L4_3.Health)
+                local L6_3 = math.floor(L4_3.MaxHealth)
+                L2_3.Text = string.format("[%d/%d]", L5_3, L6_3)
+              end
+            end
+          end
+        end)
+        task.wait(0.1)
+      else
+        if L0_2 then
+          L0_2 = false
+          pcall(function()
+            local L0_3 = L2_1.PlayerGui.HUD.Main.Indicators.Bars:GetChildren()[6]
+            if L0_3 and L0_3:IsA("TextLabel") and L0_3.Text:match("%[%d+/%d+%]") then
+              L0_3.Text = "H E A L T H"
+            end
+          end)
+        end
+        task.wait(0.5)
+      end
+    end
+  end)
+  getgenv()._YBA_setPlayerESP = setPlayerESP
+  getgenv()._YBA_refreshPlayerESP = refreshPlayerESP
+  if L28_1("PESP", false) then
+    task.defer(function()
+      setPlayerESP(true)
+    end)
+  end
+  
+  local function L155_1()
+    local L0_2 = L4_1:FindFirstChild("HUD")
+    local L1_2 = L0_2 and L0_2:FindFirstChild("Main")
+    local L2_2 = L1_2 and L1_2:FindFirstChild("Frames")
+    local L3_2 = L2_2 and L2_2:FindFirstChild("Store")
+    local L4_2 = L3_2 and L3_2:FindFirstChild("List")
+    local L5_2 = L4_2 and L4_2:FindFirstChild("StandShop")
+    return L5_2 and L5_2:FindFirstChild("SkinChances1")
+  end
+  
+  L139_1.refreshStaffESP = refreshStaffESP
+  L139_1.refreshPlayerESP = refreshPlayerESP
+  L139_1.setPlayerESP = setPlayerESP
+end
+do
+  local L144_1 = {}
+  L144_1.main = false
+  L144_1.farm = false
+  L144_1.stand = false
+  L144_1.rib = false
+  L144_1.shiny = false
+  L144_1.prestige = false
+  L144_1.quest = false
+  local L145_1
+  local L146_1 = false
+  local L147_1 = {}
+  local L148_1, L149_1
+  
+  local function L150_1(A0_2)
+    if table.clear then
+      table.clear(L147_1)
+    else
+      for L4_2 in pairs(L147_1) do
+        L147_1[L4_2] = nil
+      end
+    end
+    L148_1 = A0_2
+    if not A0_2 or not A0_2.Parent then
+      return
+    end
+    for L4_2, L5_2 in ipairs(A0_2:GetDescendants()) do
+      if L5_2:IsA("BasePart") then
+        L147_1[#L147_1 + 1] = L5_2
+      end
+    end
+  end
+  
+  local function L151_1(A0_2)
+    if L148_1 == A0_2 and 0 < #L147_1 then
+      return
+    end
+    if L149_1 then
+      pcall(function()
+        L149_1:Disconnect()
+      end)
+      L149_1 = nil
+    end
+    L150_1(A0_2)
+    if A0_2 then
+      pcall(function()
+        L149_1 = A0_2.DescendantAdded:Connect(function(A0_4)
+          if A0_4:IsA("BasePart") then
+            L147_1[#L147_1 + 1] = A0_4
+            pcall(function()
+              A0_4.CanCollide = false
+            end)
+          end
+        end)
+      end)
+    end
+  end
+  
+  function isAnyNoclipActive()
+    for L3_2, L4_2 in pairs(L144_1) do
+      if L4_2 == true then
+        return true
+      end
+    end
+    return false
+  end
+  
+  function restoreCharacterCollisions(A0_2)
+    A0_2 = A0_2 or L3_1 and L3_1.Character or L2_1 and L2_1.Character
+    if not A0_2 or not A0_2.Parent then
+      return
+    end
+    local L1_2 = {}
+    L1_2.Torso = true
+    L1_2.UpperTorso = true
+    L1_2.LowerTorso = true
+    L1_2.Head = true
+    for L5_2, L6_2 in ipairs(A0_2:GetDescendants()) do
+      if L6_2:IsA("BasePart") then
+        if L1_2[L6_2.Name] then
+          pcall(function()
+            L6_2.CanCollide = true
+          end)
+        else
+          pcall(function()
+            L6_2.CanCollide = false
+          end)
+        end
+      end
+    end
+    local L2_2 = A0_2:FindFirstChild("HumanoidRootPart")
+    if L2_2 then
+      pcall(function()
+        L2_2.CanCollide = false
+        if L2_2.AssemblyLinearVelocity.Y < -20 then
+          L2_2.AssemblyLinearVelocity = Vector3.new(L2_2.AssemblyLinearVelocity.X, 0, L2_2.AssemblyLinearVelocity.Z)
+        end
+      end)
+    end
+    local L3_2 = A0_2:FindFirstChildOfClass("Humanoid")
+    if L3_2 then
+      pcall(function()
+        L3_2:ChangeState(Enum.HumanoidStateType.GettingUp)
+      end)
+    end
+  end
+  
+  local function L152_1(A0_2)
+    if not A0_2 or not A0_2.Parent then
+      return
+    end
+    L151_1(A0_2)
+    for L4_2 = 1, #L147_1 do
+      local L5_2 = L147_1[L4_2]
+      if L5_2 and L5_2.Parent and L5_2.CanCollide then
+        pcall(function()
+          L5_2.CanCollide = false
+        end)
+      end
+    end
+  end
+  
+  local L153_1 = L152_1
+  
+  local function L154_1()
+    if L145_1 then
+      return
+    end
+    L145_1 = L6_1.Stepped:Connect(function()
+      if not isAnyNoclipActive() then
+        if L145_1 then
+          L145_1:Disconnect()
+          L145_1 = nil
+        end
+        L146_1 = false
+        return
+      end
+      local L0_3 = L3_1 and L3_1.Character or L2_1 and L2_1.Character
+      if L0_3 and L0_3.Parent then
+        if L148_1 ~= L0_3 then
+          L151_1(L0_3)
+        end
+        L152_1(L0_3)
+      end
+    end)
+  end
+  
+  local function L155_1()
+    if L145_1 then
+      L145_1:Disconnect()
+      L145_1 = nil
+    end
+    L146_1 = false
+    local L0_2 = L3_1 and L3_1.Character or L2_1 and L2_1.Character
+    restoreCharacterCollisions(L0_2)
+  end
+  
+  function enableNoclip(A0_2)
+    A0_2 = type(A0_2) == "string" and A0_2 or "main"
+    L144_1[A0_2] = true
+    L146_1 = true
+    local L1_2 = L3_1 and L3_1.Character or L2_1 and L2_1.Character
+    if L1_2 then
+      L152_1(L1_2)
+    end
+    L154_1()
+  end
+  
+  function disableNoclip(A0_2)
+    if A0_2 == true or A0_2 == "force" then
+      for L4_2 in pairs(L144_1) do
+        L144_1[L4_2] = false
+      end
+      L155_1()
+      return
+    end
+    local L1_2 = type(A0_2) == "string" and A0_2 or "main"
+    L144_1[L1_2] = false
+    if not normalFarmOn then
+      L144_1.farm = false
+    end
+    if not isAnyNoclipActive() then
+      L155_1()
+    end
+  end
+  
+  function enableNoclipState(A0_2)
+    enableNoclip(tostring(A0_2 or "stand"))
+  end
+  
+  function disableNoclipState(A0_2)
+    disableNoclip(tostring(A0_2 or "stand"))
+  end
+  
+  L139_1.isAnyNoclipActive = isAnyNoclipActive
+  L139_1.restoreCharacterCollisions = restoreCharacterCollisions
+  L139_1.enableNoclip = enableNoclip
+  L139_1.disableNoclip = disableNoclip
+  L139_1.enableNoclipState = enableNoclipState
+  L139_1.disableNoclipState = disableNoclipState
+end
+do
+  local function L144_1(...)
+    return L139_1.normalizeItemName and L139_1.normalizeItemName(...)
+  end
+  
+  local function L145_1(...)
+    return L139_1.sfCountItem and L139_1.sfCountItem(...)
+  end
+  
+  local L146_1 = L139_1.maxLimits
+  getgenv().ItemStickConnections = getgenv().ItemStickConnections or {}
+  lastItemFarmActionTick = tick()
+  
+  function noteItemFarmProgress()
+    lastItemFarmActionTick = tick()
+  end
+  
+  pcall(function()
+    local L0_2 = L2_1 or game:GetService("Players").LocalPlayer
+    if L0_2 then
+      local function L1_2(A0_3)
+        if A0_3 then
+          A0_3.ChildAdded:Connect(function(A0_4)
+            if A0_4:IsA("Tool") and noteItemFarmProgress then
+              noteItemFarmProgress()
+            end
+          end)
+        end
+      end
+      
+      L1_2(L0_2:FindFirstChild("Backpack"))
+      L0_2.ChildAdded:Connect(function(A0_3)
+        if A0_3.Name == "Backpack" then
+          L1_2(A0_3)
+        end
+      end)
+      L0_2.CharacterAdded:Connect(function()
+        if noteItemFarmProgress then
+          noteItemFarmProgress()
+        end
+      end)
+    end
+  end)
+  
+  function cleanupItemStick()
+    for L3_2, L4_2 in pairs(getgenv().ItemStickConnections) do
+      if type(L4_2) == "table" then
+        if L4_2.conn then
+          pcall(function()
+            L4_2.conn:Disconnect()
+          end)
+        end
+        if L4_2.alignPos then
+          pcall(function()
+            L4_2.alignPos:Destroy()
+          end)
+        end
+        if L4_2.attA then
+          pcall(function()
+            L4_2.attA:Destroy()
+          end)
+        end
+        if L4_2.attB then
+          pcall(function()
+            L4_2.attB:Destroy()
+          end)
+        end
+      elseif typeof(L4_2) == "RBXScriptConnection" then
+        pcall(function()
+          L4_2:Disconnect()
+        end)
+      end
+    end
+    getgenv().ItemStickConnections = {}
+  end
+  
+  getgenv()._YBA_bypassSuccess = false
+  local L147_1 = (function()
+    local L0_2 = L28_1 and L28_1("FarmTravelMethod")
+    if L0_2 then
+      return L0_2
+    end
+    local L1_2 = L28_1 and L28_1("UseTeleportFarm")
+    if L1_2 ~= nil then
+      return L1_2 and "Teleport" or "Tween"
+    end
+    return "Teleport"
+  end)()
+  getgenv()._YBA_directTP = L147_1 == "Teleport"
+  local L148_1
+  local L149_1 = 425
+  
+  local function L150_1(A0_2)
+    if typeof(A0_2) ~= "Instance" then
+      return nil
+    end
+    if A0_2:IsA("ProximityPrompt") then
+      A0_2 = A0_2.Parent
+    end
+    if A0_2 and A0_2:IsA("Attachment") then
+      A0_2 = A0_2.Parent
+    end
+    if not A0_2 then
+      return nil
+    end
+    if A0_2:IsA("BasePart") then
+      return A0_2
+    end
+    return A0_2:FindFirstChildOfClass("MeshPart") or A0_2:FindFirstChildOfClass("Part") or A0_2.PrimaryPart
+  end
+  
+  local function L151_1(A0_2, A1_2)
+    A1_2 = A1_2 or Vector3.zero
+    if typeof(A0_2) == "Vector3" then
+      return CFrame.new(A0_2 + A1_2)
+    end
+    if typeof(A0_2) == "CFrame" then
+      return A0_2 + A1_2
+    end
+    local L2_2 = L150_1(A0_2)
+    return L2_2 and L2_2.CFrame + A1_2 or nil
+  end
+  
+  local L152_1 = {}
+  local L153_1 = 0
+  
+  local function L154_1(A0_2)
+    local L1_2 = L152_1[A0_2]
+    if L1_2 and L1_2.prompt and L1_2.prompt.Parent and L1_2.prompt:IsDescendantOf(workspace) and L1_2.part and L1_2.part.Parent and L1_2.part:IsDescendantOf(workspace) then
+      return L1_2
+    end
+    return nil
+  end
+  
+  local function L155_1(A0_2, A1_2, A2_2, A3_2)
+    if L152_1[A0_2] == nil then
+      L153_1 = L153_1 + 1
+    end
+    if 500 < L153_1 then
+      for L7_2, L8_2 in pairs(L152_1) do
+        if type(L7_2) == "userdata" or typeof(L7_2) == "Instance" then
+          if not L7_2.Parent or not L7_2:IsDescendantOf(workspace) then
+            L152_1[L7_2] = nil
+            L153_1 = L153_1 - 1
+          end
+        else
+          L152_1[L7_2] = nil
+          L153_1 = L153_1 - 1
+        end
+      end
+    end
+    L152_1[A0_2] = {
+      part = A1_2,
+      prompt = A2_2,
+      name = A3_2
+    }
+  end
+  
+  function getItemComponents(A0_2)
+    if not (A0_2 and A0_2.Parent) or not A0_2:IsDescendantOf(workspace) then
+      if L152_1[A0_2] ~= nil then
+        L152_1[A0_2] = nil
+        L153_1 = math.max(0, L153_1 - 1)
+      end
+      return nil, nil, nil
+    end
+    local L1_2 = L154_1(A0_2)
+    if L1_2 and L1_2.prompt.Enabled ~= false and 1 > L1_2.part.Transparency then
+      return L1_2.part, L1_2.prompt, L1_2.name
+    end
+    local L2_2 = A0_2:FindFirstChildWhichIsA("ProximityPrompt", true) or A0_2.Parent and A0_2.Parent:FindFirstChildWhichIsA("ProximityPrompt", true)
+    if not L2_2 or L2_2.Enabled == false then
+      return nil, nil, nil
+    end
+    local L3_2
+    if A0_2:IsA("BasePart") then
+      L3_2 = A0_2
+    elseif A0_2:IsA("Model") then
+      for L7_2, L8_2 in ipairs(A0_2:GetDescendants()) do
+        if L8_2:IsA("BasePart") and L8_2:IsDescendantOf(workspace) and 1 > L8_2.Transparency then
+          L3_2 = L8_2
+          break
+        end
+      end
+      if not L3_2 then
+        if L2_2.Parent and L2_2.Parent:IsA("BasePart") and L2_2.Parent:IsDescendantOf(workspace) then
+          L3_2 = L2_2.Parent
+        elseif A0_2.PrimaryPart and A0_2.PrimaryPart:IsDescendantOf(workspace) then
+          L3_2 = A0_2.PrimaryPart
+        else
+          for L7_2, L8_2 in ipairs(A0_2:GetDescendants()) do
+            if L8_2:IsA("BasePart") and L8_2:IsDescendantOf(workspace) then
+              L3_2 = L8_2
+              break
+            end
+          end
+        end
+      end
+    end
+    if not L3_2 and L2_2.Parent and L2_2.Parent:IsA("BasePart") and L2_2.Parent:IsDescendantOf(workspace) then
+      L3_2 = L2_2.Parent
+    end
+    if not (L3_2 and L3_2.Parent) or not L3_2:IsDescendantOf(workspace) then
+      return nil, nil, nil
+    end
+    local L4_2 = L2_2.ObjectText and L2_2.ObjectText ~= "" and L2_2.ObjectText or A0_2.Name
+    local L5_2 = L139_1 and L139_1.normalizeItemName or L144_1
+    local L6_2 = L5_2 and L5_2(L4_2) or L4_2
+    L155_1(A0_2, L3_2, L2_2, L6_2)
+    return L3_2, L2_2, L6_2
+  end
+  
+  local function L156_1(A0_2)
+    local L1_2 = L3_1.Character and L3_1.Character:FindFirstChild("HumanoidRootPart")
+    local L2_2 = L1_2 and L1_2.Position or A0_2.Position + Vector3.new(0, 0, -1)
+    local L3_2 = Vector3.new(A0_2.Position.X - L2_2.X, 0, A0_2.Position.Z - L2_2.Z)
+    local L4_2 = L3_2.Magnitude > 0.01 and L3_2.Unit or Vector3.new(0, 0, -1)
+    return -L4_2 * 2.75 + Vector3.new(0, 2.5, 0)
+  end
+  
+  local L157_1, L158_1
+  local L159_1 = false
+  
+  local function L160_1()
+    if L157_1 then
+      pcall(function()
+        L157_1:Disconnect()
+      end)
+      L157_1 = nil
+    end
+    if L158_1 then
+      pcall(function()
+        L158_1:Disconnect()
+      end)
+      L158_1 = nil
+    end
+  end
+  
+  function stopMoveTween()
+    L160_1()
+    if L148_1 then
+      pcall(function()
+        L148_1:Cancel()
+      end)
+      pcall(function()
+        L148_1:Destroy()
+      end)
+      L148_1 = nil
+    end
+    L159_1 = false
+    local L0_2 = L3_1 and L3_1.Character or L2_1 and L2_1.Character
+    if L0_2 then
+      local L1_2 = L0_2:FindFirstChild("HumanoidRootPart")
+      if L1_2 then
+        pcall(function()
+          L1_2.AssemblyLinearVelocity = Vector3.zero
+          L1_2.AssemblyAngularVelocity = Vector3.zero
+        end)
+      end
+    end
+  end
+  
+  function zeroRootVelocity(A0_2)
+    if not A0_2 then
+      return
+    end
+    pcall(function()
+      A0_2.AssemblyLinearVelocity = Vector3.zero
+      A0_2.AssemblyAngularVelocity = Vector3.zero
+    end)
+  end
+  
+  function wakeUpPhysicsAndSync()
+    local L0_2 = L2_1 and L2_1.Character
+    local L1_2 = L0_2 and L0_2:FindFirstChild("HumanoidRootPart")
+    local L2_2 = L0_2 and L0_2:FindFirstChildOfClass("Humanoid")
+    if L1_2 and L2_2 and L2_2.Health > 0 then
+      pcall(function()
+        L2_2:ChangeState(Enum.HumanoidStateType.Running)
+        L1_2.AssemblyLinearVelocity = Vector3.new(0, 0.05, 0)
+      end)
+      for L6_2 = 1, 5 do
+        L6_1.Heartbeat:Wait()
+      end
+      pcall(function()
+        L1_2.AssemblyLinearVelocity = Vector3.zero
+        L1_2.AssemblyAngularVelocity = Vector3.zero
+      end)
+    end
+  end
+  
+  task.spawn(function()
+    while true do
+      task.wait(2)
+      pcall(function()
+        if not L90_1() and not L159_1 and not L85_1 and (not getgenv or not getgenv()._YBA_SellingBusy) then
+          local L0_3 = L2_1 and L2_1.Character
+          local L1_3 = L0_3 and L0_3:FindFirstChild("HumanoidRootPart")
+          local L2_3 = L0_3 and L0_3:FindFirstChildOfClass("Humanoid")
+          if L1_3 and L2_3 and L2_3.Health > 0 and L2_3:GetState() ~= Enum.HumanoidStateType.Seated and not L2_3.Sit and L1_3.AssemblyLinearVelocity.Magnitude < 0.05 then
+            L1_3.AssemblyLinearVelocity = Vector3.new(0, 0.02, 0)
+          end
+        end
+      end)
+    end
+  end)
+  
+  function isItemAvailable(A0_2)
+    if not A0_2 then
+      return false
+    end
+    if typeof(A0_2) == "Instance" then
+      if not A0_2.Parent or not A0_2:IsDescendantOf(workspace) then
+        if L152_1[A0_2] ~= nil then
+          L152_1[A0_2] = nil
+          L153_1 = math.max(0, L153_1 - 1)
+        end
+        return false
+      end
+      local L1_2 = L154_1(A0_2)
+      if L1_2 then
+        if L1_2.prompt.Enabled == false then
+          return false
+        end
+        if A0_2:IsA("BasePart") then
+          return 1 > A0_2.Transparency
+        end
+        if 1 > L1_2.part.Transparency then
+          return true
+        end
+      else
+        local L2_2 = A0_2:FindFirstChildWhichIsA("ProximityPrompt", true) or A0_2.Parent and A0_2.Parent:FindFirstChildWhichIsA("ProximityPrompt", true)
+        if L2_2 and (not (L2_2.Parent and L2_2:IsDescendantOf(workspace)) or L2_2.Enabled == false) then
+          return false
+        end
+        if A0_2:IsA("BasePart") then
+          return 1 > A0_2.Transparency
+        end
+      end
+      if A0_2:IsA("Model") then
+        local L2_2 = false
+        local L3_2 = false
+        for L7_2, L8_2 in ipairs(A0_2:GetDescendants()) do
+          if L8_2:IsA("BasePart") and L8_2:IsDescendantOf(workspace) then
+            L3_2 = true
+            if 1 > L8_2.Transparency then
+              L2_2 = true
+              break
+            end
+          end
+        end
+        if L3_2 and not L2_2 then
+          return false
+        end
+      end
+      return true
+    end
+    return true
+  end
+  
+  local function L161_1()
+    local L0_2 = getgenv()._tpCooldownUntil
+    if L0_2 and L0_2 > tick() then
+      task.wait(L0_2 - tick())
+    end
+  end
+  
+  local function L162_1()
+    getgenv()._tpCooldownUntil = tick() + 0.45
+  end
+  
+  function tweenMoveTo(A0_2, A1_2, A2_2, A3_2)
+    if not A0_2 or not A0_2.Parent then
+      return false
+    end
+    stopMoveTween()
+    local L4_2 = (A0_2.Position - A1_2.Position).Magnitude
+    if L4_2 < 1 then
+      zeroRootVelocity(A0_2)
+      return true
+    end
+    enableNoclip(normalFarmOn and "farm" or SF and SF.standFarmRunning and "stand" or "main")
+    local L5_2 = A0_2.Parent
+    zeroRootVelocity(A0_2)
+    local L6_2 = math.max(A2_2 or L149_1 or 425, 50)
+    local L7_2 = math.clamp(L4_2 / L6_2, 0.05, 3)
+    local L8_2 = L8_1:Create(A0_2, TweenInfo.new(L7_2, Enum.EasingStyle.Linear), {CFrame = A1_2})
+    L148_1 = L8_2
+    L159_1 = true
+    local L9_2 = false
+    local L10_2 = {}
+    pcall(function()
+      for L3_3, L4_3 in ipairs(L5_2:GetDescendants()) do
+        if L4_3:IsA("BasePart") then
+          L10_2[#L10_2 + 1] = L4_3
+        end
+      end
+    end)
+    local L11_2
+    pcall(function()
+      L11_2 = L5_2.DescendantAdded:Connect(function(A0_4)
+        if A0_4:IsA("BasePart") then
+          L10_2[#L10_2 + 1] = A0_4
+        end
+      end)
+    end)
+    L158_1 = L11_2
+    L157_1 = L6_1.Stepped:Connect(function()
+      if not (L5_2 and L5_2.Parent and A0_2) or not A0_2.Parent then
+        L9_2 = true
+        return
+      end
+      for L3_3 = 1, #L10_2 do
+        local L4_3 = L10_2[L3_3]
+        if L4_3 and L4_3.Parent and L4_3.CanCollide then
+          pcall(function()
+            L4_3.CanCollide = false
+          end)
+        end
+      end
+      pcall(function()
+        A0_2.AssemblyLinearVelocity = Vector3.zero
+        A0_2.AssemblyAngularVelocity = Vector3.zero
+      end)
+      if A3_2 and A3_2() then
+        L9_2 = true
+      end
+    end)
+    L8_2:Play()
+    local L12_2 = tick()
+    local L13_2 = L7_2 + 1.2
+    while L8_2.PlaybackState == Enum.PlaybackState.Playing and not L9_2 and L13_2 > tick() - L12_2 do
+      task.wait()
+      if A3_2 and A3_2() then
+        L9_2 = true
+        break
+      end
+    end
+    L160_1()
+    if L9_2 then
+      pcall(function()
+        L8_2:Cancel()
+      end)
+      pcall(function()
+        L8_2:Destroy()
+      end)
+      if L148_1 == L8_2 then
+        L148_1 = nil
+      end
+      L159_1 = false
+      zeroRootVelocity(A0_2)
+      return false
+    end
+    pcall(function()
+      L8_2:Destroy()
+    end)
+    if L148_1 == L8_2 then
+      L148_1 = nil
+    end
+    L159_1 = false
+    zeroRootVelocity(A0_2)
+    return true
+  end
+  
+  local L163_1 = 12
+  getgenv()._YBA_maxTPDist = L163_1
+  
+  function moveCharacterTo(A0_2, A1_2, A2_2)
+    if L90_1() then
+      return false
+    end
+    local L3_2 = L3_1 and L3_1.Character or L2_1 and L2_1.Character or workspace:FindFirstChild("Living") and workspace.Living:FindFirstChild(L3_1 and L3_1.Name or L2_1.Name) or workspace:FindFirstChild(L3_1 and L3_1.Name or L2_1.Name)
+    if not (L3_2 and L3_2.Parent) or not L3_2:IsDescendantOf(workspace) then
+      return false
+    end
+    local L4_2 = L3_2:FindFirstChildOfClass("Humanoid")
+    if not L4_2 or L4_2.Health <= 0 then
+      return false
+    end
+    local L5_2 = L3_2:FindFirstChild("HumanoidRootPart")
+    local L6_2 = L151_1(A0_2, A1_2)
+    if not L5_2 or not L6_2 then
+      return false
+    end
+    local L7_2 = (L5_2.Position - L6_2.Position).Magnitude
+    if L7_2 < 1 then
+      stopMoveTween()
+      zeroRootVelocity(L5_2)
+      return true
+    end
+    if getgenv()._YBA_directTP then
+      L5_2.CFrame = L6_2
+      zeroRootVelocity(L5_2)
+      if recordTeleport then
+        recordTeleport()
+      end
+      return true
+    end
+    local L8_2 = tweenMoveTo(L5_2, L6_2, L149_1, function()
+      if L90_1() then
+        return true
+      end
+      if A2_2 and A2_2() then
+        return true
+      end
+      return false
+    end)
+    if L5_2 and L5_2.Parent then
+      zeroRootVelocity(L5_2)
+    end
+    if recordTeleport then
+      recordTeleport()
+    end
+    return L8_2
+  end
+  
+  function activatePrompt(A0_2, A1_2, A2_2)
+    if typeof(A0_2) ~= "Instance" or not A0_2:IsA("ProximityPrompt") then
+      return false
+    end
+    local L3_2 = L150_1(A0_2)
+    if L3_2 and not A2_2 then
+      local L4_2 = L3_1.Character and L3_1.Character:FindFirstChild("HumanoidRootPart")
+      local L5_2 = (A0_2.MaxActivationDistance > 0 and A0_2.MaxActivationDistance or 10) - 0.5
+      if not L4_2 or L5_2 < (L3_2.Position - L4_2.Position).Magnitude then
+        moveCharacterTo(L3_2, Vector3.new(0, 0.1, 0))
+      end
+    end
+    local L4_2 = false
+    if type(fireproximityprompt) == "function" then
+      pcall(function()
+        fireproximityprompt(A0_2)
+        L4_2 = true
+      end)
+    end
+    if not L4_2 then
+      pcall(function()
+        if type(firesignal) == "function" then
+          firesignal(A0_2.Triggered, L3_1)
+        end
+      end)
+      pcall(function()
+        if type(firesignal) == "function" then
+          firesignal(A0_2.PromptTriggered, L3_1)
+        end
+      end)
+    end
+    pcall(function()
+      A0_2:InputHoldBegin()
+    end)
+    local L5_2 = A1_2
+    if L5_2 == nil or L5_2 <= 0 or 1 < L5_2 then
+      L5_2 = A0_2.HoldDuration
+    end
+    if L5_2 <= 0 then
+      L5_2 = 0.5
+    end
+    local L6_2 = L7_1.KeyboardEnabled and A0_2.KeyboardKeyCode or A0_2.GamepadKeyCode
+    if L6_2 == Enum.KeyCode.Unknown then
+      L6_2 = Enum.KeyCode.E
+    end
+    pcall(function()
+      if L9_1 and L9_1.SendKeyEvent then
+        L9_1:SendKeyEvent(true, L6_2, false, game)
+      end
+    end)
+    task.wait(0 < L5_2 and L5_2 or 0.05)
+    pcall(function()
+      if L9_1 and L9_1.SendKeyEvent then
+        L9_1:SendKeyEvent(false, L6_2, false, game)
+      end
+    end)
+    pcall(function()
+      A0_2:InputHoldEnd()
+    end)
+    pcall(function()
+      if type(firesignal) == "function" then
+        firesignal(A0_2.TriggerEnded, L3_1)
+      end
+    end)
+    return true
+  end
+  
+  L139_1.moveCharacterTo = moveCharacterTo
+  L139_1.stopMoveTween = stopMoveTween
+  L139_1.zeroRootVelocity = zeroRootVelocity
+  L139_1.wakeUpPhysicsAndSync = wakeUpPhysicsAndSync
+  L139_1.activatePrompt = activatePrompt
+  L139_1.isItemAvailable = isItemAvailable
+  L139_1.cleanupItemStick = cleanupItemStick
+  L139_1.getItemComponents = getItemComponents
+end
+do
+  local function L144_1(...)
+    return L139_1.normalizeItemName(...)
+  end
+  
+  local function L145_1(...)
+    return L139_1.sfCountItem(...)
+  end
+  
+  local function L146_1(...)
+    return L139_1.getItemComponents(...)
+  end
+  
+  local function L147_1(...)
+    return L139_1.checkAndSellMax(...)
+  end
+  
+  local function L148_1(...)
+    return L139_1.checkAndBuyLuckyArrow(...)
+  end
+  
+  local function L149_1(...)
+    return L139_1.moveCharacterTo(...)
+  end
+  
+  local function L150_1(...)
+    return L139_1.stopMoveTween(...)
+  end
+  
+  local function L151_1(...)
+    return L139_1.zeroRootVelocity(...)
+  end
+  
+  local function L152_1(...)
+    return L139_1.wakeUpPhysicsAndSync(...)
+  end
+  
+  local function L153_1(...)
+    return L139_1.activatePrompt(...)
+  end
+  
+  local function L154_1(...)
+    return L139_1.isItemAvailable(...)
+  end
+  
+  local function L155_1(...)
+    return L139_1.cleanupItemStick(...)
+  end
+  
+  local function L156_1(...)
+    return L139_1.enableNoclip(...)
+  end
+  
+  local L157_1 = L139_1.maxLimits
+  
+  local function L158_1(A0_2)
+    if typeof(A0_2) ~= "Instance" then
+      return false
+    end
+    local L1_2 = game.Workspace:FindFirstChild("Item_Spawns") and game.Workspace.Item_Spawns:FindFirstChild("Items")
+    if L1_2 and A0_2:IsDescendantOf(L1_2) then
+      return true
+    end
+    if A0_2:FindFirstChild("ProximityPrompt") then
+      return true
+    end
+    if A0_2.Parent and A0_2.Parent:FindFirstChild("ProximityPrompt") then
+      return true
+    end
+    return false
+  end
+  
+  local L159_1 = -702.137085
+  local L160_1 = 975.83844
+  local L161_1 = -805.215942
+  local L162_1 = 468.16217
+  local L163_1 = 68
+  
+  function getRandomFarmRoamCFrame()
+    local L0_2 = L2_1.Character and L2_1.Character:FindFirstChild("HumanoidRootPart")
+    local L1_2 = L0_2 and L0_2.CFrame.LookVector or Vector3.new(0, 0, -1)
+    L1_2 = Vector3.new(L1_2.X, 0, L1_2.Z)
+    if L1_2.Magnitude < 0.01 then
+      L1_2 = Vector3.new(0, 0, -1)
+    else
+      L1_2 = L1_2.Unit
+    end
+    local L2_2 = L159_1 + math.random() * (L160_1 - L159_1)
+    local L3_2 = L161_1 + math.random() * (L162_1 - L161_1)
+    local L4_2 = 65 + math.random() * 10
+    local L5_2 = Vector3.new(L2_2, L4_2, L3_2)
+    return CFrame.lookAt(L5_2, L5_2 + L1_2)
+  end
+  
+  function waitForGameLoad()
+    if not L62_1 or not L62_1() then
+      task.spawn(function()
+        pcall(L74_1)
+      end)
+    end
+    local L0_2 = tick()
+    while tick() - L0_2 < 120 do
+      if L62_1 and L62_1() then
+        return true
+      end
+      task.wait(0.5)
+    end
+    if L62_1 and L62_1() then
+      return true
+    end
+    warn("[YBA] Game load timeout: Character took too long.")
+    return false
+  end
+  
+  getRandomSkyCFrame = getRandomFarmRoamCFrame
+  
+  function cleanupFarmPads()
+    pcall(function()
+      local L0_3 = L10_1:FindFirstChild("WhitePad")
+      if L0_3 then
+        L0_3:Destroy()
+      end
+      local L1_3 = L10_1:FindFirstChild("UnderwhitePad")
+      if L1_3 then
+        L1_3:Destroy()
+      end
+      local L2_3 = L10_1:FindFirstChild("YBA_FloatPad_Farm")
+      if L2_3 then
+        L2_3:Destroy()
+      end
+    end)
+  end
+  
+  local function L164_1(A0_2)
+    cleanupFarmPads()
+  end
+  
+  local function L165_1()
+    local L0_2 = L2_1.Character and L2_1.Character:FindFirstChild("HumanoidRootPart")
+    if L0_2 then
+      local L1_2 = getRandomSkyCFrame()
+      L164_1(L1_2.Position)
+      if getgenv()._YBA_directTP then
+        L0_2.CFrame = L1_2
+        L0_2.AssemblyLinearVelocity = Vector3.zero
+        L0_2.AssemblyAngularVelocity = Vector3.zero
+      else
+        L149_1(L1_2)
+      end
+    end
+  end
+  
+  function randomSkyRoam(A0_2)
+    A0_2 = A0_2 or 5
+    local L1_2 = tick()
+    L156_1(normalFarmOn and "farm" or "main")
+    while A0_2 > tick() - L1_2 do
+      L165_1()
+      task.wait(0.3125)
+    end
+  end
+  
+  local function L166_1(A0_2, A1_2)
+    local L2_2 = L3_1.Character
+    if not L2_2 then
+      return false
+    end
+    local L3_2 = L2_2:FindFirstChild("HumanoidRootPart")
+    if not L3_2 then
+      return false
+    end
+    local L4_2, L5_2 = pcall(function()
+      return A1_2:GetModelCFrame() - Vector3.new(0, 7.5, 0)
+    end)
+    if not L4_2 or not L5_2 then
+      return false
+    end
+    L3_2.CFrame = L5_2
+    local L6_2 = tick()
+    repeat
+      task.wait()
+      L3_2.CFrame = L5_2
+    until not (not ((L3_2.Position - A1_2:GetModelCFrame().p).Magnitude <= 40) and A1_2.Parent) or tick() - L6_2 > 3
+    if not A1_2.Parent then
+      return false
+    end
+    task.wait(L82_1(0.5))
+    local L7_2 = tick()
+    repeat
+      pcall(function()
+        if A0_2 and A0_2:FindFirstChild("RemoteEvent") then
+          A0_2.RemoteEvent:FireServer()
+        elseif A0_2 then
+          fireproximityprompt(A0_2, 0, true)
+        end
+      end)
+      task.wait(0.1)
+    until not (A1_2.Parent and A1_2:FindFirstChild("ProximityPrompt")) or tick() - L7_2 > 3.5
+    return true
+  end
+  
+  function travelToInstant(A0_2)
+    if L86_1() then
+      L87_1(0.5)
+      return false
+    end
+    if L90_1() then
+      return false
+    end
+    L155_1()
+    L156_1(normalFarmOn and "farm" or SF and SF.standFarmRunning and "stand" or "main")
+    local L1_2 = L3_1 and L3_1.Character or L2_1 and L2_1.Character or workspace:FindFirstChild("Living") and workspace.Living:FindFirstChild(L3_1 and L3_1.Name or L2_1.Name) or workspace:FindFirstChild(L3_1 and L3_1.Name or L2_1.Name)
+    if not (L1_2 and L1_2.Parent) or not L1_2:IsDescendantOf(workspace) then
+      return false
+    end
+    local L2_2 = L1_2:FindFirstChildOfClass("Humanoid")
+    if not L2_2 or L2_2.Health <= 0 then
+      return false
+    end
+    local L3_2 = L1_2:FindFirstChild("HumanoidRootPart")
+    if not L3_2 then
+      return false
+    end
+    local L4_2, L5_2
+    local L6_2 = false
+    if typeof(A0_2) == "Vector3" then
+      if getgenv()._YBA_directTP then
+        L3_2.CFrame = CFrame.new(A0_2)
+        L151_1(L3_2)
+        return true
+      else
+        L156_1(normalFarmOn and "farm" or "main")
+        return tweenMoveTo(L3_2, CFrame.new(A0_2), moveTweenSpeed, nil)
+      end
+    elseif typeof(A0_2) == "CFrame" then
+      if getgenv()._YBA_directTP then
+        L3_2.CFrame = A0_2
+        L151_1(L3_2)
+        return true
+      else
+        L156_1(normalFarmOn and "farm" or "main")
+        return tweenMoveTo(L3_2, A0_2, moveTweenSpeed, nil)
+      end
+    elseif typeof(A0_2) == "Instance" then
+      L6_2 = L158_1(A0_2)
+      if A0_2:IsA("BasePart") then
+        L4_2 = A0_2
+        L5_2 = A0_2.Parent
+      elseif A0_2:FindFirstChildOfClass("MeshPart") then
+        L4_2 = A0_2:FindFirstChildOfClass("MeshPart")
+        L5_2 = A0_2
+      elseif A0_2:FindFirstChildOfClass("Part") then
+        L4_2 = A0_2:FindFirstChildOfClass("Part")
+        L5_2 = A0_2
+      elseif A0_2.PrimaryPart then
+        L4_2 = A0_2.PrimaryPart
+        L5_2 = A0_2
+      end
+    else
+      return false
+    end
+    if not L4_2 or not L4_2.Parent then
+      return false
+    end
+    if not L6_2 then
+      if getgenv()._YBA_directTP then
+        L3_2.CFrame = CFrame.new(L4_2.Position)
+        L151_1(L3_2)
+        return true
+      else
+        L156_1(normalFarmOn and "farm" or "main")
+        return tweenMoveTo(L3_2, CFrame.new(L4_2.Position), moveTweenSpeed, function()
+          return not L4_2 or not L4_2.Parent or not L4_2:IsDescendantOf(workspace)
+        end)
+      end
+    end
+    local L7_2
+    if L4_2.Parent then
+      L7_2 = L4_2.Parent:FindFirstChildWhichIsA("ProximityPrompt", true)
+    end
+    if not L7_2 and L4_2:FindFirstChildWhichIsA("ProximityPrompt", true) then
+      L7_2 = L4_2:FindFirstChildWhichIsA("ProximityPrompt", true)
+    end
+    if not L154_1(L5_2 or L4_2) then
+      return false
+    end
+    local L8_2 = getgenv().InstantMethod or L28_1 and L28_1("FarmPosMethod", "Up") or "Up"
+    local L9_2 = tostring(L8_2):lower()
+    local L10_2 = 7
+    if L9_2 == "down" then
+      L10_2 = -7
+    elseif L9_2 == "def" then
+      L10_2 = 0
+    else
+      L10_2 = 7
+    end
+    local L11_2 = L4_2.Position + Vector3.new(0, L10_2, 0)
+    local L12_2 = CFrame.new(L11_2) * CFrame.Angles(0, L3_2.CFrame.Y, 0)
+    
+    local function L13_2()
+      if not L154_1(L5_2 or L4_2) then
+        return true
+      end
+      if L7_2 and (not (L7_2.Parent and L7_2:IsDescendantOf(workspace)) or L7_2.Enabled == false) then
+        return true
+      end
+      if L4_2 and (not L4_2.Parent or not L4_2:IsDescendantOf(workspace)) then
+        return true
+      end
+      if normalFarmOn == false and standFarmRunning == false and ribFarmRunning == false and shinyFarmRunning == false then
+        return true
+      end
+      return false
+    end
+    
+    if getgenv()._YBA_directTP then
+      L3_2.CFrame = L12_2
+      L151_1(L3_2)
+      if recordTeleport then
+        recordTeleport()
+      end
+    else
+      L156_1(normalFarmOn and "farm" or "main")
+      local L14_2 = tweenMoveTo(L3_2, L12_2, moveTweenSpeed, L13_2)
+      if not L14_2 or L13_2() then
+        L155_1()
+        L151_1(L3_2)
+        return false
+      end
+      if recordTeleport then
+        recordTeleport()
+      end
+    end
+    if not L154_1(L5_2 or L4_2) or not L4_2.Parent then
+      L155_1()
+      L151_1(L3_2)
+      return false
+    end
+    local L14_2 = game:GetService("RunService").Heartbeat:Connect(function()
+      if not L3_1.Character or not L3_1.Character:FindFirstChild("HumanoidRootPart") then
+        L155_1()
+        return
+      end
+      if L4_2 and L4_2.Parent and L154_1(L5_2 or L4_2) then
+        local L0_3 = L4_2.Position + Vector3.new(0, L10_2, 0)
+        L3_2.CFrame = CFrame.new(L0_3) * CFrame.Angles(0, L3_2.CFrame.Y, 0)
+        L3_2.AssemblyLinearVelocity = Vector3.zero
+        L3_2.AssemblyAngularVelocity = Vector3.zero
+      else
+        L155_1()
+      end
+    end)
+    table.insert(getgenv().ItemStickConnections, {conn = L14_2})
+    if L7_2 then
+      task.spawn(function()
+        local L0_3 = L82_1(0.35)
+        if 0 < L0_3 then
+          task.wait(L0_3)
+        end
+        local L1_3 = tick()
+        while true do
+          if not (L4_2 and L4_2.Parent and L154_1(L5_2 or L4_2)) or L85_1 or getgenv()._YBA_SellingBusy then
+            break
+          end
+          pcall(function()
+            if L7_2:FindFirstChild("RemoteEvent") then
+              L7_2.RemoteEvent:FireServer()
+            else
+              fireproximityprompt(L7_2, 0, true)
+            end
+          end)
+          task.wait(0.1)
+          if tick() - L1_3 > 4 then
+            break
+          end
+        end
+      end)
+    end
+    return true
+  end
+  
+  local L167_1 = getRandomFarmRoamCFrame()
+  
+  local function L168_1()
+    L155_1()
+    if not L3_1.Character or not L3_1.Character.HumanoidRootPart then
+      return
+    end
+    L167_1 = getRandomFarmRoamCFrame()
+    L164_1(nil)
+    L149_1(L167_1)
+  end
+  
+  function instantTravelTo(A0_2, A1_2)
+    local L2_2 = travelToInstant(A0_2)
+    if A1_2 and L2_2 then
+      task.wait(A1_2)
+    end
+    return L2_2
+  end
+  
+  function collectSingleItemNormal(A0_2)
+    if noteItemFarmProgress then
+      noteItemFarmProgress()
+    end
+    if L86_1() then
+      L87_1(0.5)
+      return false
+    end
+    if L90_1() or L85_1 or getgenv()._YBA_SellingBusy then
+      return false
+    end
+    if not L154_1(A0_2) then
+      return false
+    end
+    if L147_1 then
+      pcall(L147_1)
+    end
+    if L86_1() then
+      L87_1(0.5)
+      return false
+    end
+    if L90_1() or L85_1 or getgenv()._YBA_SellingBusy then
+      return false
+    end
+    local L1_2 = os.clock()
+    if not getgenv()._lastItemTarget or getgenv()._lastItemTarget ~= A0_2 then
+      getgenv()._lastItemTarget = A0_2
+      getgenv()._lastItemTargetTime = L1_2
+      getgenv()._lastItemTargetAttempts = 1
+    else
+      getgenv()._lastItemTargetAttempts = (getgenv()._lastItemTargetAttempts or 1) + 1
+      if L1_2 - getgenv()._lastItemTargetTime > 8 or getgenv()._lastItemTargetAttempts > 5 then
+        warn("[Farm] Stuck on item for 8s / 5 attempts. Temporarily ignoring for 15s...")
+        getgenv()._blacklistedItems = getgenv()._blacklistedItems or {}
+        getgenv()._blacklistedItems[A0_2] = L1_2 + 15
+        getgenv()._lastItemTarget = nil
+        getgenv()._lastItemTargetAttempts = 0
+        L155_1()
+        return false
+      end
+    end
+    local L2_2, L3_2, L4_2 = L146_1(A0_2)
+    if not L2_2 or not L3_2 then
+      L2_2 = L2_2 or A0_2:FindFirstChildWhichIsA("BasePart", true) or A0_2.PrimaryPart
+      L3_2 = L3_2 or A0_2:FindFirstChildWhichIsA("ProximityPrompt", true)
+    end
+    if not (L2_2 and L3_2) or not L154_1(A0_2) then
+      return false
+    end
+    local L5_2 = L82_1(0.35)
+    local L6_2 = instantPickup and instantTravelTo(L2_2) or travelToInstant(L2_2)
+    if not L6_2 or not L154_1(A0_2) then
+      L155_1()
+      return false
+    end
+    task.wait(L5_2)
+    if L85_1 or getgenv()._YBA_SellingBusy or L90_1() or not L154_1(A0_2) then
+      L155_1()
+      return false
+    end
+    if instantPickup then
+      if type(fireproximityprompt) == "function" then
+        pcall(function()
+          fireproximityprompt(L3_2, 0, true)
+        end)
+      end
+      L153_1(L3_2, 0)
+    else
+      local L7_2 = L3_1.Character and L3_1.Character:FindFirstChild("HumanoidRootPart")
+      if L7_2 and 15 >= (L2_2.Position - L7_2.Position).Magnitude then
+        if type(fireproximityprompt) == "function" then
+          pcall(function()
+            fireproximityprompt(L3_2, 0, true)
+          end)
+        end
+        L153_1(L3_2, 0.4)
+      end
+    end
+    local L7_2 = tick()
+    while 1 > tick() - L7_2 and L154_1(A0_2) and not L90_1() do
+      if type(fireproximityprompt) == "function" then
+        pcall(function()
+          fireproximityprompt(L3_2, 0, true)
+        end)
+      end
+      task.wait(0.1)
+    end
+    L148_1()
+    if L126_1 then
+      L126_1()
+    end
+    task.wait(0.1)
+    L155_1()
+    return not L154_1(A0_2)
+  end
+  
+  function collectItemLikeNormalFarm(A0_2)
+    return collectSingleItemNormal(A0_2)
+  end
+  
+  function farmItemByName(A0_2, A1_2, A2_2)
+    A1_2 = A1_2 or 1
+    local L3_2 = tick()
+    local L4_2 = 0
+    local L5_2, L6_2
+    local L7_2 = L144_1 and L144_1(A0_2) or A0_2
+    while A1_2 > L4_2 and tick() - L3_2 < 30 do
+      local L8_2 = false
+      while true do
+        if A2_2 and not A2_2() then
+          L8_2 = true
+          break
+        end
+        if L90_1() then
+          L8_2 = true
+          break
+        end
+        local L9_2 = game.Workspace:FindFirstChild("Item_Spawns") and game.Workspace.Item_Spawns:FindFirstChild("Items")
+        if not L9_2 then
+          task.wait(0.5)
+          break
+        end
+        local L10_2 = L3_1.Character and L3_1.Character:FindFirstChild("HumanoidRootPart")
+        if not L10_2 then
+          task.wait(0.5)
+          break
+        end
+        local L11_2
+        local L12_2 = math.huge
+        for L16_2, L17_2 in pairs(L9_2:GetChildren()) do
+          while true do
+            if getgenv()._blacklistedItems and getgenv()._blacklistedItems[L17_2] then
+              if os.clock() < (getgenv()._blacklistedItems[L17_2] or 0) then
+                break
+              end
+              getgenv()._blacklistedItems[L17_2] = nil
+            end
+            local L18_2, L19_2, L20_2 = L146_1(L17_2)
+            if not (L18_2 and L19_2 and L154_1(L17_2)) then
+              break
+            end
+            local L21_2 = L144_1 and L144_1(L20_2) or L20_2
+            if L21_2 ~= L7_2 and L20_2 ~= A0_2 and (not L17_2.Name or L144_1(L17_2.Name) ~= L7_2) then
+              break
+            end
+            local L22_2 = (L18_2.Position - L10_2.Position).Magnitude
+            if L12_2 > L22_2 then
+              L12_2 = L22_2
+              L11_2 = L17_2
+            end
+            break
+          end
+        end
+        if not L11_2 then
+          if tick() - L3_2 > 3 and 1 <= L4_2 then
+            L8_2 = true
+            break
+          end
+          task.wait(0.5)
+          break
+        end
+        if L11_2 ~= L5_2 then
+          L5_2 = L11_2
+          L6_2 = tick()
+        elseif L6_2 and tick() - L6_2 > 10 then
+          warn("[farmItemByName] Stuck on item for 10s, skipping")
+          L5_2 = nil
+          L6_2 = nil
+          task.wait(0.5)
+          break
+        end
+        local L13_2 = 0
+        for L17_2, L18_2 in pairs(L3_1.Backpack:GetChildren()) do
+          if L18_2.Name == A0_2 or L144_1 and L144_1(L18_2.Name) == L7_2 then
+            L13_2 = L13_2 + 1
+          end
+        end
+        if L3_1.Character then
+          for L17_2, L18_2 in pairs(L3_1.Character:GetChildren()) do
+            if L18_2.Name == A0_2 or L144_1 and L144_1(L18_2.Name) == L7_2 then
+              L13_2 = L13_2 + 1
+            end
+          end
+        end
+        collectSingleItemNormal(L11_2)
+        local L14_2 = 0
+        for L18_2, L19_2 in pairs(L3_1.Backpack:GetChildren()) do
+          if L19_2.Name == A0_2 or L144_1 and L144_1(L19_2.Name) == L7_2 then
+            L14_2 = L14_2 + 1
+          end
+        end
+        if L3_1.Character then
+          for L18_2, L19_2 in pairs(L3_1.Character:GetChildren()) do
+            if L19_2.Name == A0_2 or L144_1 and L144_1(L19_2.Name) == L7_2 then
+              L14_2 = L14_2 + 1
+            end
+          end
+        end
+        if L13_2 < L14_2 then
+          L4_2 = L4_2 + (L14_2 - L13_2)
+        end
+        break
+      end
+      if L8_2 then
+        break
+      end
+    end
+    return L4_2
+  end
+  
+  normalFarmOn = false
+  selectedFarmItems = (function()
+    local L0_2 = L28_1 and L28_1("SelectedFarmItems")
+    if type(L0_2) == "table" then
+      local L1_2 = {}
+      for L5_2, L6_2 in ipairs(L0_2) do
+        if type(L6_2) == "string" then
+          table.insert(L1_2, L6_2)
+        end
+      end
+      return L1_2
+    end
+    return {}
+  end)()
+  do
+    local L169_1 = false
+    for L173_1 = #selectedFarmItems, 1, -1 do
+      local L174_1 = L144_1 and L144_1(selectedFarmItems[L173_1]) or selectedFarmItems[L173_1]
+      if L139_1 and L139_1.nonFarmableItems and L139_1.nonFarmableItems[L174_1] then
+        table.remove(selectedFarmItems, L173_1)
+        L169_1 = true
+      end
+    end
+    if L169_1 then
+      pcall(function()
+        L27_1("SelectedFarmItems", selectedFarmItems)
+      end)
+    end
+  end
+  sellBlacklist = (function()
+    local L0_2 = L28_1 and L28_1("SLBL")
+    if type(L0_2) == "table" then
+      local L1_2 = {}
+      for L5_2, L6_2 in ipairs(L0_2) do
+        if type(L6_2) == "string" and not tostring(L6_2):lower():find("lucky") then
+          table.insert(L1_2, L6_2)
+        end
+      end
+      return L1_2
+    end
+    return {}
+  end)()
+  
+  function findNearestItem(A0_2)
+    local L1_2 = L3_1.Character and L3_1.Character:FindFirstChild("HumanoidRootPart")
+    if not L1_2 then
+      return nil
+    end
+    local L2_2 = game.Workspace:FindFirstChild("Item_Spawns") and game.Workspace.Item_Spawns:FindFirstChild("Items")
+    if not L2_2 then
+      return nil
+    end
+    for L6_2 = 1, 2 do
+      if L6_2 == 2 then
+        pcall(function()
+          local L0_3 = getgenv()._blacklistedItems
+          if type(L0_3) == "table" then
+            local L1_3 = os.clock()
+            for L5_3, L6_3 in pairs(L0_3) do
+              local L7_3 = false
+              pcall(function()
+                if not L5_3.Parent or not L5_3:IsDescendantOf(workspace) then
+                  L7_3 = true
+                end
+              end)
+              if L7_3 or type(L6_3) == "number" and L6_3 <= L1_3 then
+                L0_3[L5_3] = nil
+              end
+            end
+          end
+        end)
+      end
+      local L7_2 = math.huge
+      local L8_2 = math.huge
+      local L9_2
+      local L10_2 = os.clock()
+      for L14_2, L15_2 in pairs(L2_2:GetChildren()) do
+        while true do
+          if L6_2 == 1 and getgenv()._blacklistedItems and getgenv()._blacklistedItems[L15_2] then
+            if L10_2 < getgenv()._blacklistedItems[L15_2] then
+              break
+            else
+              getgenv()._blacklistedItems[L15_2] = nil
+            end
+          end
+          local L16_2, L17_2, L18_2 = L146_1(L15_2)
+          if not (L16_2 and L17_2 and L154_1(L15_2)) then
+            break
+          end
+          do
+            local L19_2 = L144_1 and L144_1(L18_2) or L18_2
+            if L139_1 and L139_1.nonFarmableItems and L139_1.nonFarmableItems[L19_2] then
+              break
+            end
+          end
+          local L19_2 = L145_1 and L145_1(L18_2) or 0
+          local L20_2 = L157_1 and (L157_1[L18_2] or L144_1 and L157_1[L144_1(L18_2)]) or 25
+          if isAutoSellBlacklisted and isAutoSellBlacklisted(L18_2) and L19_2 >= L20_2 then
+            break
+          end
+          local L21_2 = #A0_2 == 0
+          if not L21_2 then
+            local L22_2 = L144_1 and L144_1(L18_2) or L18_2
+            for L26_2, L27_2 in ipairs(A0_2) do
+              if L144_1 and L144_1(L27_2) == L22_2 or L27_2 == L18_2 or L27_2 == "Lucky Arrow" and (L18_2 == "Lucky Arrow" or L15_2.Name and L15_2.Name:find("Lucky Arrow")) then
+                L21_2 = true
+                break
+              end
+            end
+          end
+          if not (L21_2 and L19_2 < L20_2) then
+            break
+          end
+          local L22_2 = (L16_2.Position - L1_2.Position).Magnitude
+          local L23_2 = 4
+          local L24_2 = (tostring(L18_2 or "") .. " " .. tostring(L17_2.ObjectText or "") .. " " .. tostring(L15_2.Name or "")):lower()
+          local L25_2 = L24_2:gsub("[^%a%d]", "")
+          if L25_2:find("luckyarrow", 1, true) then
+            L23_2 = 1
+          elseif L25_2:find("luckystonemask", 1, true) or L25_2:find("luckymask", 1, true) then
+            L23_2 = 2
+          elseif L25_2:find("candy", 1, true) then
+            L23_2 = 3
+          else
+            L23_2 = 4
+          end
+          if L7_2 > L23_2 then
+            L7_2 = L23_2
+            L8_2 = L22_2
+            L9_2 = L15_2
+            break
+          end
+          if L23_2 == L7_2 and L22_2 < L8_2 then
+            L8_2 = L22_2
+            L9_2 = L15_2
+          end
+          break
+        end
+      end
+      if L9_2 then
+        return L9_2
+      end
+    end
+    return nil
+  end
+  
+  function findLuckyArrow()
+    return findNearestItem({
+      "Lucky Arrow",
+      "Lucky Stone Mask"
+    })
+  end
+  
+  autoTurnInCandies = L28_1 and L28_1("AutoTurnInCandies", false) or false
+  
+  function getTotalCandiesCount()
+    local L0_2 = 0
+    local L1_2 = L2_1 or game:GetService("Players").LocalPlayer
+    local L2_2 = L1_2 and L1_2:FindFirstChild("Backpack")
+    local L3_2 = L1_2 and L1_2.Character
+    
+    local function L4_2(A0_3)
+      if A0_3 and A0_3:IsA("Tool") then
+        local L1_3 = tostring(A0_3.Name):lower()
+        if L1_3:find("candy", 1, true) or L1_3:find("\208\186\208\190\208\189\209\132\208\181\209\130", 1, true) or L1_3:find("\208\187\208\181\208\180\208\181\208\189", 1, true) or isCandyItem and (isCandyItem(A0_3) or isCandyItem(A0_3.Name)) then
+          L0_2 = L0_2 + 1
+        end
+      end
+    end
+    
+    if L2_2 then
+      for L8_2, L9_2 in ipairs(L2_2:GetChildren()) do
+        L4_2(L9_2)
+      end
+    end
+    if L3_2 then
+      for L8_2, L9_2 in ipairs(L3_2:GetChildren()) do
+        L4_2(L9_2)
+      end
+    end
+    return L0_2
+  end
+  
+  function findNearestJackNPC()
+    local L0_2 = workspace:FindFirstChild("Dialogues")
+    local L1_2
+    local L2_2 = L2_1 or game:GetService("Players").LocalPlayer
+    local L3_2 = L2_2 and L2_2.Character and L2_2.Character:FindFirstChild("HumanoidRootPart")
+    local L4_2 = L3_2 and L3_2.Position or Vector3.zero
+    
+    local function L5_2(A0_3)
+      if not A0_3 or not A0_3:IsA("Model") and not A0_3:IsA("Folder") then
+        return false
+      end
+      local L1_3 = tostring(A0_3.Name):lower()
+      return A0_3.Name == "Jack, The Cauldron Specter" or L1_3:find("cauldron specter", 1, true) or L1_3:find("jack", 1, true) and not L1_3:find("jotaro", 1, true) and not L1_3:find("blackjack", 1, true)
+    end
+    
+    if L0_2 then
+      local L6_2 = math.huge
+      for L10_2, L11_2 in ipairs(L0_2:GetChildren()) do
+        if L5_2(L11_2) then
+          local L12_2 = L11_2:GetPivot()
+          local L13_2 = (L12_2.Position - L4_2).Magnitude
+          if L6_2 > L13_2 then
+            L6_2 = L13_2
+            L1_2 = L11_2
+          end
+        end
+      end
+    end
+    if not L1_2 then
+      for L9_2, L10_2 in ipairs(workspace:GetDescendants()) do
+        if L5_2(L10_2) then
+          L1_2 = L10_2
+          break
+        end
+      end
+    end
+    return L1_2
+  end
+  
+  function completeAndCloseJackDialogue(A0_2, A1_2)
+    A1_2 = A1_2 or 4
+    local L2_2 = L2_1 or game:GetService("Players") and game:GetService("Players").LocalPlayer
+    local L3_2 = L2_2 and L2_2:FindFirstChild("PlayerGui")
+    local L4_2 = L2_2 and L2_2.Character
+    local L5_2 = L4_2 and L4_2:FindFirstChildOfClass("Humanoid")
+    pcall(function()
+      if L5_2 and L4_2:FindFirstChildOfClass("Tool") then
+        L5_2:UnequipTools()
+      end
+    end)
+    local L6_2 = tick()
+    
+    local function L7_2(A0_3, A1_3)
+      if not A0_3 or not A1_3 then
+        return
+      end
+      local L2_3 = A1_3:FindFirstChild("ClickContinue", true) or A0_3:FindFirstChild("ClickContinue", true)
+      if L2_3 and L2_3.Visible and L54_1 then
+        L54_1(L2_3)
+      end
+      local L3_3 = A1_3:FindFirstChild("Options")
+      if L3_3 and L3_3.Visible then
+        return
+      end
+      local L4_3 = A1_3:FindFirstChild("DialogueFrame", true)
+      if L4_3 and L4_3:IsA("GuiObject") and L4_3.Visible and L54_1 then
+        L54_1(L4_3)
+      end
+      local L5_3 = A0_3:FindFirstChild("Frame") or A0_3:FindFirstChildWhichIsA("Frame")
+      if L5_3 and L5_3:IsA("GuiObject") and L5_3.Visible and L54_1 then
+        L54_1(L5_3)
+      end
+    end
+    
+    while A1_2 > tick() - L6_2 do
+      local L8_2 = A0_2 or L3_2 and L3_2:FindFirstChild("DialogueGui")
+      if not (L8_2 and L8_2.Parent) or not L8_2.Enabled then
+        break
+      end
+      local L9_2 = L8_2:FindFirstChild("Frame") or L8_2:FindFirstChildWhichIsA("Frame")
+      if not L9_2 or not L9_2.Visible then
+        break
+      end
+      for L13_2, L14_2 in ipairs(L9_2:GetDescendants()) do
+        if L14_2:IsA("GuiButton") and L14_2.Visible then
+          do
+            local L15_2 = tostring(L14_2:IsA("TextButton") and L14_2.Text or ""):lower()
+            if L15_2:find("continue") or L15_2:find("bye") or L15_2:find("go now") or L15_2:find("leave") or L15_2:find("see ya") or L15_2:find("\208\191\208\190\208\186\208\176") or L15_2:find("\209\131\208\185\209\130\208\184") then
+              if L54_1 then
+                L54_1(L14_2)
+              end
+              break
+            end
+          end
+        end
+      end
+      L7_2(L8_2, L9_2)
+      task.wait(0.18)
+    end
+    local L8_2 = A0_2 or L3_2 and L3_2:FindFirstChild("DialogueGui")
+    if L8_2 and L8_2.Parent and L8_2.Enabled then
+      local L9_2 = tick()
+      while tick() - L9_2 < 2 do
+        L8_2 = L3_2 and L3_2:FindFirstChild("DialogueGui") or L8_2
+        if not (L8_2 and L8_2.Parent) or not L8_2.Enabled then
+          break
+        end
+        local L10_2 = L8_2:FindFirstChild("Frame") or L8_2:FindFirstChildWhichIsA("Frame")
+        if not L10_2 or not L10_2.Visible then
+          break
+        end
+        L7_2(L8_2, L10_2)
+        task.wait(0.15)
+      end
+    end
+  end
+  
+  lastJackInteractionTick = 0
+  isTurningInCandies = false
+  
+  function turnInCandiesToJack(A0_2)
+    if noteItemFarmProgress then
+      noteItemFarmProgress()
+    end
+    if isTurningInCandies or isBuyingRedeemedLucky then
+      if tick() - lastJackInteractionTick > 12 then
+        isTurningInCandies = false
+        isBuyingRedeemedLucky = false
+      else
+        return false, "busy"
+      end
+    end
+    isTurningInCandies = true
+    lastJackInteractionTick = tick()
+    local L1_2 = getTotalCandiesCount()
+    if L1_2 == 0 then
+      if not A0_2 then
+        L107_1("Halloween Event", "No candies in inventory to turn in!")
+      end
+      isTurningInCandies = false
+      return false, "no_candies"
+    end
+    if waitForTeleportCooldown then
+      waitForTeleportCooldown(0.7)
+    end
+    local L2_2 = game:GetService("ReplicatedStorage")
+    local L3_2 = L2_2:FindFirstChild("NewDialogue") and L2_2.NewDialogue:FindFirstChild("Halloween Event") or L2_2:FindFirstChild("Dialogue") and L2_2.Dialogue:FindFirstChild("Halloween Event") or L2_2:FindFirstChild("NewDialogue") and L2_2.NewDialogue:FindFirstChild("Jack") or L2_2:FindFirstChild("Dialogue") and L2_2.Dialogue:FindFirstChild("Jack")
+    local L4_2 = findNearestJackNPC()
+    if not L4_2 and not L3_2 then
+      if not A0_2 then
+        L107_1("Halloween Event", "Jack NPC / Dialogue prompt not found!")
+      end
+      isTurningInCandies = false
+      return false, "no_npc"
+    end
+    local L5_2 = L4_2 and L4_2:FindFirstChildWhichIsA("ProximityPrompt", true)
+    if not L5_2 and not L3_2 then
+      if not A0_2 then
+        L107_1("Halloween Event", "ProximityPrompt on Jack not found!")
+      end
+      isTurningInCandies = false
+      return false, "no_prompt"
+    end
+    local L6_2 = L2_1 or game:GetService("Players").LocalPlayer
+    local L7_2 = L6_2 and L6_2.Character and L6_2.Character:FindFirstChild("HumanoidRootPart")
+    if not L7_2 then
+      isTurningInCandies = false
+      return false, "no_hrp"
+    end
+    if waitForTeleportCooldown then
+      waitForTeleportCooldown(0.7)
+    end
+    
+    local function L8_2()
+      isTurningInCandies = false
+    end
+    
+    if not A0_2 then
+      L107_1("Halloween Event", "Turning in " .. L1_2 .. " candies to Jack...")
+    end
+    pcall(function()
+      local L0_3 = L6_2 and L6_2.Character
+      local L1_3 = L0_3 and L0_3:FindFirstChildOfClass("Humanoid")
+      if L1_3 and L0_3:FindFirstChildOfClass("Tool") then
+        L1_3:UnequipTools()
+      end
+    end)
+    local L9_2 = L6_2 and L6_2.Character and L6_2.Character:FindFirstChild("RemoteEvent")
+    
+    local function L10_2()
+      if L3_2 and L9_2 then
+        pcall(function()
+          L9_2:FireServer("PromptTriggered", L3_2)
+        end)
+      end
+      if L5_2 then
+        pcall(function()
+          if L5_2.MaxActivationDistance > 32 then
+            L5_2.MaxActivationDistance = 10
+          end
+          L5_2.RequiresLineOfSight = true
+        end)
+        if L9_2 then
+          pcall(function()
+            L9_2:FireServer("PromptTriggered", L5_2)
+          end)
+        end
+        if type(fireproximityprompt) == "function" then
+          pcall(function()
+            fireproximityprompt(L5_2, 0, true)
+          end)
+          pcall(function()
+            fireproximityprompt(L5_2)
+          end)
+        end
+        if type(firesignal) == "function" then
+          pcall(function()
+            firesignal(L5_2.Triggered, L6_2)
+            if L5_2.PromptTriggered then
+              firesignal(L5_2.PromptTriggered, L6_2)
+            end
+          end)
+        end
+      end
+    end
+    
+    L10_2()
+    local L11_2 = L6_2:FindFirstChild("PlayerGui")
+    local L12_2
+    local L13_2 = tick()
+    while tick() - L13_2 < 3.5 do
+      L12_2 = L11_2 and L11_2:FindFirstChild("DialogueGui")
+      if L12_2 and L12_2.Enabled and L12_2:FindFirstChild("Frame") and L12_2.Frame.Visible then
+        break
+      end
+      L10_2()
+      task.wait(0.2)
+    end
+    if not L12_2 or not L12_2.Enabled then
+      if not A0_2 then
+        L107_1("Halloween Event", "Failed to open Jack's dialogue!")
+      end
+      L8_2()
+      return false, "no_dialogue"
+    end
+    local L14_2
+    local L15_2 = tick()
+    while tick() - L15_2 < 3 do
+      if not (L12_2 and L12_2.Parent) or not L12_2.Enabled then
+        L12_2 = L11_2 and L11_2:FindFirstChild("DialogueGui")
+      end
+      if L12_2 and L12_2.Enabled then
+        for L19_2, L20_2 in ipairs(L12_2:GetDescendants()) do
+          if L20_2:IsA("TextButton") and tostring(L20_2.Text):lower():find("turn in", 1, true) then
+            L14_2 = L20_2
+            break
+          end
+        end
+        if L14_2 then
+          break
+        end
+        local L16_2 = L12_2:FindFirstChild("Frame")
+        local L17_2 = L16_2 and L16_2:FindFirstChild("ClickContinue", true)
+        if L17_2 and L17_2.Visible and L54_1 then
+          L54_1(L17_2)
+        end
+      end
+      task.wait(0.12)
+    end
+    if not L14_2 then
+      if not A0_2 then
+        L107_1("Halloween Event", "Turn in button not found in dialogue!")
+      end
+      completeAndCloseJackDialogue(L12_2, 2)
+      L8_2()
+      return false, "no_turnin_btn"
+    end
+    if L54_1 then
+      L54_1(L14_2)
+    else
+      pcall(function()
+        firesignal(L14_2.MouseButton1Click)
+      end)
+    end
+    task.wait(0.5)
+    completeAndCloseJackDialogue(L12_2, 4)
+    task.wait(0.3)
+    local L16_2 = getTotalCandiesCount()
+    local L17_2 = math.max(0, L1_2 - L16_2)
+    if 0 < L17_2 then
+      lastKnownJackPoints = (lastKnownJackPoints or 0) + L17_2
+    end
+    L107_1("Halloween Event", "\226\156\168 Turned in " .. (0 < L17_2 and L17_2 or L1_2) .. " candies for event points!")
+    if (autoBuyRedeemedLucky or L28_1 and L28_1("AutoBuyRedeemedLuckyArrow", false)) and lastKnownJackPoints and lastKnownJackPoints >= 100 and getRedeemedLuckyCount() < 9 then
+      task.wait(0.5)
+      pcall(function()
+        buyRedeemedLuckyArrowFromJack(true)
+      end)
+    end
+    L8_2()
+    return true
+  end
+  
+  local L169_1 = 15
+  
+  function checkAndTurnInCandies(A0_2)
+    if not autoTurnInCandies and (not L28_1 or not L28_1("AutoTurnInCandies", false)) then
+      return false
+    end
+    local L1_2 = getTotalCandiesCount()
+    if A0_2 and 0 < L1_2 then
+      return turnInCandiesToJack(true)
+    end
+    if L1_2 > L169_1 then
+      return turnInCandiesToJack(true)
+    end
+    return false
+  end
+  
+  autoBuyRedeemedLucky = L28_1 and L28_1("AutoBuyRedeemedLuckyArrow", false) or false
+  lastKnownJackPoints = nil
+  
+  function getRedeemedLuckyCount()
+    local L0_2 = 0
+    local L1_2 = L2_1 or game:GetService("Players").LocalPlayer
+    local L2_2 = L1_2 and L1_2:FindFirstChild("Backpack")
+    local L3_2 = L1_2 and L1_2.Character
+    if L2_2 then
+      for L7_2, L8_2 in ipairs(L2_2:GetChildren()) do
+        if L8_2:IsA("Tool") and L8_2.Name == "Redeemed Lucky Arrow" then
+          L0_2 = L0_2 + 1
+        end
+      end
+    end
+    if L3_2 then
+      for L7_2, L8_2 in ipairs(L3_2:GetChildren()) do
+        if L8_2:IsA("Tool") and L8_2.Name == "Redeemed Lucky Arrow" then
+          L0_2 = L0_2 + 1
+        end
+      end
+    end
+    return L0_2
+  end
+  
+  isBuyingRedeemedLucky = false
+  
+  function buyRedeemedLuckyArrowFromJack(A0_2)
+    if noteItemFarmProgress then
+      noteItemFarmProgress()
+    end
+    if isBuyingRedeemedLucky or isTurningInCandies then
+      if tick() - lastJackInteractionTick > 12 then
+        isBuyingRedeemedLucky = false
+        isTurningInCandies = false
+      else
+        return false, "busy"
+      end
+    end
+    isBuyingRedeemedLucky = true
+    lastJackInteractionTick = tick()
+    local L1_2 = getRedeemedLuckyCount()
+    if 9 <= L1_2 then
+      if not A0_2 then
+        L107_1("Halloween Event", "Max Redeemed Lucky Arrows (9/9) already reached!")
+      end
+      isBuyingRedeemedLucky = false
+      return false, "max_reached"
+    end
+    if waitForTeleportCooldown then
+      waitForTeleportCooldown(0.7)
+    end
+    local L2_2 = game:GetService("ReplicatedStorage")
+    local L3_2 = L2_2:FindFirstChild("NewDialogue") and L2_2.NewDialogue:FindFirstChild("Halloween Event") or L2_2:FindFirstChild("Dialogue") and L2_2.Dialogue:FindFirstChild("Halloween Event") or L2_2:FindFirstChild("NewDialogue") and L2_2.NewDialogue:FindFirstChild("Jack") or L2_2:FindFirstChild("Dialogue") and L2_2.Dialogue:FindFirstChild("Jack")
+    local L4_2 = findNearestJackNPC()
+    if not L4_2 and not L3_2 then
+      if not A0_2 then
+        L107_1("Halloween Event", "Jack NPC / Dialogue prompt not found!")
+      end
+      isBuyingRedeemedLucky = false
+      return false, "no_npc"
+    end
+    local L5_2 = L4_2 and L4_2:FindFirstChildWhichIsA("ProximityPrompt", true)
+    if not L5_2 and not L3_2 then
+      if not A0_2 then
+        L107_1("Halloween Event", "ProximityPrompt on Jack not found!")
+      end
+      isBuyingRedeemedLucky = false
+      return false, "no_prompt"
+    end
+    local L6_2 = L2_1 or game:GetService("Players").LocalPlayer
+    local L7_2 = L6_2 and L6_2.Character and L6_2.Character:FindFirstChild("HumanoidRootPart")
+    if not L7_2 then
+      isBuyingRedeemedLucky = false
+      return false, "no_hrp"
+    end
+    if waitForTeleportCooldown then
+      waitForTeleportCooldown(0.7)
+    end
+    
+    local function L8_2()
+      isBuyingRedeemedLucky = false
+    end
+    
+    if not A0_2 then
+      L107_1("Halloween Event", "Opening Jack's dialogue to buy Redeemed Lucky Arrow...")
+    end
+    pcall(function()
+      local L0_3 = L6_2 and L6_2.Character
+      local L1_3 = L0_3 and L0_3:FindFirstChildOfClass("Humanoid")
+      if L1_3 and L0_3:FindFirstChildOfClass("Tool") then
+        L1_3:UnequipTools()
+      end
+    end)
+    local L9_2 = L6_2 and L6_2.Character and L6_2.Character:FindFirstChild("RemoteEvent")
+    
+    local function L10_2()
+      if L3_2 and L9_2 then
+        pcall(function()
+          L9_2:FireServer("PromptTriggered", L3_2)
+        end)
+      end
+      if L5_2 then
+        pcall(function()
+          if L5_2.MaxActivationDistance > 32 then
+            L5_2.MaxActivationDistance = 10
+          end
+          L5_2.RequiresLineOfSight = true
+        end)
+        if L9_2 then
+          pcall(function()
+            L9_2:FireServer("PromptTriggered", L5_2)
+          end)
+        end
+        if type(fireproximityprompt) == "function" then
+          pcall(function()
+            fireproximityprompt(L5_2, 0, true)
+          end)
+          pcall(function()
+            fireproximityprompt(L5_2)
+          end)
+        end
+        if type(firesignal) == "function" then
+          pcall(function()
+            firesignal(L5_2.Triggered, L6_2)
+            if L5_2.PromptTriggered then
+              firesignal(L5_2.PromptTriggered, L6_2)
+            end
+          end)
+        end
+      end
+    end
+    
+    L10_2()
+    local L11_2 = L6_2:FindFirstChild("PlayerGui")
+    local L12_2
+    local L13_2 = tick()
+    while tick() - L13_2 < 3.5 do
+      L12_2 = L11_2 and L11_2:FindFirstChild("DialogueGui")
+      if L12_2 and L12_2.Enabled and L12_2:FindFirstChild("Frame") and L12_2.Frame.Visible then
+        break
+      end
+      L10_2()
+      task.wait(0.2)
+    end
+    if not L12_2 or not L12_2.Enabled then
+      if not A0_2 then
+        L107_1("Halloween Event", "Failed to open Jack's dialogue!")
+      end
+      L8_2()
+      return false, "no_dialogue"
+    end
+    local L14_2
+    local L15_2 = tick()
+    while tick() - L15_2 < 3 do
+      for L19_2, L20_2 in ipairs(L12_2:GetDescendants()) do
+        if L20_2:IsA("TextButton") and tostring(L20_2.Text):lower():find("use my points", 1, true) then
+          L14_2 = L20_2
+          break
+        end
+      end
+      if L14_2 then
+        break
+      end
+      local L16_2 = L12_2:FindFirstChild("Frame") and L12_2.Frame:FindFirstChild("ClickContinue")
+      if L16_2 and L16_2.Visible and L54_1 then
+        L54_1(L16_2)
+      end
+      task.wait(0.1)
+    end
+    if not L14_2 then
+      if not A0_2 then
+        L107_1("Halloween Event", "Could not find 'use my points' button!")
+      end
+      completeAndCloseJackDialogue(L12_2, 2)
+      L8_2()
+      return false, "no_points_btn"
+    end
+    if L54_1 then
+      L54_1(L14_2)
+    end
+    task.wait(0.6)
+    local L16_2
+    local L17_2 = tick()
+    while tick() - L17_2 < 3 do
+      for L21_2, L22_2 in ipairs(L12_2:GetDescendants()) do
+        if L22_2:IsA("TextButton") and tostring(L22_2.Text):lower():find("normal items", 1, true) then
+          L16_2 = L22_2
+          break
+        end
+      end
+      if L16_2 then
+        break
+      end
+      local L18_2 = L12_2:FindFirstChild("Frame") and L12_2.Frame:FindFirstChild("ClickContinue")
+      if L18_2 and L18_2.Visible and L54_1 then
+        L54_1(L18_2)
+      end
+      task.wait(0.1)
+    end
+    if not L16_2 then
+      if not A0_2 then
+        L107_1("Halloween Event", "Could not find 'Normal Items' button!")
+      end
+      completeAndCloseJackDialogue(L12_2, 2)
+      L8_2()
+      return false, "no_norm_btn"
+    end
+    if L54_1 then
+      L54_1(L16_2)
+    end
+    task.wait(0.7)
+    local L18_2 = ""
+    for L22_2, L23_2 in ipairs(L12_2:GetDescendants()) do
+      if L23_2:IsA("TextLabel") and L23_2.Visible and L23_2.Name:find("Group", 1, true) then
+        L18_2 = L18_2 .. " " .. tostring(L23_2.Text)
+      end
+    end
+    local L19_2 = tonumber(L18_2:match("(%d+)%s*points"))
+    if L19_2 then
+      lastKnownJackPoints = L19_2
+    end
+    if lastKnownJackPoints and lastKnownJackPoints < 100 then
+      L107_1("Halloween Event", "Jack's Points: " .. lastKnownJackPoints .. "/100")
+      completeAndCloseJackDialogue(L12_2, 3)
+      L8_2()
+      return false, "not_enough_points"
+    end
+    local L20_2
+    local L21_2 = tick()
+    while tick() - L21_2 < 2.5 do
+      for L25_2, L26_2 in ipairs(L12_2:GetDescendants()) do
+        if L26_2:IsA("TextButton") then
+          do
+            local L27_2 = tostring(L26_2.Text):lower()
+            if L27_2:find("lucky arrow", 1, true) and not L27_2:find("roka", 1, true) and not L27_2:find("mysterious", 1, true) then
+              L20_2 = L26_2
+              break
+            end
+          end
+        end
+      end
+      if L20_2 then
+        break
+      end
+      task.wait(0.1)
+    end
+    if not L20_2 then
+      if not A0_2 then
+        L107_1("Halloween Event", "'Lucky Arrow - 100' button not found in dialogue!")
+      end
+      completeAndCloseJackDialogue(L12_2, 2)
+      L8_2()
+      return false, "no_lucky_btn"
+    end
+    local L22_2 = getRedeemedLuckyCount()
+    if L54_1 then
+      L54_1(L20_2)
+    end
+    task.wait(0.6)
+    completeAndCloseJackDialogue(L12_2, 4)
+    task.wait(0.4)
+    local L23_2 = getRedeemedLuckyCount()
+    local L24_2 = L22_2 < L23_2
+    if L24_2 then
+      if lastKnownJackPoints then
+        lastKnownJackPoints = math.max(0, lastKnownJackPoints - 100)
+      end
+      L107_1("Halloween Event", "\226\156\168 Redeemed Lucky Arrow bought! (" .. L23_2 .. "/9)")
+    elseif not A0_2 then
+      L107_1("Halloween Event", "Could not complete purchase of Redeemed Lucky Arrow.")
+    end
+    L8_2()
+    return L24_2
+  end
+  
+  lastJackPointsCheckTick = 0
+  
+  function checkAndBuyRedeemedLuckyArrow(A0_2)
+    if not normalFarmOn then
+      return false
+    end
+    if not autoBuyRedeemedLucky and (not L28_1 or not L28_1("AutoBuyRedeemedLuckyArrow", false)) then
+      return false
+    end
+    if getRedeemedLuckyCount() >= 9 then
+      return false
+    end
+    if A0_2 then
+      lastJackPointsCheckTick = tick()
+      return buyRedeemedLuckyArrowFromJack(true)
+    end
+    if lastKnownJackPoints and lastKnownJackPoints >= 100 then
+      lastJackPointsCheckTick = tick()
+      return buyRedeemedLuckyArrowFromJack(true)
+    end
+    if tick() - lastJackPointsCheckTick >= 60 then
+      lastJackPointsCheckTick = tick()
+      return buyRedeemedLuckyArrowFromJack(true)
+    end
+    return false
+  end
+  
+  serverHopFarmEnabled = L28_1("SHF", true)
+  local L170_1 = 10
+  local L171_1 = 4.5
+  local L172_1 = 3
+  
+  local function L173_1()
+    local L0_2 = L28_1 and (L28_1("SH_Delay") or L28_1("SHD"))
+    if L0_2 ~= nil and tonumber(L0_2) then
+      return math.clamp(math.floor(tonumber(L0_2)), 0, 5)
+    end
+    if L20_1 and L20_1.ServerHopDelay ~= nil and tonumber(L20_1.ServerHopDelay) then
+      return math.clamp(math.floor(tonumber(L20_1.ServerHopDelay)), 0, 5)
+    end
+    if _G.YBAItemFarm and _G.YBAItemFarm.serverHopDelay ~= nil then
+      return math.clamp(math.floor(tonumber(_G.YBAItemFarm.serverHopDelay)), 0, 5)
+    end
+    if L139_1 and L139_1.serverHopDelay ~= nil then
+      return math.clamp(math.floor(tonumber(L139_1.serverHopDelay)), 0, 5)
+    end
+    return 3
+  end
+  
+  local function L174_1()
+    local L0_2 = "rbxcache/active_servers.json"
+    if not (readfile and isfile) or not isfile(L0_2) then
+      return {}
+    end
+    local L1_2, L2_2 = pcall(readfile, L0_2)
+    if not L1_2 or type(L2_2) ~= "string" or L2_2 == "" then
+      return {}
+    end
+    local L3_2, L4_2 = pcall(function()
+      return L5_1:JSONDecode(L2_2)
+    end)
+    if not L3_2 or type(L4_2) ~= "table" then
+      return {}
+    end
+    local L5_2 = os.time()
+    local L6_2 = {}
+    for L10_2, L11_2 in pairs(L4_2) do
+      if type(L11_2) == "table" and L11_2.time and L5_2 - L11_2.time < 180 then
+        L6_2[tostring(L10_2)] = L11_2
+      end
+    end
+    return L6_2
+  end
+  
+  local function L175_1(A0_2, A1_2)
+    if not A0_2 or A0_2 == "" then
+      return
+    end
+    local L2_2 = "rbxcache/active_servers.json"
+    local L3_2 = L174_1()
+    L3_2[tostring(A0_2)] = {
+      account = tostring(A1_2 or L2_1 and L2_1.Name or "Account"),
+      time = os.time()
+    }
+    pcall(function()
+      if makefolder and (not isfolder or not isfolder("rbxcache")) then
+        pcall(makefolder, "rbxcache")
+      end
+      if writefile then
+        writefile(L2_2, L5_1:JSONEncode(L3_2))
+      end
+    end)
+  end
+  
+  task.spawn(function()
+    while true do
+      if game.JobId and game.JobId ~= "" then
+        local L0_2 = L45_1 and L45_1() or L2_1 or game:GetService("Players").LocalPlayer
+        pcall(L175_1, game.JobId, L0_2 and L0_2.Name)
+      end
+      task.wait(30)
+    end
+  end)
+  
+  local function L176_1()
+    return syn and syn.request or http and http.request or fluxus and fluxus.request or krnl and krnl.request or delta and delta.request or identifyexecutor and (http_request or request) or http_request or request
+  end
+  
+  local function L177_1(A0_2)
+    local L1_2 = L176_1()
+    if not L1_2 then
+      warn("[ServerHop] HTTP request function not available on this executor")
+      return {}
+    end
+    local L2_2 = L174_1()
+    local L3_2 = {}
+    local L4_2 = {}
+    A0_2 = A0_2 or 30
+    local L5_2 = math.clamp(math.ceil(A0_2 / 100), 1, 3)
+    local L6_2 = ""
+    local L7_2 = {"Desc", "Asc"}
+    local L8_2 = L7_2[math.random(1, #L7_2)]
+    for L12_2 = 1, L5_2 do
+      local L13_2 = ("https://games.roproxy.com/v1/games/%d/servers/Public?sortOrder=%s&limit=100"):format(game.PlaceId, L8_2)
+      if L6_2 ~= "" then
+        L13_2 = L13_2 .. "&cursor=" .. L6_2
+      end
+      local L14_2, L15_2 = pcall(L1_2, {Url = L13_2, Method = "GET"})
+      if not (L14_2 and L15_2) or L15_2.StatusCode ~= 200 then
+        L13_2 = ("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=%s&limit=100"):format(game.PlaceId, L8_2)
+        if L6_2 ~= "" then
+          L13_2 = L13_2 .. "&cursor=" .. L6_2
+        end
+        L14_2, L15_2 = pcall(L1_2, {Url = L13_2, Method = "GET"})
+      end
+      if L14_2 and L15_2 and L15_2.StatusCode == 200 and L15_2.Body then
+        local L16_2, L17_2 = pcall(function()
+          return L5_1:JSONDecode(L15_2.Body)
+        end)
+        if L16_2 and L17_2 and L17_2.data and type(L17_2.data) == "table" then
+          for L21_2, L22_2 in ipairs(L17_2.data) do
+            if L22_2 and L22_2.id and L22_2.id ~= game.JobId and L22_2.playing and L22_2.maxPlayers then
+              local L23_2 = math.max(1, L22_2.maxPlayers - 2)
+              if L23_2 >= L22_2.playing and L22_2.playing > 0 then
+                table.insert(L4_2, L22_2)
+                if not L2_2[tostring(L22_2.id)] then
+                  table.insert(L3_2, L22_2)
+                end
+              end
+            end
+          end
+          if L17_2.nextPageCursor and tostring(L17_2.nextPageCursor) ~= "" then
+            L6_2 = tostring(L17_2.nextPageCursor)
+          else
+            break
+          end
+        else
+          break
+        end
+      else
+        break
+      end
+    end
+    local L9_2 = 0 < #L3_2 and L3_2 or L4_2
+    local L10_2 = {}
+    local L11_2 = {}
+    for L15_2 = 1, #L9_2 do
+      table.insert(L11_2, L15_2)
+    end
+    for L15_2 = #L11_2, 2, -1 do
+      local L16_2 = math.random(1, L15_2)
+      L11_2[L15_2], L11_2[L16_2] = L11_2[L16_2], L11_2[L15_2]
+    end
+    for L15_2 = 1, math.min(A0_2, #L11_2) do
+      table.insert(L10_2, L9_2[L11_2[L15_2]])
+    end
+    return L10_2
+  end
+  
+  local L178_1 = 0
+  local L179_1 = false
+  
+  function serverHopToRandom()
+    local L0_2 = tick()
+    if L49_1 or L0_2 - L178_1 < 5 then
+      return false
+    end
+    L49_1 = true
+    L178_1 = L0_2
+    L48_1 = false
+    task.delay(15, function()
+      if L49_1 then
+        L49_1 = false
+        L48_1 = true
+      end
+    end)
+    if L95_1 then
+      pcall(L95_1)
+    end
+    local L1_2 = L45_1 and L45_1() or L2_1 or game:GetService("Players").LocalPlayer
+    local L2_2 = L177_1(30)
+    if L2_2 and 0 < #L2_2 then
+      local L3_2 = game.JobId
+      for L7_2, L8_2 in ipairs(L2_2) do
+        local L9_2 = math.max(1, (L8_2.maxPlayers or 16) - 2)
+        if L8_2.id ~= L3_2 and L8_2.playing and L9_2 >= L8_2.playing then
+          if L47_1 then
+            pcall(L47_1, "Server Hop to " .. L8_2.id)
+          end
+          pcall(L175_1, L8_2.id, L1_2 and L1_2.Name)
+          local L10_2 = false
+          pcall(function()
+            game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, L8_2.id, L1_2)
+            L10_2 = true
+          end)
+          if L10_2 then
+            task.wait(6)
+            return true
+          end
+        end
+      end
+    end
+    if L47_1 then
+      pcall(L47_1, "Server Hop (Random Teleport)")
+    end
+    pcall(function()
+      game:GetService("TeleportService"):Teleport(game.PlaceId, L1_2)
+    end)
+    task.wait(6)
+    return true
+  end
+  
+  if _G.__RAILHUB_TELEPORT_CONN then
+    pcall(function()
+      _G.__RAILHUB_TELEPORT_CONN:Disconnect()
+    end)
+    _G.__RAILHUB_TELEPORT_CONN = nil
+  end
+  if getgenv and getgenv().__RAILHUB_TELEPORT_CONN then
+    pcall(function()
+      getgenv().__RAILHUB_TELEPORT_CONN:Disconnect()
+    end)
+    getgenv().__RAILHUB_TELEPORT_CONN = nil
+  end
+  local L180_1
+  pcall(function()
+    L180_1 = game:GetService("TeleportService").TeleportInitFailed:Connect(function(A0_3, A1_3, A2_3)
+      local L3_3 = L45_1 and L45_1() or L2_1 or game:GetService("Players").LocalPlayer
+      if A0_3 == L3_3 or not A0_3 then
+        warn("[ServerHop] Teleport failed (" .. tostring(A1_3) .. "): " .. tostring(A2_3))
+        pcall(function()
+          game:GetService("GuiService"):ClearError()
+        end)
+        if L179_1 then
+          return
+        end
+        L179_1 = true
+        L49_1 = true
+        L48_1 = false
+        task.spawn(function()
+          local L0_4 = 7
+          if A1_3 == Enum.TeleportResult.IsTeleporting then
+            L0_4 = 10
+          elseif A1_3 == Enum.TeleportResult.Failure then
+            L0_4 = 8
+          end
+          task.wait(L0_4)
+          L49_1 = false
+          L179_1 = false
+          L48_1 = true
+          serverHopToRandom()
+        end)
+      end
+    end)
+    _G.__RAILHUB_TELEPORT_CONN = L180_1
+    if getgenv then
+      getgenv().__RAILHUB_TELEPORT_CONN = L180_1
+    end
+  end)
+  
+  function checkItemOnMap(A0_2)
+    local L1_2 = L2_1.Character and L2_1.Character:FindFirstChild("HumanoidRootPart")
+    if not L1_2 then
+      return false
+    end
+    local L2_2 = game.Workspace:FindFirstChild("Item_Spawns") and game.Workspace.Item_Spawns:FindFirstChild("Items")
+    if not L2_2 then
+      return false
+    end
+    local L3_2 = L144_1 and L144_1(A0_2) or A0_2
+    for L7_2, L8_2 in pairs(L2_2:GetChildren()) do
+      local L9_2, L10_2, L11_2 = L146_1(L8_2)
+      if L9_2 and L10_2 and L154_1(L8_2) and (L144_1 and L144_1(L11_2) == L3_2 or L11_2 == A0_2 or L8_2.Name and L144_1(L8_2.Name) == L3_2) then
+        return true
+      end
+    end
+    return false
+  end
+  
+  local function L181_1(A0_2)
+    if not serverHopFarmEnabled then
+      return false
+    end
+    waitForGameLoad()
+    local L1_2 = L173_1()
+    local L2_2 = L1_2
+    local L3_2 = tick()
+    local L4_2 = false
+    while 0 < L2_2 and L2_2 > tick() - L3_2 do
+      if not serverHopFarmEnabled or not normalFarmOn then
+        return false
+      end
+      if checkItemOnMap(A0_2) then
+        L4_2 = true
+        break
+      end
+      L165_1()
+      task.wait(0.25)
+    end
+    if L4_2 or L2_2 == 0 and checkItemOnMap(A0_2) then
+      return true
+    end
+    for L8_2 = 1, L172_1 do
+      local L9_2 = serverHopToRandom()
+      if L9_2 then
+        task.wait(10)
+        return true
+      end
+      if L8_2 < L172_1 then
+        task.wait(3)
+      end
+    end
+    warn("[ServerHop] All retry attempts exhausted for item: " .. A0_2)
+    return false
+  end
+  
+  function normalFarm()
+    if not waitForGameLoad() then
+      if not L62_1 or not L62_1() then
+        normalFarmOn = false
+        return
+      end
+      if serverHopFarmEnabled then
+        warn("[Farm] Game failed to load. Hopping server...")
+        serverHopToRandom()
+      else
+        warn("[Farm] Game failed to load. Stopping farm.")
+        normalFarmOn = false
+      end
+      return
+    end
+    if L152_1 then
+      pcall(L152_1)
+    end
+    do
+      local L0_2 = L82_1 and L82_1(1) or 1
+      if 0 < L0_2 then
+        task.wait(L0_2)
+      end
+    end
+    local L0_2 = tick()
+    local L1_2 = 3600
+    local L2_2 = 0
+    local L3_2 = 50000
+    while normalFarmOn do
+      local L4_2 = false
+      while true do
+        if L126_1 and L126_1() then
+          normalFarmOn = false
+          L4_2 = true
+          break
+        end
+        if L1_2 < tick() - L0_2 then
+          L0_2 = tick()
+          L2_2 = 0
+        end
+        while normalFarmOn do
+          if L126_1 and L126_1() then
+            normalFarmOn = false
+            break
+          end
+          if L86_1() then
+            L87_1(0.5)
+            break
+          end
+          if L90_1() or L85_1 or getgenv()._YBA_SellingBusy then
+            busyWaitCount = (busyWaitCount or 0) + 1
+            if busyWaitCount > 10 then
+              busyWaitCount = 0
+              pcall(function()
+                L85_1 = false
+                getgenv()._YBA_SellingBusy = false
+                isBuyingRedeemedLucky = false
+                isTurningInCandies = false
+                local L0_3 = L2_1 or game:GetService("Players").LocalPlayer
+                local L1_3 = L0_3 and L0_3.Character and L0_3.Character:FindFirstChild("HumanoidRootPart")
+                if L1_3 then
+                  L1_3.Anchored = false
+                end
+                if L78_1 then
+                  L78_1()
+                end
+              end)
+            end
+            task.wait(0.2)
+            break
+          else
+            busyWaitCount = 0
+          end
+          L2_2 = L2_2 + 1
+          if L3_2 < L2_2 then
+            normalFarmOn = false
+            break
+          end
+          if L147_1 then
+            pcall(L147_1)
+          end
+          if autoTurnInCandies and checkAndTurnInCandies then
+            pcall(checkAndTurnInCandies)
+          end
+          if autoBuyRedeemedLucky and checkAndBuyRedeemedLuckyArrow then
+            pcall(checkAndBuyRedeemedLuckyArrow)
+          end
+          local L5_2 = findLuckyArrow() or findNearestItem(selectedFarmItems)
+          if not L5_2 then
+            getgenv()._lastItemTarget = nil
+            break
+          end
+          collectSingleItemNormal(L5_2)
+          task.wait(0.05)
+        end
+        if not normalFarmOn then
+          break
+        end
+        if L126_1 and L126_1() then
+          normalFarmOn = false
+          L4_2 = true
+          break
+        end
+        local L5_2 = L173_1()
+        if 0 < L5_2 then
+          local L6_2 = tick()
+          while true do
+            if not (normalFarmOn and L5_2 > tick() - L6_2) or (findLuckyArrow() or findNearestItem(selectedFarmItems)) ~= nil then
+              break
+            end
+            L165_1()
+            task.wait(0.25)
+          end
+        end
+        
+        local function L6_2()
+          if L147_1 then
+            pcall(L147_1)
+          end
+          return (findLuckyArrow() or findNearestItem(selectedFarmItems)) ~= nil
+        end
+        
+        if L6_2() then
+          task.wait(0.08)
+          break
+        end
+        if autoTurnInCandies and checkAndTurnInCandies then
+          pcall(function()
+            checkAndTurnInCandies(true)
+          end)
+        end
+        if autoBuyRedeemedLucky and checkAndBuyRedeemedLuckyArrow then
+          pcall(checkAndBuyRedeemedLuckyArrow)
+        end
+        if serverHopFarmEnabled then
+          local L7_2 = serverHopToRandom()
+          if L7_2 then
+            task.wait(10)
+            break
+          end
+          task.wait(4)
+          break
+        else
+          while normalFarmOn do
+            local L7_2 = false
+            if serverHopFarmEnabled then
+              serverHopToRandom()
+              task.wait(10)
+              L7_2 = true
+            elseif L6_2() then
+              L7_2 = true
+            else
+              local L8_2 = L45_1 and L45_1() or L2_1 or L3_1
+              local L9_2 = L8_2 and L8_2.Character and L8_2.Character:FindFirstChild("HumanoidRootPart")
+              if not L9_2 then
+                task.wait(0.1)
+              elseif not getgenv()._YBA_directTP then
+                tweenMoveTo(L9_2, getRandomFarmRoamCFrame(), moveTweenSpeed, function()
+                  return L6_2() or not normalFarmOn or serverHopFarmEnabled
+                end)
+                task.wait(0.5)
+              else
+                local L10_2 = getRandomFarmRoamCFrame()
+                L9_2.CFrame = L10_2
+                L9_2.AssemblyLinearVelocity = Vector3.zero
+                L9_2.AssemblyAngularVelocity = Vector3.zero
+                task.wait(0.4)
+              end
+            end
+            if L7_2 then
+              break
+            end
+          end
+        end
+        break
+      end
+      if L4_2 then
+        break
+      end
+    end
+  end
+  
+  local L182_1
+  
+  local function L183_1()
+  end
+  
+  function startFarming()
+    if noteItemFarmProgress then
+      noteItemFarmProgress()
+    end
+    if L126_1 and L126_1() then
+      return
+    end
+    if not L75_1("_YBA_startFarmingWaiting", "Item Farm", startFarming) then
+      return
+    end
+    getgenv()._YBA_startFarmingWaiting = false
+    L17_1("item farm STARTED (in main game)")
+    if L152_1 then
+      pcall(L152_1)
+    end
+    if not normalFarmOn then
+      pcall(function()
+        local L0_3 = L3_1 and L3_1.Character or L2_1 and L2_1.Character
+        local L1_3 = L0_3 and L0_3:FindFirstChild("HumanoidRootPart")
+        local L2_3 = L0_3 and L0_3:FindFirstChildOfClass("Humanoid")
+        if L1_3 and L2_3 and L2_3.Health > 0 then
+          getgenv()._YBA_FarmReturnPos = L1_3.CFrame
+        end
+      end)
+    end
+    normalFarmOn = true
+    L27_1("IF", true)
+    L20_1.ItemFarmEnabled = true
+    if not L10_1:FindFirstChild("WhitePad") then
+      local L0_2 = Instance.new("Part")
+      L0_2.Size = Vector3.new(10000, 1, 10000)
+      L0_2.Position = Vector3.new(-139.164612, 60.740036, -372.339508)
+      L0_2.Anchored = true
+      L0_2.CanCollide = true
+      L0_2.Color = Color3.fromRGB(255, 255, 255)
+      L0_2.Transparency = 0.95
+      L0_2.Name = "WhitePad"
+      L0_2.Parent = L10_1
+    end
+    if not L10_1:FindFirstChild("UnderwhitePad") then
+      local L0_2 = Instance.new("Part")
+      L0_2.Size = Vector3.new(10000, 1, 10000)
+      L0_2.Position = Vector3.new(0, -45, 0)
+      L0_2.Anchored = true
+      L0_2.CanCollide = true
+      L0_2.Color = Color3.fromRGB(255, 255, 255)
+      L0_2.Transparency = 0.5
+      L0_2.Name = "UnderwhitePad"
+      L0_2.Parent = L10_1
+    end
+    if L182_1 then
+      pcall(task.cancel, L182_1)
+      L182_1 = nil
+    end
+    L182_1 = task.spawn(normalFarm)
+    L156_1("farm")
+  end
+  
+  function stopFarming()
+    if getgenv then
+      getgenv()._YBA_startFarmingWaiting = false
+    end
+    local L0_2 = normalFarmOn == true
+    normalFarmOn = false
+    L27_1("IF", false)
+    L20_1.ItemFarmEnabled = false
+    L150_1()
+    L155_1()
+    cleanupFarmPads()
+    disableNoclip("farm")
+    if not L28_1 or not L28_1("PNC", false) then
+      disableNoclip("main")
+      disableNoclip(true)
+      local L1_2 = L3_1 and L3_1.Character or L2_1 and L2_1.Character
+      restoreCharacterCollisions(L1_2)
+    end
+    if L182_1 then
+      pcall(task.cancel, L182_1)
+      L182_1 = nil
+    end
+    if L0_2 then
+      local L1_2 = getgenv and getgenv()._YBA_FarmReturnPos
+      if getgenv then
+        getgenv()._YBA_FarmReturnPos = nil
+      end
+      if L1_2 then
+        task.spawn(function()
+          task.wait(0.3)
+          pcall(function()
+            if L62_1 and L62_1() and not L86_1() then
+              local L0_4 = L3_1 and L3_1.Character or L2_1 and L2_1.Character
+              local L1_4 = L0_4 and L0_4:FindFirstChild("HumanoidRootPart")
+              if L1_4 then
+                if getgenv()._YBA_directTP then
+                  L1_4.CFrame = L1_2
+                  if L151_1 then
+                    L151_1(L1_4)
+                  end
+                elseif L149_1 then
+                  L149_1(L1_2)
+                else
+                  L1_4.CFrame = L1_2
+                end
+              end
+            end
+          end)
+        end)
+      end
+    end
+  end
+  
+  local function L184_1()
+    task.wait(0.5)
+    L156_1("farm")
+    if L182_1 then
+      pcall(task.cancel, L182_1)
+      L182_1 = nil
+    end
+    L182_1 = task.spawn(normalFarm)
+    if noteItemFarmProgress then
+      noteItemFarmProgress()
+    end
+  end
+  
+  pcall(function()
+    local L0_2 = L45_1 and L45_1() or L2_1 or L3_1
+    if L0_2 then
+      L0_2.CharacterAdded:Connect(function(A0_3)
+        if not L62_1 or not L62_1() then
+          task.spawn(function()
+            local L0_4 = tick()
+            while tick() - L0_4 < 120 do
+              task.wait(1)
+              if L62_1 and L62_1() then
+                break
+              end
+            end
+            if normalFarmOn and L62_1 and L62_1() then
+              L184_1()
+            end
+          end)
+          return
+        end
+        L150_1()
+        L155_1()
+        local L1_3 = normalFarmOn == true or L28_1 and L28_1("PNC", false) == true
+        if L1_3 then
+          task.defer(function()
+            L156_1(normalFarmOn and "farm" or "main")
+          end)
+        else
+          task.defer(function()
+            disableNoclip(true)
+          end)
+        end
+        if normalFarmOn then
+          L184_1()
+        end
+      end)
+    end
+  end)
+  task.spawn(function()
+    while true do
+      task.wait(2)
+      if normalFarmOn and L62_1 and L62_1() then
+        local L0_2 = tick()
+        if not L182_1 or coroutine.status(L182_1) == "dead" then
+          warn("[Item Farm Watchdog] normalThread was terminated! Resurrecting farm thread...")
+          L184_1()
+        elseif L0_2 - (lastItemFarmActionTick or 0) > 8 then
+          pcall(function()
+            L155_1()
+            L150_1()
+            L85_1 = false
+            getgenv()._YBA_SellingBusy = false
+            isBuyingRedeemedLucky = false
+            isTurningInCandies = false
+            if L78_1 then
+              L78_1()
+            end
+            local L0_3 = L45_1 and L45_1() or L2_1 or L3_1
+            local L1_3 = L0_3 and L0_3.Character
+            local L2_3 = L1_3 and L1_3:FindFirstChildOfClass("Humanoid")
+            local L3_3 = L1_3 and L1_3:FindFirstChild("HumanoidRootPart")
+            if L3_3 then
+              L3_3.Anchored = false
+              L3_3.AssemblyLinearVelocity = Vector3.zero
+            end
+            if L2_3 and L2_3.Health > 0 then
+              if L2_3.Sit then
+                L2_3.Sit = false
+              end
+              if L2_3.PlatformStand then
+                L2_3.PlatformStand = false
+                L2_3:ChangeState(Enum.HumanoidStateType.GettingUp)
+              end
+            end
+            if L1_3 and L1_3:FindFirstChild("RagdollParts") then
+              pcall(function()
+                L1_3.RagdollParts:Destroy()
+              end)
+            end
+          end)
+        end
+        if L86_1() then
+          lastItemFarmActionTick = L0_2
+        end
+      else
+        lastItemFarmActionTick = tick()
+      end
+    end
+  end)
+  _G.YBAItemFarm = {
+    sellableItems = sellableItems,
+    isSellableItem = isSellableItem,
+    isCandyItem = isCandyItem,
+    isProtectedItem = isProtectedItem,
+    itemOptions = itemOptions,
+    sellSpecificOptions = sellSpecificOptions,
+    sellBlacklistOptions = sellBlacklistOptions,
+    selectedFarmItems = selectedFarmItems,
+    sellBlacklist = sellBlacklist,
+    startFarming = startFarming,
+    stopFarming = stopFarming,
+    cleanupItemStick = function()
+      if L155_1 then
+        L155_1()
+      end
+    end,
+    cleanupFarmPads = function()
+      if cleanupFarmPads then
+        cleanupFarmPads()
+      end
+    end,
+    ensureWhitePads = function()
+      if L183_1 then
+        L183_1()
+      end
+    end,
+    enableInstantPickup = enableInstantPickup,
+    disableInstantPickup = disableInstantPickup,
+    enableNoclip = L156_1,
+    disableNoclip = disableNoclip,
+    enableNoclipState = enableNoclipState,
+    disableNoclipState = disableNoclipState,
+    restoreCollisions = restoreCharacterCollisions,
+    isNoclipActive = isAnyNoclipActive,
+    setFarmMethod = function(A0_2)
+      getgenv().InstantMethod = A0_2
+    end,
+    getFarmMethod = function()
+      return getgenv().InstantMethod
+    end,
+    setAutoSellMax = function(A0_2)
+      autoSellMax = A0_2
+    end,
+    getAutoSellMax = function()
+      return autoSellMax
+    end,
+    setAutoBuyLuckyArrow = function(A0_2)
+      autoBuyLuckyArrow = A0_2
+    end,
+    getAutoBuyLuckyArrow = function()
+      return autoBuyLuckyArrow
+    end,
+    sellAll = sellAll,
+    sellAllSelected = sellAllSelected,
+    sellAllWorthless = sellAllWorthless,
+    sellInventory = sellInventory,
+    checkAndSellMax = L147_1,
+    sellItem = sellItem,
+    enableAntiAfk = L137_1,
+    disableAntiAfk = L138_1,
+    enableServerHopFarm = function()
+      serverHopFarmEnabled = true
+    end,
+    disableServerHopFarm = function()
+      serverHopFarmEnabled = false
+    end,
+    isServerHopFarmEnabled = function()
+      return serverHopFarmEnabled
+    end,
+    turnInCandies = turnInCandiesToJack,
+    setAutoTurnInCandies = function(A0_2)
+      autoTurnInCandies = A0_2
+    end,
+    getAutoTurnInCandies = function()
+      return autoTurnInCandies
+    end,
+    buyRedeemedLuckyArrow = buyRedeemedLuckyArrowFromJack,
+    setAutoBuyRedeemedLucky = function(A0_2)
+      autoBuyRedeemedLucky = A0_2
+    end,
+    getAutoBuyRedeemedLucky = function()
+      return autoBuyRedeemedLucky
+    end,
+    getRedeemedLuckyCount = getRedeemedLuckyCount
+  }
+  if getgenv then
+    getgenv().YBAItemFarm = _G.YBAItemFarm
+  end
+  getgenv().RAILhub_FixCollision = function()
+    L107_1("YBA Script", "Fixing collision issues...")
+    disableNoclip(true)
+    if _G.YBAItemFarm and _G.YBAItemFarm.disableNoclip then
+      _G.YBAItemFarm.disableNoclip(true)
+    end
+    if L27_1 then
+      L27_1("PNC", false)
+    end
+    restoreCharacterCollisions(L3_1.Character or L2_1.Character)
+    L107_1("YBA Script", "Collision restored & Noclip reset.")
+  end
+  getgenv()._YBA_Exports = {
+    findNearestItem = findNearestItem,
+    collectSingleItemNormal = collectSingleItemNormal,
+    checkAndSellMax = L147_1,
+    enableNoclip = L156_1,
+    disableNoclip = disableNoclip,
+    enableNoclipState = enableNoclipState,
+    disableNoclipState = disableNoclipState,
+    restoreCollisions = restoreCharacterCollisions,
+    isNoclipActive = isAnyNoclipActive,
+    cleanupItemStick = L155_1,
+    moveCharacterTo = L149_1,
+    activatePrompt = L153_1,
+    getRandomFarmRoamCFrame = getRandomFarmRoamCFrame,
+    travelToInstant = travelToInstant,
+    instantTravelTo = instantTravelTo,
+    collectItemLikeNormalFarm = collectItemLikeNormalFarm,
+    farmItemByName = farmItemByName,
+    serverHopToRandom = serverHopToRandom,
+    waitForGameLoad = waitForGameLoad,
+    randomSkyRoam = randomSkyRoam,
+    maxLimits = L157_1,
+    sellItem = sellItem,
+    sellInventory = sellInventory,
+    isSellableItem = isSellableItem,
+    isCandyItem = isCandyItem,
+    turnInCandies = turnInCandiesToJack,
+    buyRedeemedLuckyArrow = buyRedeemedLuckyArrowFromJack
+  }
+  L139_1.getRandomFarmRoamCFrame = getRandomFarmRoamCFrame
+  L139_1.waitForGameLoad = waitForGameLoad
+  L139_1.getRandomSkyCFrame = getRandomSkyCFrame
+  L139_1.cleanupFarmPads = cleanupFarmPads
+  L139_1.randomSkyRoam = randomSkyRoam
+  L139_1.travelToInstant = travelToInstant
+  L139_1.instantTravelTo = instantTravelTo
+  L139_1.collectSingleItemNormal = collectSingleItemNormal
+  L139_1.collectItemLikeNormalFarm = collectItemLikeNormalFarm
+  L139_1.farmItemByName = farmItemByName
+  L139_1.findNearestItem = findNearestItem
+  L139_1.findLuckyArrow = findLuckyArrow
+  L139_1.serverHopToRandom = serverHopToRandom
+  L139_1.checkItemOnMap = checkItemOnMap
+  L139_1.startFarming = startFarming
+  L139_1.stopFarming = stopFarming
+  
+  function L139_1.serverHopFarmEnabled()
+    return serverHopFarmEnabled
+  end
+  
+  function L139_1.getServerHopFarmEnabled()
+    return serverHopFarmEnabled
+  end
+  
+  L139_1.getServerHopDelay = L173_1
+  if _G.YBAItemFarm then
+    _G.YBAItemFarm.getServerHopDelay = L173_1
+    _G.YBAItemFarm.serverHopDelay = L173_1()
+  end
+end
+do
+  local L144_1 = false
+  pcall(function()
+    if type(isfile) == "function" and isfile(L18_1 .. "/NO_HOOKS.txt") then
+      L144_1 = true
+    end
+    if getgenv and getgenv().RAILHUB_NO_HOOKS then
+      L144_1 = true
+    end
+  end)
+  if L144_1 then
+    L17_1("NO_HOOKS on: skipping bypass hooks")
+  end
+  local L145_1, L146_1 = pcall(function()
+    if L144_1 then
+      error("hooks disabled by NO_HOOKS.txt")
+    end
+    local L0_2 = hookmetamethod(Vector3.new(), "__index", newcclosure(function(A0_3, A1_3)
+      local L2_3 = tostring(getcallingscript())
+      if not checkcaller() and A1_3 == "magnitude" and L2_3 == "ItemSpawn" then
+        return 0
+      end
+      return oldMagnitude(A0_3, A1_3)
+    end))
+    local L1_2 = "  ___XP DE KEY"
+    local L2_2 = hookmetamethod(game, "__namecall", newcclosure(function(A0_3, ...)
+      local L2_3 = getnamecallmethod()
+      local L3_3 = {
+        ...
+      }
+      if not checkcaller() and rawequal(A0_3.Name, "Returner") and rawequal(L3_3[1], "idklolbrah2de") then
+        return L1_2
+      end
+      return oldNc(A0_3, ...)
+    end))
+    pcall(function()
+      local L0_3
+      L0_3 = hookmetamethod(game, "__concat", newcclosure(function(A0_4, A1_4)
+        local L2_4 = typeof(A0_4) == "Instance" and A0_4.Name or tostring(A0_4)
+        local L3_4 = typeof(A1_4) == "Instance" and A1_4.Name or tostring(A1_4)
+        return L2_4 .. L3_4
+      end))
+      getgenv().oldConcat = L0_3
+    end)
+    getgenv().oldMagnitude = L0_2
+    getgenv().oldNc = L2_2
+    task.wait(0.1)
+  end)
+  if L145_1 then
+    L107_1("YBA Script", "Anti-teleport bypass loaded successfully")
+    getgenv()._YBA_bypassSuccess = true
+    local L147_1 = L28_1 and L28_1("FarmTravelMethod")
+    if L147_1 then
+      getgenv()._YBA_directTP = L147_1 == "Teleport"
+    else
+      getgenv()._YBA_directTP = L28_1("UseTeleportFarm", true)
+    end
+  else
+    L107_1("YBA Script", "Bypass failed - using Tween movement to avoid server kick")
+    getgenv()._YBA_bypassSuccess = false
+    getgenv()._YBA_directTP = false
+  end
+  local L147_1 = "rbxassetid://87452743189169"
+  
+  function L106_1()
+    _G.MenuHeaderImage = L147_1
+    _G.MenuHeaderImageUrl = L147_1
+    return L147_1
+  end
+  
+  getgenv()._YBA_resolveMenuHeaderImage = L106_1
+  local L148_1 = L10_1.CurrentCamera
+  local L149_1 = L148_1 and L148_1.ViewportSize.X or 1920
+  local L150_1 = L148_1 and L148_1.ViewportSize.Y or 1080
+  if L149_1 == 0 or L150_1 == 0 then
+    local L151_1 = 1920
+    L150_1 = 1080
+    L149_1 = L151_1
+  end
+  local L151_1 = L149_1 * 0.95
+  local L152_1 = L150_1 * 0.95
+  local L153_1 = L151_1 / 868
+  local L154_1 = L152_1 / 650
+  local L155_1 = math.min(L153_1, L154_1)
+  local L156_1 = math.clamp(L155_1, 0.5, 1)
+  local L157_1 = L28_1("MenuScale", L156_1)
+  if L28_1("MenuScale") == nil then
+    L27_1("MenuScale", L157_1)
+  end
+  L105_1 = L96_1:Window({
+    Title = "RailHub",
+    Subtitle = "YBA",
+    Size = UDim2.fromOffset(868, 650),
+    DragStyle = 2,
+    ShowUserInfo = true,
+    Keybind = Enum.KeyCode.RightControl,
+    AcrylicBlur = true
+  })
+  if type(L105_1.SetScale) == "function" then
+    L105_1:SetScale(L157_1)
+  end
+  getgenv().RAILhubWindow = L105_1
+  _G.RAILhubWindow = L105_1
+  L17_1("UI: window created")
+  if L28_1 and L28_1("UI_Open", true) == false then
+    pcall(function()
+      L105_1:SetState(false)
+    end)
+  end
+  pcall(function()
+    local L0_2 = L28_1 and L28_1("UI_Pos")
+    local L1_2 = L105_1 and (L105_1.Frame or L105_1.Base)
+    if type(L0_2) == "table" and #L0_2 == 4 and L1_2 then
+      local L2_2 = tonumber(L0_2[1]) or 0.5
+      local L3_2 = tonumber(L0_2[2]) or 0
+      local L4_2 = tonumber(L0_2[3]) or 0.5
+      local L5_2 = tonumber(L0_2[4]) or 0
+      local L6_2 = workspace and workspace.CurrentCamera
+      local L7_2 = L6_2 and L6_2.ViewportSize.X or 1920
+      local L8_2 = L6_2 and L6_2.ViewportSize.Y or 1080
+      if L7_2 and 0 < L7_2 then
+        L3_2 = math.clamp(L3_2, -L7_2 / 2, L7_2 / 2)
+      end
+      if L8_2 and 0 < L8_2 then
+        L5_2 = math.clamp(L5_2, -L8_2 / 2, L8_2 / 2)
+      end
+      L1_2.Position = UDim2.new(L2_2, L3_2, L4_2, L5_2)
+    end
+  end)
+  do
+    local L158_1, L159_1
+    task.spawn(function()
+      while true do
+        task.wait(3)
+        pcall(function()
+          if not L105_1 then
+            return
+          end
+          if type(L105_1.GetState) == "function" then
+            local L0_3 = L105_1:GetState() and true or false
+            if L0_3 ~= L158_1 then
+              L158_1 = L0_3
+              L27_1("UI_Open", L0_3)
+            end
+          end
+          local L0_3 = L105_1.Frame or L105_1.Base
+          if L0_3 and L0_3.Position then
+            local L1_3 = L0_3.Position
+            local L2_3 = table.concat({
+              tostring(L1_3.X.Scale),
+              tostring(L1_3.X.Offset),
+              tostring(L1_3.Y.Scale),
+              tostring(L1_3.Y.Offset)
+            }, ",")
+            if L2_3 ~= L159_1 then
+              L159_1 = L2_3
+              L27_1("UI_Pos", {
+                L1_3.X.Scale,
+                L1_3.X.Offset,
+                L1_3.Y.Scale,
+                L1_3.Y.Offset
+              })
+            end
+          end
+        end)
+      end
+    end)
+  end
+  task.spawn(function()
+    task.wait(0.5)
+    pcall(function()
+      if L105_1 and type(L105_1.GetState) == "function" and type(L105_1.SetState) == "function" and L105_1:GetState() then
+        L105_1:SetState(false)
+      end
+    end)
+    local L0_2 = tick()
+    while tick() - L0_2 < 300 do
+      task.wait(1)
+      if L62_1 and L62_1() then
+        break
+      end
+    end
+    if L62_1 and L62_1() then
+      pcall(function()
+        if L105_1 and type(L105_1.GetState) == "function" and type(L105_1.SetState) == "function" then
+          local L0_3 = true
+          pcall(function()
+            L0_3 = L28_1("UI_Open", true) ~= false
+          end)
+          if L105_1:GetState() ~= L0_3 then
+            L105_1:SetState(L0_3)
+          end
+        end
+      end)
+    end
+  end)
+  
+  local function L158_1(A0_2)
+    local L1_2
+    pcall(function()
+      if type(getgenv) == "function" then
+        L1_2 = getgenv()[A0_2]
+      end
+    end)
+    if L1_2 ~= nil then
+      return L1_2
+    end
+    if rawget(_G, A0_2) ~= nil then
+      return rawget(_G, A0_2)
+    end
+    if type(shared) == "table" and rawget(shared, A0_2) ~= nil then
+      return rawget(shared, A0_2)
+    end
+    pcall(function()
+      L1_2 = getfenv()[A0_2]
+    end)
+    return L1_2
+  end
+  
+  local function L159_1(A0_2)
+    if A0_2 <= 0 then
+      return "Expired"
+    end
+    local L1_2 = math.floor(A0_2 / 86400)
+    local L2_2 = math.floor(A0_2 % 86400 / 3600)
+    local L3_2 = math.floor(A0_2 % 3600 / 60)
+    local L4_2 = math.floor(A0_2 % 60)
+    if 0 < L1_2 then
+      return string.format("%dd %02dh %02dm %02ds", L1_2, L2_2, L3_2, L4_2)
+    elseif 0 < L2_2 then
+      return string.format("%02dh %02dm %02ds", L2_2, L3_2, L4_2)
+    else
+      return string.format("%02dm %02ds", L3_2, L4_2)
+    end
+  end
+  
+  local function L160_1(A0_2)
+    if A0_2 == nil or A0_2 == false then
+      return nil
+    end
+    if type(A0_2) == "number" then
+      if A0_2 <= 0 then
+        return nil
+      end
+      if 100000000000 < A0_2 then
+        return math.floor(A0_2 / 1000)
+      elseif 100000000 <= A0_2 then
+        return math.floor(A0_2)
+      else
+        return nil
+      end
+    end
+    if type(A0_2) == "string" then
+      local L1_2 = A0_2:lower():gsub("^%s+", ""):gsub("%s+$", "")
+      if L1_2 == "" or L1_2 == "null" or L1_2 == "nil" or L1_2 == "never" or L1_2 == "lifetime" or L1_2 == "permanent" or L1_2 == "perm" or L1_2 == "none" then
+        return nil
+      end
+      local L2_2 = tonumber(L1_2)
+      if L2_2 then
+        if L2_2 <= 0 then
+          return nil
+        end
+        if 100000000000 < L2_2 then
+          return math.floor(L2_2 / 1000)
+        elseif 100000000 <= L2_2 then
+          return math.floor(L2_2)
+        else
+          return nil
+        end
+      end
+      local L3_2, L4_2, L5_2, L6_2, L7_2, L8_2 = A0_2:match("(%d%d%d%d)%-(%d%d)%-(%d%d)[T%s]+(%d%d):(%d%d):?(%d*)")
+      if L3_2 and L4_2 and L5_2 and L6_2 and L7_2 then
+        local L9_2 = tonumber(L8_2) or 0
+        local L10_2 = {}
+        L10_2.year = tonumber(L3_2)
+        L10_2.month = tonumber(L4_2)
+        L10_2.day = tonumber(L5_2)
+        L10_2.hour = tonumber(L6_2)
+        L10_2.min = tonumber(L7_2)
+        L10_2.sec = L9_2
+        L10_2.isdst = false
+        local L11_2, L12_2 = pcall(os.time, L10_2)
+        if L11_2 and L12_2 and 100000000 <= L12_2 then
+          local L13_2 = A0_2:match("%s*([Zz])%s*$") and "Z" or A0_2:match("([%+%-]%d%d:?%d%d)%s*$")
+          if L13_2 then
+            local L14_2, L15_2 = pcall(function()
+              return os.difftime(os.time(), os.time(os.date("!*t")))
+            end)
+            if L14_2 and L15_2 then
+              local L16_2 = 0
+              if L13_2 ~= "Z" then
+                local L17_2, L18_2, L19_2 = L13_2:match("([%+%-])(%d%d):?(%d%d)")
+                if L18_2 then
+                  L16_2 = (tonumber(L18_2) * 3600 + tonumber(L19_2) * 60) * (L17_2 == "-" and -1 or 1)
+                end
+              end
+              L12_2 = L12_2 - L15_2 - L16_2
+            end
+          end
+          return L12_2
+        end
+      end
+    end
+    return nil
+  end
+  
+  local function L161_1(A0_2, A1_2, A2_2)
+    if type(A0_2) ~= "table" then
+      return nil
+    end
+    A2_2 = A2_2 or 3
+    if A2_2 <= 0 then
+      return nil
+    end
+    for L6_2, L7_2 in ipairs(A1_2) do
+      if A0_2[L7_2] ~= nil then
+        return A0_2[L7_2]
+      end
+      for L11_2, L12_2 in pairs(A0_2) do
+        if type(L11_2) == "string" and L11_2:lower() == L7_2:lower() then
+          return L12_2
+        end
+      end
+    end
+    local L3_2 = {
+      "key",
+      "data",
+      "result",
+      "info",
+      "payload",
+      "key_data",
+      "keyData",
+      "keyInfo",
+      "key_info",
+      "response"
+    }
+    for L7_2, L8_2 in ipairs(L3_2) do
+      if type(A0_2[L8_2]) == "table" then
+        local L9_2 = L161_1(A0_2[L8_2], A1_2, A2_2 - 1)
+        if L9_2 ~= nil then
+          return L9_2
+        end
+      end
+    end
+    for L7_2, L8_2 in pairs(A0_2) do
+      if type(L8_2) == "table" then
+        local L9_2 = L161_1(L8_2, A1_2, A2_2 - 1)
+        if L9_2 ~= nil then
+          return L9_2
+        end
+      end
+    end
+    return nil
+  end
+  
+  local function L162_1(A0_2)
+    local L1_2 = tostring(A0_2 or ""):lower()
+    if L1_2 == "" then
+      return false
+    end
+    if L1_2 == "lifetime" or L1_2 == "permanent" then
+      return true
+    end
+    if L1_2:find("lifetime", 1, true) or L1_2:find("permanent", 1, true) then
+      return true
+    end
+    return false
+  end
+  
+  local function L163_1()
+    return L158_1("JD_KEY") or L158_1("SCRIPT_KEY")
+  end
+  
+  local function L164_1()
+    local L0_2 = L163_1()
+    local L1_2
+    pcall(function()
+      local L0_3 = "rbxcache/railhub_key_meta.json"
+      if isfile and isfile(L0_3) then
+        local L1_3 = game:GetService("HttpService")
+        local L2_3 = L1_3:JSONDecode(readfile(L0_3))
+        if type(L2_3) == "table" then
+          L1_2 = L2_3
+        end
+      end
+    end)
+    if type(L1_2) ~= "table" then
+      return nil
+    end
+    if L0_2 and L0_2 ~= "" and L1_2.key and tostring(L1_2.key) ~= "" and tostring(L1_2.key) ~= tostring(L0_2) then
+      return nil
+    end
+    return L1_2
+  end
+  
+  local function L165_1()
+    local L0_2 = L158_1("JD_REASON")
+    local L1_2 = L158_1("JD_RAW_RESPONSE") or L158_1("JD_KEY_DATA")
+    local L2_2 = L158_1("JD_EXPIRES_AT")
+    if not L2_2 and type(L1_2) == "table" then
+      L2_2 = L161_1(L1_2, {
+        "expires_at",
+        "expiresAt",
+        "expire_at",
+        "expireAt",
+        "expiration",
+        "expires",
+        "valid_until",
+        "validUntil",
+        "expiry",
+        "expire_date",
+        "expireDate",
+        "expiration_date"
+      })
+    end
+    if not L2_2 then
+      local L3_2 = getgenv and getgenv().__RAIL_session or _G.__RAIL_session or shared and shared.__RAIL_session
+      if type(L3_2) == "table" and type(L3_2.data) == "table" and L3_2.data.expires_at then
+        L2_2 = L3_2.data.expires_at
+      end
+    end
+    if not L2_2 then
+      local L3_2 = L164_1()
+      if L3_2 and L3_2.expires_at then
+        L2_2 = L3_2.expires_at
+      end
+    end
+    local L3_2 = L160_1(L2_2)
+    local L4_2 = L158_1("JD_FOLDER_NAME") or L158_1("JD_FOLDER") or L158_1("JD_KEY_FOLDER") or L158_1("folder_name")
+    if not L4_2 and type(L1_2) == "table" then
+      L4_2 = L161_1(L1_2, {
+        "folder_name",
+        "folderName",
+        "folder",
+        "folder_title",
+        "folderTitle",
+        "folder_id",
+        "folderId",
+        "group",
+        "tier"
+      })
+    end
+    if not L4_2 then
+      local L5_2 = getgenv and getgenv().__RAIL_session or _G.__RAIL_session or shared and shared.__RAIL_session
+      if type(L5_2) == "table" and type(L5_2.data) == "table" and L5_2.data.folder_name then
+        L4_2 = L5_2.data.folder_name
+      end
+    end
+    if not L4_2 then
+      local L5_2 = L164_1()
+      if L5_2 and L5_2.folder_name then
+        L4_2 = L5_2.folder_name
+      end
+    end
+    local L5_2 = L4_2 and tostring(L4_2):lower() or ""
+    local L6_2 = "free"
+    if L5_2 == "paid" or L5_2:find("paid", 1, true) then
+      L6_2 = "paid"
+    elseif L5_2 == "giveaway" or L5_2:find("giveaway", 1, true) then
+      L6_2 = "giveaway"
+    elseif L5_2 == "premium" or L5_2:find("premium", 1, true) or L158_1("JD_IS_PREMIUM") == true then
+      L6_2 = "paid"
+    elseif L4_2 and tostring(L4_2) ~= "" then
+      L6_2 = tostring(L4_2):lower()
+    else
+      L6_2 = "free"
+    end
+    local L7_2 = false
+    if L162_1(L4_2) then
+      L7_2 = true
+    end
+    if type(L1_2) == "table" and (L1_2.is_lifetime == true or L1_2.lifetime == true or L1_2.permanent == true or L1_2.isLifetime == true) then
+      L7_2 = true
+    end
+    if L158_1("JD_IS_LIFETIME") == true or L158_1("JD_LIFETIME") == true or L158_1("IS_LIFETIME") == true then
+      L7_2 = true
+    end
+    local L8_2 = L164_1()
+    if type(L8_2) == "table" and (L8_2.is_lifetime == true or L8_2.lifetime == true or L8_2.permanent == true or L8_2.isLifetime == true) then
+      L7_2 = true
+    end
+    local L9_2 = L158_1("JD_DISCORD_USERNAME")
+    if not L9_2 and type(L1_2) == "table" then
+      L9_2 = L161_1(L1_2, {
+        "discord_username",
+        "discordUsername",
+        "discord_name",
+        "username",
+        "discord"
+      })
+    end
+    local L10_2 = L6_2:sub(1, 1):upper() .. L6_2:sub(2)
+    local L11_2 = "Lifetime"
+    local L12_2 = "Active"
+    local L13_2 = false
+    if L7_2 then
+      L11_2 = "Lifetime"
+      L12_2 = "Active (" .. L10_2 .. " Lifetime)"
+      L13_2 = false
+    elseif L0_2 == "KEYLESS" then
+      L11_2 = "Keyless"
+      L12_2 = "Keyless"
+      L13_2 = false
+    elseif L3_2 and 0 < L3_2 then
+      local L14_2 = math.floor(L3_2 - os.time())
+      if L14_2 <= 0 then
+        L11_2 = "Expired"
+        L12_2 = "Expired"
+        L13_2 = true
+      else
+        L11_2 = L159_1(L14_2)
+        L12_2 = "Active (" .. L10_2 .. ")"
+        L13_2 = false
+      end
+    else
+      local L14_2 = 86400
+      pcall(function()
+        local L0_3 = L164_1()
+        if L0_3 and L0_3.expires_at then
+          local L1_3 = L160_1(L0_3.expires_at)
+          if L1_3 and 0 < L1_3 then
+            L14_2 = math.floor(L1_3 - os.time())
+          end
+        end
+      end)
+      if 0 < L14_2 then
+        L11_2 = L159_1(L14_2)
+      else
+        L11_2 = "Active"
+      end
+      L12_2 = "Active (" .. L10_2 .. ")"
+      L13_2 = false
+    end
+    return L11_2, L12_2, L13_2, L9_2, L4_2, L6_2
+  end
+  
+  local L166_1, L167_1
+  
+  local function L168_1()
+    if L166_1 and L167_1 and L166_1.Parent and L167_1.Parent then
+      return true
+    end
+    local L0_2 = gethui and gethui() or game:GetService("CoreGui")
+    local L1_2
+    for L5_2, L6_2 in ipairs(L0_2:GetChildren()) do
+      if L6_2:IsA("ScreenGui") and (L6_2.Name == "MacLib" or L6_2:FindFirstChild("Base", true)) then
+        do
+          local L7_2 = L6_2:FindFirstChild("UserAndDisplayFrame", true)
+          if L7_2 then
+            L1_2 = L7_2
+            break
+          end
+        end
+      end
+    end
+    if not L1_2 then
+      for L5_2, L6_2 in ipairs(L0_2:GetDescendants()) do
+        if L6_2:IsA("Frame") and L6_2.Name == "UserAndDisplayFrame" then
+          L1_2 = L6_2
+          break
+        end
+      end
+    end
+    local L2_2 = L1_2 and L1_2:FindFirstChild("DisplayName")
+    local L3_2 = L1_2 and L1_2:FindFirstChild("Username")
+    if not L2_2 and not L3_2 then
+      return false
+    end
+    L1_2.AutomaticSize = Enum.AutomaticSize.Y
+    L1_2.ClipsDescendants = false
+    if L2_2 then
+      L2_2.LayoutOrder = 1
+    end
+    if L3_2 then
+      L3_2.Visible = false
+      L3_2.TextTransparency = 1
+      L3_2.Size = UDim2.fromScale(0, 0)
+      if not L3_2:GetAttribute("HiddenByScript") then
+        L3_2:SetAttribute("HiddenByScript", true)
+        L3_2:GetPropertyChangedSignal("Visible"):Connect(function()
+          if L3_2.Visible then
+            L3_2.Visible = false
+          end
+        end)
+      end
+    end
+    local L4_2 = L2_2 or L3_2
+    local L5_2 = L1_2:FindFirstChild("KeyTypeLabel")
+    if not L5_2 then
+      L5_2 = Instance.new("TextLabel")
+      L5_2.Name = "KeyTypeLabel"
+      L5_2.LayoutOrder = 2
+      L5_2.AutomaticSize = Enum.AutomaticSize.XY
+      L5_2.BackgroundTransparency = 1
+      L5_2.BorderSizePixel = 0
+      L5_2.Size = UDim2.fromScale(1, 0)
+      if L4_2 then
+        L5_2.Font = L4_2.Font
+        if L4_2.FontFace then
+          L5_2.FontFace = L4_2.FontFace
+        end
+      end
+      L5_2.TextSize = 11
+      L5_2.TextColor3 = Color3.fromRGB(175, 175, 175)
+      L5_2.TextTransparency = 0.2
+      L5_2.TextXAlignment = Enum.TextXAlignment.Left
+      L5_2.TextYAlignment = Enum.TextYAlignment.Top
+      L5_2.TextTruncate = Enum.TextTruncate.None
+      L5_2.Text = "key type: free"
+      L5_2.Parent = L1_2
+    end
+    L166_1 = L5_2
+    local L6_2 = L1_2:FindFirstChild("KeyTimeLabel")
+    if not L6_2 then
+      L6_2 = Instance.new("TextLabel")
+      L6_2.Name = "KeyTimeLabel"
+      L6_2.LayoutOrder = 3
+      L6_2.AutomaticSize = Enum.AutomaticSize.XY
+      L6_2.BackgroundTransparency = 1
+      L6_2.BorderSizePixel = 0
+      L6_2.Size = UDim2.fromScale(1, 0)
+      if L4_2 then
+        L6_2.Font = L4_2.Font
+        if L4_2.FontFace then
+          L6_2.FontFace = L4_2.FontFace
+        end
+      end
+      L6_2.TextSize = 11
+      L6_2.TextColor3 = Color3.fromRGB(150, 150, 150)
+      L6_2.TextTransparency = 0.4
+      L6_2.TextXAlignment = Enum.TextXAlignment.Left
+      L6_2.TextYAlignment = Enum.TextYAlignment.Top
+      L6_2.TextTruncate = Enum.TextTruncate.None
+      L6_2.Text = "time: calculating..."
+      L6_2.Parent = L1_2
+    end
+    L167_1 = L6_2
+    return true
+  end
+  
+  local function L169_1()
+    local L0_2, L1_2, L2_2, L3_2, L4_2, L5_2 = L165_1()
+    L5_2 = L5_2 or "free"
+    L168_1()
+    if L166_1 and L166_1.Parent then
+      pcall(function()
+        if L5_2 == "paid" then
+          L166_1.TextColor3 = Color3.fromRGB(120, 235, 150)
+          L166_1.Text = "key type: paid"
+        elseif L5_2 == "giveaway" then
+          L166_1.TextColor3 = Color3.fromRGB(160, 200, 255)
+          L166_1.Text = "key type: giveaway"
+        else
+          L166_1.TextColor3 = Color3.fromRGB(175, 175, 175)
+          L166_1.Text = "key type: free"
+        end
+      end)
+    end
+    if L167_1 and L167_1.Parent then
+      pcall(function()
+        if L2_2 then
+          L167_1.TextColor3 = Color3.fromRGB(250, 90, 90)
+          L167_1.Text = "time: expired"
+        else
+          L167_1.TextColor3 = Color3.fromRGB(155, 155, 155)
+          L167_1.Text = "time: " .. tostring(L0_2)
+        end
+      end)
+    end
+  end
+  
+  task.spawn(function()
+    for L3_2 = 1, 40 do
+      if L168_1() then
+        break
+      end
+      task.wait(0.2)
+    end
+    L169_1()
+    while true do
+      if not task.wait(1) or not pcall(L169_1) then
+        break
+      end
+    end
+  end)
+end
+do
+  local L144_1 = Instance.new("ScreenGui")
+  L144_1.Name = "RAILhubToggle"
+  L144_1.ResetOnSpawn = false
+  L144_1.IgnoreGuiInset = true
+  L144_1.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+  L144_1.DisplayOrder = 50
+  local L145_1 = pcall(function()
+    L144_1.Parent = gethui and gethui() or game:GetService("CoreGui")
+  end)
+  if not L145_1 or not L144_1.Parent then
+    pcall(function()
+      L144_1.Parent = L46_1() or L2_1 and (L2_1:FindFirstChild("PlayerGui") or L2_1.WaitForChild and L2_1:WaitForChild("PlayerGui", 5))
+    end)
+  end
+  if type(L101_1) == "table" and type(L101_1.Guis) == "table" then
+    L101_1.Guis[#L101_1.Guis + 1] = L144_1
+  end
+  local L146_1 = Instance.new("ImageButton")
+  L146_1.Parent = L144_1
+  L146_1.Size = UDim2.fromOffset(55, 55)
+  L146_1.Position = UDim2.new(0.15, 0, 0.15, 0)
+  L146_1.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+  L146_1.BorderSizePixel = 0
+  L146_1.Image = L106_1 and L106_1() or "rbxassetid://87452743189169"
+  L146_1.ImageColor3 = Color3.fromRGB(235, 235, 235)
+  L146_1.Active = true
+  local L147_1 = Instance.new("UICorner")
+  L147_1.CornerRadius = UDim.new(0, 10)
+  L147_1.Parent = L146_1
+  local L148_1 = false
+  local L149_1 = false
+  local L150_1, L151_1, L152_1
+  L146_1.InputBegan:Connect(function(A0_2)
+    if A0_2.UserInputType == Enum.UserInputType.MouseButton1 or A0_2.UserInputType == Enum.UserInputType.Touch then
+      L148_1 = true
+      L149_1 = false
+      L151_1 = A0_2.Position
+      L152_1 = L146_1.Position
+      A0_2.Changed:Connect(function()
+        if A0_2.UserInputState == Enum.UserInputState.End then
+          L148_1 = false
+        end
+      end)
+    end
+  end)
+  L146_1.InputChanged:Connect(function(A0_2)
+    if A0_2.UserInputType == Enum.UserInputType.MouseMovement or A0_2.UserInputType == Enum.UserInputType.Touch then
+      L150_1 = A0_2
+    end
+  end)
+  L7_1.InputChanged:Connect(function(A0_2)
+    if A0_2 == L150_1 and L148_1 then
+      local L1_2 = A0_2.Position - L151_1
+      if L1_2.Magnitude > 5 then
+        L149_1 = true
+        L146_1.Position = UDim2.new(L152_1.X.Scale, L152_1.X.Offset + L1_2.X, L152_1.Y.Scale, L152_1.Y.Offset + L1_2.Y)
+      end
+    end
+  end)
+  L146_1.MouseButton1Click:Connect(function()
+    if L149_1 then
+      L149_1 = false
+      return
+    end
+    if L105_1 then
+      if type(L105_1.SetState) == "function" and type(L105_1.GetState) == "function" then
+        L105_1:SetState(not L105_1:GetState())
+        return
+      end
+      if type(L105_1.Toggle) == "function" then
+        L105_1:Toggle()
+        return
+      end
+      if type(L105_1.ToggleUI) == "function" then
+        L105_1:ToggleUI()
+        return
+      end
+      if type(L105_1.SetVisible) == "function" then
+        L105_1:SetVisible(L105_1.Visible ~= true)
+        return
+      end
+    end
+    local L0_2 = gethui and gethui() or game:GetService("CoreGui")
+    local L1_2 = L105_1 and L105_1.Settings and L105_1.Settings.Title or "RAIL|hub"
+    for L5_2, L6_2 in ipairs(L0_2:GetChildren()) do
+      if L6_2:IsA("ScreenGui") then
+        for L10_2, L11_2 in ipairs(L6_2:GetDescendants()) do
+          if L11_2:IsA("TextLabel") and L11_2.Text == L1_2 then
+            L6_2.Enabled = not L6_2.Enabled
+            return
+          end
+        end
+      end
+    end
+    if L105_1 and L105_1.Frame then
+      L105_1.Frame.Visible = not L105_1.Frame.Visible
+    end
+  end)
+  local L153_1 = false
+  local L154_1, L155_1
+  L146_1.InputBegan:Connect(function(A0_2)
+    if A0_2.UserInputType == Enum.UserInputType.MouseButton1 or A0_2.UserInputType == Enum.UserInputType.Touch then
+      L153_1 = true
+      L154_1 = A0_2.Position
+      L155_1 = L146_1.Position
+    end
+  end)
+  L7_1.InputChanged:Connect(function(A0_2)
+    if not L153_1 then
+      return
+    end
+    if A0_2.UserInputType == Enum.UserInputType.MouseMovement or A0_2.UserInputType == Enum.UserInputType.Touch then
+      local L1_2 = A0_2.Position - L154_1
+      L146_1.Position = UDim2.new(L155_1.X.Scale, L155_1.X.Offset + L1_2.X, L155_1.Y.Scale, L155_1.Y.Offset + L1_2.Y)
+    end
+  end)
+  L7_1.InputEnded:Connect(function(A0_2)
+    if A0_2.UserInputType == Enum.UserInputType.MouseButton1 or A0_2.UserInputType == Enum.UserInputType.Touch then
+      L153_1 = false
+    end
+  end)
+end
+local L144_1 = {}
+L144_1.UIBlurToggle = L105_1:GlobalSetting({
+  Name = "UI Transparency",
+  Default = L28_1("UIBlur", false),
+  Callback = function(A0_2)
+    L27_1("UIBlur", A0_2)
+    L105_1:SetAcrylicBlurState(A0_2)
+  end
+})
+L144_1.ShowUserInfo = L105_1:GlobalSetting({
+  Name = "User Info",
+  Default = L28_1("ShowUserInfo", true),
+  Callback = function(A0_2)
+    L27_1("ShowUserInfo", A0_2)
+    if typeof(L105_1.SetUserInfoState) == "function" then
+      L105_1:SetUserInfoState(A0_2)
+    elseif typeof(L105_1.ToggleUserInfo) == "function" then
+      L105_1:ToggleUserInfo(A0_2)
+    else
+      pcall(function()
+        if L105_1.Settings then
+          L105_1.Settings.ShowUserInfo = A0_2
+        end
+        if L105_1.Frame and L105_1.Frame:FindFirstChild("Bottom") then
+          local L0_3 = L105_1.Frame.Bottom
+          for L4_3, L5_3 in pairs(L0_3:GetChildren()) do
+            if L5_3:IsA("ImageLabel") or L5_3:IsA("ImageButton") then
+              L5_3.Visible = A0_2
+            elseif L5_3:IsA("TextLabel") or L5_3:IsA("TextBox") or L5_3:IsA("TextButton") then
+              L5_3.Visible = A0_2
+            elseif L5_3:IsA("Frame") and (L5_3.Name:find("User") or L5_3.Name:find("Avatar") or L5_3.Name:find("Profile")) then
+              L5_3.Visible = A0_2
+            end
+          end
+          local L1_3 = L0_3:FindFirstChild("BottomLeft") or L0_3:FindFirstChild("Left")
+          if L1_3 then
+            L1_3.Visible = A0_2
+          end
+          if not A0_2 then
+            local L2_3 = true
+            for L6_3, L7_3 in pairs(L0_3:GetChildren()) do
+              if L7_3.Visible then
+                L2_3 = false
+                break
+              end
+            end
+            if L2_3 then
+              L0_3.Visible = false
+            end
+          else
+            L0_3.Visible = true
+          end
+        end
+        if L105_1.Frame then
+          local L0_3 = {
+            L105_1.Frame
+          }
+          while 0 < #L0_3 do
+            local L1_3 = table.remove(L0_3)
+            for L5_3, L6_3 in pairs(L1_3:GetChildren()) do
+              if (L6_3.Name:find("User") or L6_3.Name:find("Avatar") or L6_3.Name:find("Profile") or L6_3.Name:find("Name")) and (L6_3:IsA("Frame") or L6_3:IsA("ImageLabel") or L6_3:IsA("TextLabel") or L6_3:IsA("ViewportFrame")) then
+                L6_3.Visible = A0_2
+              end
+              table.insert(L0_3, L6_3)
+            end
+          end
+        end
+      end)
+    end
+  end
+})
+L144_1.Watermark = L105_1:GlobalSetting({
+  Name = "Watermark",
+  Default = L28_1("ShowWatermark", true),
+  Callback = function(A0_2)
+    L27_1("ShowWatermark", A0_2)
+    if _G.CustomWatermark then
+      _G.CustomWatermark.Enabled = A0_2
+    end
+  end
+})
+if _G.allvars and _G.allvars._rt then
+  _G.allvars._rt.globalSettings = L144_1
+end
+task.spawn(function()
+  if _G.CustomWatermark then
+    return
+  end
+  local L0_2 = Instance.new("ScreenGui")
+  L0_2.Name = "RAILhubWatermark"
+  L0_2.ResetOnSpawn = false
+  L0_2.IgnoreGuiInset = true
+  L0_2.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+  local L1_2 = pcall(function()
+    L0_2.Parent = gethui and gethui() or game:GetService("CoreGui")
+  end)
+  if not L1_2 or not L0_2.Parent then
+    pcall(function()
+      L0_2.Parent = L46_1() or L2_1 and (L2_1:FindFirstChild("PlayerGui") or L2_1.WaitForChild and L2_1:WaitForChild("PlayerGui", 5))
+    end)
+  end
+  if type(L101_1) == "table" and type(L101_1.Guis) == "table" then
+    L101_1.Guis[#L101_1.Guis + 1] = L0_2
+  end
+  local L2_2 = Instance.new("Frame")
+  L2_2.Name = "WatermarkFrame"
+  L2_2.Position = UDim2.new(0, 15, 0, 60)
+  L2_2.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+  L2_2.BackgroundTransparency = 0.35
+  L2_2.BorderSizePixel = 0
+  L2_2.AutomaticSize = Enum.AutomaticSize.X
+  L2_2.Size = UDim2.new(0, 0, 0, 26)
+  L2_2.Parent = L0_2
+  local L3_2 = Instance.new("UICorner")
+  L3_2.CornerRadius = UDim.new(0, 6)
+  L3_2.Parent = L2_2
+  local L4_2 = Instance.new("UIPadding")
+  L4_2.PaddingLeft = UDim.new(0, 10)
+  L4_2.PaddingRight = UDim.new(0, 10)
+  L4_2.PaddingTop = UDim.new(0, 4)
+  L4_2.PaddingBottom = UDim.new(0, 4)
+  L4_2.Parent = L2_2
+  local L5_2 = Instance.new("UIStroke")
+  L5_2.Thickness = 1
+  L5_2.Color = Color3.fromRGB(255, 255, 255)
+  L5_2.Transparency = 0.85
+  L5_2.Parent = L2_2
+  local L6_2 = Instance.new("TextLabel")
+  L6_2.Parent = L2_2
+  L6_2.Size = UDim2.new(0, 0, 1, 0)
+  L6_2.BackgroundTransparency = 1
+  L6_2.TextColor3 = Color3.fromRGB(240, 240, 240)
+  L6_2.Font = Enum.Font.GothamMedium
+  L6_2.TextSize = 13
+  L6_2.TextXAlignment = Enum.TextXAlignment.Left
+  L6_2.AutomaticSize = Enum.AutomaticSize.X
+  local L7_2 = tick()
+  local L8_2 = 60
+  local L9_2 = 0
+  L6_1.RenderStepped:Connect(function()
+    local L0_3 = tick()
+    local L1_3 = L0_3 - L7_2
+    L7_2 = L0_3
+    if 0 < L1_3 then
+      L8_2 = math.clamp(math.floor(1 / L1_3), 1, 1000)
+    end
+  end)
+  L6_1.Heartbeat:Connect(function()
+    local L0_3 = tick()
+    if L0_3 - L9_2 < 0.33 then
+      return
+    end
+    L9_2 = L0_3
+    if L0_2.Enabled then
+      L6_2.Text = string.format("RailHub | %s | %s | %d FPS", os.date("%H:%M:%S"), os.date("%d/%m/%Y"), L8_2)
+    end
+  end)
+  _G.CustomWatermark = L0_2
+  L0_2.Enabled = (L28_1 and L28_1("ShowWatermark", true)) ~= false
+end)
+local L145_1 = L105_1:TabGroup()
+local L146_1 = {}
+L146_1.Info = L145_1:Tab({
+  Name = "Information",
+  Image = "rbxassetid://80780628588275"
+})
+L146_1.Farming = L145_1:Tab({
+  Name = "Farming",
+  Image = "rbxassetid://4483345737"
+})
+L146_1.Visuals = L145_1:Tab({
+  Name = "Visuals",
+  Image = "rbxassetid://6523858394"
+})
+L146_1.Stands = L145_1:Tab({
+  Name = "Stands",
+  Image = "rbxassetid://124929180840291"
+})
+L146_1.Player = L145_1:Tab({
+  Name = "Player",
+  Image = "rbxassetid://117259180607823"
+})
+L146_1.PvP = L145_1:Tab({
+  Name = "PvP",
+  Image = "rbxassetid://7485051715"
+})
+L146_1.Webhooks = L145_1:Tab({
+  Name = "Webhooks",
+  Image = "rbxassetid://14895333462"
+})
+L146_1.Settings = L145_1:Tab({
+  Name = "Settings",
+  Image = "rbxassetid://7734053495"
+})
+getgenv().YBA_Tabs = L146_1
+L17_1("UI: tab group + 8 tabs created")
+pcall(function()
+  if L146_1 and L146_1.Info and type(L146_1.Info.Select) == "function" then
+    L146_1.Info:Select()
+  elseif L146_1 and L146_1.Farming and type(L146_1.Farming.Select) == "function" then
+    L146_1.Farming:Select()
+  end
+end)
+do
+  local L147_1 = L146_1.Info
+  local L148_1 = L147_1:Section({Side = "Left", Name = "Updates"})
+  local L149_1 = L147_1:Section({Side = "Right", Name = "Links"})
+  L148_1:Header({
+    Text = "Version: 0.2.3",
+    AutoLocalize = false
+  })
+  L148_1:Header({
+    Text = "Last update: 16.10.2026",
+    AutoLocalize = false
+  })
+  L149_1:Header({Text = "Links", AutoLocalize = false})
+  L149_1:Button({
+    Name = "Discord Link",
+    Callback = function()
+      L104_1("https://discord.gg/67UTqK8su5")
+    end
+  })
+  L147_1 = _G
+  L148_1 = "YBAItemFarm"
+  L147_1 = L147_1[L148_1]
+  L148_1 = nil
+  L149_1 = "Farming"
+  L149_1 = L146_1[L149_1]
+  
+  local function L150_1(A0_2, A1_2)
+    if not A0_2 then
+      return {}
+    end
+    for L5_2 = #A0_2, 1, -1 do
+      table.remove(A0_2, L5_2)
+    end
+    if type(A1_2) == "table" then
+      if A1_2[1] ~= nil then
+        for L5_2, L6_2 in ipairs(A1_2) do
+          if type(L6_2) == "string" then
+            table.insert(A0_2, L6_2)
+          end
+        end
+      else
+        for L5_2, L6_2 in pairs(A1_2) do
+          if L6_2 == true and type(L5_2) == "string" then
+            table.insert(A0_2, L5_2)
+          end
+        end
+      end
+    end
+    return A0_2
+  end
+  
+  local L151_1 = L149_1:Section({
+    Side = "Left",
+    Name = "Auto farm items"
+  })
+  local L152_1 = L149_1:Section({
+    Side = "Right",
+    Name = "Auto Prestige"
+  })
+  L151_1:Header({
+    Text = " Auto farm items",
+    AutoLocalize = false
+  })
+  L152_1:Header({
+    Text = "Auto Prestige",
+    AutoLocalize = false
+  })
+  L151_1:Dropdown({
+    Name = "Items (empty = all)",
+    Options = _G.YBAItemFarm and _G.YBAItemFarm.itemOptions or {},
+    Multi = true,
+    Default = L28_1 and L28_1("SelectedFarmItems", {}) or {},
+    Callback = function(A0_2)
+      local L1_2 = _G.YBAItemFarm and _G.YBAItemFarm.selectedFarmItems or {}
+      L150_1(L1_2, A0_2)
+      L27_1("SelectedFarmItems", L1_2)
+    end
+  })
+  L151_1:Dropdown({
+    Name = "Travel Method",
+    Options = {"Teleport", "Tween"},
+    Default = (function()
+      local L0_2 = L28_1 and L28_1("FarmTravelMethod")
+      if L0_2 then
+        return L0_2
+      end
+      local L1_2 = L28_1 and L28_1("UseTeleportFarm")
+      if L1_2 ~= nil then
+        return L1_2 and "Teleport" or "Tween"
+      end
+      return "Teleport"
+    end)(),
+    Callback = function(A0_2)
+      L27_1("FarmTravelMethod", A0_2)
+      L27_1("UseTeleportFarm", A0_2 == "Teleport")
+      getgenv()._YBA_directTP = A0_2 == "Teleport"
+    end
+  })
+  L151_1:Dropdown({
+    Name = "Farm Position Mode",
+    Options = {
+      "Up",
+      "Def",
+      "Down"
+    },
+    Default = L28_1("FarmPosMethod", "Up"),
+    Callback = function(A0_2)
+      L27_1("FarmPosMethod", A0_2)
+      getgenv().InstantMethod = A0_2
+    end
+  })
+  L151_1:Toggle({
+    Name = "Enable farming",
+    Default = L28_1("IF", false),
+    Callback = function(A0_2)
+      L20_1.ItemFarmEnabled = A0_2
+      L27_1("IF", A0_2)
+      local L1_2 = _G.YBAItemFarm
+      if A0_2 then
+        if L1_2 and L1_2.startFarming then
+          L1_2.startFarming()
+        else
+          warn("[YBA] startFarming not available")
+        end
+        if ensureWhitePads then
+          pcall(ensureWhitePads)
+        elseif L1_2 and L1_2.ensureWhitePads then
+          pcall(L1_2.ensureWhitePads)
+        end
+      else
+        if L1_2 and L1_2.stopFarming then
+          L1_2.stopFarming()
+        elseif stopFarming then
+          stopFarming()
+        end
+        if cleanupItemStick then
+          cleanupItemStick()
+        elseif L1_2 and L1_2.cleanupItemStick then
+          L1_2.cleanupItemStick()
+        end
+        if cleanupFarmPads then
+          cleanupFarmPads()
+        elseif L1_2 and L1_2.cleanupFarmPads then
+          L1_2.cleanupFarmPads()
+        end
+        if not L28_1 or not L28_1("PNC", false) then
+          if L1_2 and L1_2.disableNoclip then
+            L1_2.disableNoclip(true)
+          elseif disableNoclip then
+            disableNoclip(true)
+          end
+          local L2_2 = L3_1 and L3_1.Character or L2_1 and L2_1.Character
+          if restoreCharacterCollisions then
+            restoreCharacterCollisions(L2_2)
+          end
+        end
+      end
+    end
+  })
+  L151_1:Toggle({
+    Name = "Auto sell on stack limit",
+    Default = L28_1("ASM", false),
+    Callback = function(A0_2)
+      local L1_2 = _G.YBAItemFarm
+      if L1_2 and L1_2.setAutoSellMax then
+        L1_2.setAutoSellMax(A0_2)
+      end
+      L27_1("ASM", A0_2)
+      if A0_2 then
+        task.spawn(function()
+          if L1_2 and L1_2.checkAndSellMax then
+            L1_2.checkAndSellMax()
+          end
+        end)
+      end
+    end
+  })
+  L151_1:Dropdown({
+    Name = "Never auto-sell (empty = sell all)",
+    Options = _G.YBAItemFarm and _G.YBAItemFarm.sellBlacklistOptions or {},
+    Multi = true,
+    Default = L28_1 and L28_1("SLBL", {}) or {},
+    Callback = function(A0_2)
+      local L1_2 = _G.YBAItemFarm and _G.YBAItemFarm.sellBlacklist or {}
+      L150_1(L1_2, A0_2)
+      L27_1("SLBL", L1_2)
+    end
+  })
+  L151_1:Toggle({
+    Name = "Auto buy Lucky Arrow (75k)",
+    Default = L28_1("ABLA", false),
+    Callback = function(A0_2)
+      local L1_2 = _G.YBAItemFarm
+      if L1_2 and L1_2.setAutoBuyLuckyArrow then
+        L1_2.setAutoBuyLuckyArrow(A0_2)
+      end
+      L27_1("ABLA", A0_2)
+    end
+  })
+  L151_1:Button({
+    Name = "Turn in Candies [halloween]",
+    Callback = function()
+      local L0_2 = turnInCandiesToJack or _G.YBAItemFarm and _G.YBAItemFarm.turnInCandies
+      if L0_2 then
+        L0_2(false)
+      else
+        L107_1("Halloween Event", "Turn in function not found!")
+      end
+    end
+  })
+  L151_1:Toggle({
+    Name = "Auto Turn in Candies [halloween]",
+    Default = L28_1("AutoTurnInCandies", false),
+    Callback = function(A0_2)
+      L27_1("AutoTurnInCandies", A0_2)
+      autoTurnInCandies = A0_2
+      if _G.YBAItemFarm and _G.YBAItemFarm.setAutoTurnInCandies then
+        _G.YBAItemFarm.setAutoTurnInCandies(A0_2)
+      end
+    end
+  })
+  L151_1:Button({
+    Name = "Buy Redeemed Lucky Arrow [halloween]",
+    Callback = function()
+      local L0_2 = buyRedeemedLuckyArrowFromJack or _G.YBAItemFarm and _G.YBAItemFarm.buyRedeemedLuckyArrow
+      if L0_2 then
+        L0_2(false)
+      else
+        L107_1("Halloween Event", "Buy function not found!")
+      end
+    end
+  })
+  L151_1:Toggle({
+    Name = "Auto Buy Redeemed Lucky Arrow [halloween]",
+    Default = L28_1("AutoBuyRedeemedLuckyArrow", false),
+    Callback = function(A0_2)
+      L27_1("AutoBuyRedeemedLuckyArrow", A0_2)
+      autoBuyRedeemedLucky = A0_2
+      if _G.YBAItemFarm and _G.YBAItemFarm.setAutoBuyRedeemedLucky then
+        _G.YBAItemFarm.setAutoBuyRedeemedLucky(A0_2)
+      end
+    end
+  })
+  L151_1:Toggle({
+    Name = "Server Hop Farm",
+    Default = L28_1("SHF", true),
+    Callback = function(A0_2)
+      if A0_2 then
+        if _G.YBAItemFarm and _G.YBAItemFarm.enableServerHopFarm then
+          _G.YBAItemFarm.enableServerHopFarm()
+        end
+      elseif _G.YBAItemFarm and _G.YBAItemFarm.disableServerHopFarm then
+        _G.YBAItemFarm.disableServerHopFarm()
+      end
+      L27_1("SHF", A0_2)
+    end
+  })
+  L151_1:Slider({
+    Name = "Server Hop Wait Delay",
+    Default = tonumber(L28_1 and L28_1("SH_Delay", 3)) or 3,
+    Minimum = 0,
+    Maximum = 5,
+    DisplayMethod = "Value",
+    Precision = 0,
+    Suffix = "s",
+    Callback = function(A0_2)
+      local L1_2 = tonumber(A0_2) or 0
+      L27_1("SH_Delay", L1_2)
+      if _G.YBAItemFarm then
+        _G.YBAItemFarm.serverHopDelay = L1_2
+      end
+      if L139_1 then
+        L139_1.serverHopDelay = L1_2
+      end
+      if SF then
+        SF.serverHopDelay = L1_2
+      end
+    end
+  })
+  L151_1:Toggle({
+    Name = "Auto Leave on Max ($1M & 9 Lucky)",
+    Default = L28_1("AutoLeaveItemFarm", false),
+    Callback = function(A0_2)
+      L27_1("AutoLeaveItemFarm", A0_2)
+      if A0_2 and L126_1 then
+        L126_1()
+      end
+    end
+  })
+  L151_1:Toggle({
+    Name = "Item ESP",
+    Default = L28_1("IESP", false),
+    Callback = function(A0_2)
+      L27_1("IESP", A0_2)
+      setItemESP(A0_2)
+    end
+  })
+  L151_1:Slider({
+    Name = "Item ESP Text Size",
+    Default = tonumber(L28_1("IESPSize", 14)) or 14,
+    Minimum = 8,
+    Maximum = 28,
+    DisplayMethod = "Value",
+    Precision = 0,
+    Callback = function(A0_2)
+      setItemESPTextSize(A0_2)
+    end
+  })
+  L152_1:Toggle({
+    Name = "Auto Prestige",
+    Default = L28_1("AP", false),
+    Callback = function(A0_2)
+      local L1_2 = getgenv and getgenv().RAILhub_ToggleAutoPrestige or _G.toggleAutoPrestige or L148_1
+      if L1_2 then
+        L1_2(A0_2)
+      else
+        L27_1("AP", A0_2)
+        if A0_2 then
+          task.spawn(function()
+            local L0_3 = tick()
+            local L1_3
+            while tick() - L0_3 < 15 do
+              L1_3 = getgenv and getgenv().RAILhub_ToggleAutoPrestige or _G.toggleAutoPrestige or L148_1
+              if L1_3 then
+                break
+              end
+              task.wait(0.1)
+            end
+            if L1_3 then
+              L1_3(true)
+            end
+          end)
+        end
+      end
+    end
+  })
+  L152_1:Toggle({
+    Name = "Auto Leave on Max (P3 L50)",
+    Default = L28_1("AutoLeavePrestige", false),
+    Callback = function(A0_2)
+      L27_1("AutoLeavePrestige", A0_2)
+      if A0_2 and L127_1 then
+        L127_1()
+      end
+    end
+  })
+  if (L20_1.ItemFarmEnabled or L28_1("IF", false)) and not L92_1 then
+    L17_1("autostart scheduled: item farm")
+    task.delay(1.5, function()
+      local L0_2 = _G.YBAItemFarm
+      if L0_2 and L0_2.startFarming then
+        L0_2.startFarming()
+      elseif startFarming then
+        startFarming()
+      end
+    end)
+  end
+  if L28_1("ASM", false) then
+    local L153_1 = _G.YBAItemFarm
+    if L153_1 and L153_1.setAutoSellMax then
+      L153_1.setAutoSellMax(true)
+    end
+  end
+  if L28_1("ABLA", false) then
+    local L153_1 = _G.YBAItemFarm
+    if L153_1 and L153_1.setAutoBuyLuckyArrow then
+      L153_1.setAutoBuyLuckyArrow(true)
+    end
+  end
+  if L28_1("IESP", false) then
+    task.defer(function()
+      setItemESP(true)
+    end)
+  end
+end
+do
+  local L147_1 = L146_1.Visuals
+  local L148_1 = L146_1.Farming
+  
+  local function L149_1(A0_2, A1_2, A2_2)
+    L27_1(A0_2, A2_2)
+    getgenv().PlayerESPData[A1_2] = A2_2
+    if getgenv()._YBA_refreshPlayerESP then
+      task.defer(getgenv()._YBA_refreshPlayerESP)
+    end
+  end
+  
+  local L150_1 = L147_1:Section({Side = "Left", Name = "ESP"})
+  L150_1:Header({Text = "Player ESP", AutoLocalize = false})
+  L150_1:Toggle({
+    Name = "Enable Player ESP",
+    Default = L28_1("PESP", false),
+    Callback = function(A0_2)
+      L27_1("PESP", A0_2)
+      if getgenv()._YBA_setPlayerESP then
+        getgenv()._YBA_setPlayerESP(A0_2)
+      end
+    end
+  })
+  L150_1:Toggle({
+    Name = "ESP Chams",
+    Default = L28_1("PESP_CH", true),
+    Callback = function(A0_2)
+      L149_1("PESP_CH", "showChams", A0_2)
+    end
+  })
+  L150_1:Toggle({
+    Name = "ESP Names",
+    Default = L28_1("PESP_NM", true),
+    Callback = function(A0_2)
+      L149_1("PESP_NM", "showNames", A0_2)
+    end
+  })
+  L150_1:Toggle({
+    Name = "ESP Distance",
+    Default = L28_1("PESP_DS", true),
+    Callback = function(A0_2)
+      L149_1("PESP_DS", "showDistance", A0_2)
+    end
+  })
+  L150_1:Toggle({
+    Name = "ESP Stand",
+    Default = L28_1("PESP_ST", true),
+    Callback = function(A0_2)
+      L149_1("PESP_ST", "showStand", A0_2)
+    end
+  })
+  L150_1:Toggle({
+    Name = "ESP Spec",
+    Default = L28_1("PESP_SP", true),
+    Callback = function(A0_2)
+      L149_1("PESP_SP", "showSpec", A0_2)
+    end
+  })
+  L150_1:Toggle({
+    Name = "ESP Health",
+    Default = L28_1("PESP_HP", true),
+    Callback = function(A0_2)
+      L149_1("PESP_HP", "showHealth", A0_2)
+    end
+  })
+  local L151_1 = L147_1:Section({
+    Side = "Left",
+    Name = "Self Visuals"
+  })
+  L151_1:Header({
+    Text = "Self Visuals",
+    AutoLocalize = false
+  })
+  L151_1:Toggle({
+    Name = "View Self HP",
+    Default = L28_1("HUD_HP", true),
+    Callback = function(A0_2)
+      L27_1("HUD_HP", A0_2)
+      getgenv().HUDHealthEnabled = A0_2
+    end
+  })
+  local L152_1 = L147_1:Section({
+    Side = "Right",
+    Name = "World & Weather"
+  })
+  L152_1:Header({Text = "Weather", AutoLocalize = false})
+  local L153_1 = {}
+  L153_1.FogColor = game:GetService("Lighting").FogColor
+  L153_1.FogEnd = game:GetService("Lighting").FogEnd
+  L153_1.FogStart = game:GetService("Lighting").FogStart
+  
+  local function L154_1()
+    pcall(function()
+      local L0_3 = game:GetService("ReplicatedStorage"):FindFirstChild("Modules")
+      local L1_3 = L0_3 and L0_3:FindFirstChild("Rain")
+      if L1_3 then
+        local L2_3 = require(L1_3)
+        if L2_3 and type(L2_3.Disable) == "function" then
+          L2_3:Disable()
+        end
+      end
+    end)
+    pcall(function()
+      local L0_3 = workspace.CurrentCamera
+      if L0_3 then
+        local L1_3 = L0_3:FindFirstChild("YBA_RainSphere")
+        if L1_3 then
+          L1_3:Destroy()
+        end
+        local L2_3 = L0_3:FindFirstChild("YBA_SnowEmitter")
+        if L2_3 then
+          L2_3:Destroy()
+        end
+      end
+    end)
+    pcall(function()
+      local L0_3 = game:GetService("Lighting")
+      L0_3.FogColor = L153_1.FogColor or Color3.fromRGB(192, 192, 192)
+      L0_3.FogEnd = L153_1.FogEnd or 100000
+      L0_3.FogStart = L153_1.FogStart or 0
+    end)
+  end
+  
+  getgenv().WeatherCfg = getgenv().WeatherCfg or {
+    Enabled = L28_1("WEATHER_ENABLED", false),
+    Selected = L28_1("WEATHER_SELECTED", "None")
+  }
+  L152_1:Toggle({
+    Name = "Enable Weather Changer",
+    Default = L28_1("WEATHER_ENABLED", false),
+    Callback = function(A0_2)
+      L27_1("WEATHER_ENABLED", A0_2)
+      getgenv().WeatherCfg.Enabled = A0_2
+      if not A0_2 then
+        L154_1()
+      end
+    end
+  })
+  L152_1:Dropdown({
+    Name = "Select Weather",
+    Options = {"Rain", "Snow"},
+    Default = L28_1("WEATHER_SELECTED", "None"),
+    Callback = function(A0_2)
+      L27_1("WEATHER_SELECTED", A0_2)
+      getgenv().WeatherCfg.Selected = A0_2
+      L154_1()
+    end
+  })
+  task.spawn(function()
+    while true do
+      task.wait(1)
+      pcall(function()
+        if getgenv().WeatherCfg.Enabled then
+          local L0_3 = getgenv().WeatherCfg.Selected
+          if L0_3 == "Rain" then
+            local L1_3 = require(game:GetService("ReplicatedStorage").Modules.Rain)
+            L1_3:Enable()
+            L1_3:SetIntensityRatio(1)
+            local L2_3 = game:GetService("Lighting")
+            L2_3.FogColor = Color3.fromRGB(0, 0, 0)
+            L2_3.FogEnd = 1050
+            L2_3.FogStart = 0
+            local L3_3 = workspace.CurrentCamera
+            local L4_3 = L3_3 and L3_3:FindFirstChild("YBA_RainSphere")
+            if not L4_3 and L3_3 then
+              L4_3 = Instance.new("Part")
+              L4_3.Name = "YBA_RainSphere"
+              L4_3.Shape = Enum.PartType.Ball
+              L4_3.Size = Vector3.new(2100, 2100, 2100)
+              L4_3.Color = Color3.fromRGB(0, 0, 0)
+              L4_3.Material = Enum.Material.SmoothPlastic
+              L4_3.CanCollide = false
+              L4_3.Anchored = true
+              L4_3.CastShadow = false
+              local L5_3 = Instance.new("SpecialMesh")
+              L5_3.MeshType = Enum.MeshType.FileMesh
+              L5_3.MeshId = "rbxassetid://4371999088"
+              L5_3.Scale = Vector3.new(10.5, 10.5, 10.5)
+              L5_3.Parent = L4_3
+              L4_3.Parent = L3_3
+            end
+            if L4_3 and L3_3 then
+              L4_3.CFrame = L3_3.CFrame
+            end
+          elseif L0_3 == "Snow" then
+            local L1_3 = workspace.CurrentCamera
+            local L2_3 = game:GetService("ReplicatedStorage").Objects:FindFirstChild("SnowingEffect")
+            if L2_3 and L1_3 then
+              local L3_3 = L1_3:FindFirstChild("YBA_SnowEmitter")
+              if not L3_3 then
+                L3_3 = Instance.new("Part")
+                L3_3.Name = "YBA_SnowEmitter"
+                L3_3.Transparency = 1
+                L3_3.CanCollide = false
+                L3_3.Anchored = true
+                L3_3.Size = Vector3.new(100, 1, 100)
+                L3_3.Parent = L1_3
+                for L7_3, L8_3 in pairs(L2_3:GetChildren()) do
+                  if L8_3:IsA("ParticleEmitter") then
+                    local L9_3 = L8_3:Clone()
+                    L9_3.Parent = L3_3
+                    L9_3.Enabled = true
+                  end
+                end
+              end
+              L3_3.CFrame = L1_3.CFrame * CFrame.new(0, 50, -20)
+              for L7_3, L8_3 in pairs(L3_3:GetChildren()) do
+                if L8_3:IsA("ParticleEmitter") then
+                  L8_3.Enabled = true
+                end
+              end
+            end
+            local L3_3 = game:GetService("Lighting")
+            L3_3.FogColor = Color3.fromRGB(255, 255, 255)
+            L3_3.FogEnd = 1500
+            L3_3.FogStart = 10
+          end
+        else
+          local L0_3 = workspace.CurrentCamera
+          if L0_3 and (L0_3:FindFirstChild("YBA_RainSphere") or L0_3:FindFirstChild("YBA_SnowEmitter")) then
+            L154_1()
+          end
+        end
+      end)
+    end
+  end)
+  local L155_1 = L147_1:Section({
+    Side = "Right",
+    Name = "Custom Finishers"
+  })
+  L155_1:Header({
+    Text = "Finishers changer",
+    AutoLocalize = false
+  })
+  local L156_1 = L28_1("PSelectFinisher", "Shiza")
+  
+  local function L157_1()
+    if getgenv().FinisherSystemHooked then
+      return
+    end
+    getgenv().FinisherSystemHooked = true
+    local L0_2 = game:GetService("ReplicatedStorage")
+    local L1_2 = game:GetService("Players").LocalPlayer
+    
+    local function L2_2()
+      if type(getinstances) == "function" then
+        return getinstances()
+      else
+        local L0_3 = {}
+        for L4_3, L5_3 in pairs(game:GetDescendants()) do
+          table.insert(L0_3, L5_3)
+        end
+        return L0_3
+      end
+    end
+    
+    local function L3_2(A0_3)
+      if not A0_3 or not A0_3:IsA("RemoteEvent") then
+        return
+      end
+      if not getgenv().HookedRemotes then
+        getgenv().HookedRemotes = {}
+      end
+      if getgenv().HookedRemotes[A0_3] then
+        return
+      end
+      getgenv().HookedRemotes[A0_3] = true
+      A0_3.OnClientEvent:Connect(function(A0_4, A1_4)
+        if not getgenv().CustomFinisherEnabled then
+          return
+        end
+        pcall(function()
+          if type(A0_4) == "string" and string.find(A0_4, "Finisher:") and type(A1_4) == "table" then
+            local L0_5 = A1_4.User
+            local L1_5 = tostring(L0_5)
+            local L2_5 = L1_5 == L1_2.Name or L0_5 == L1_2 or L1_2.Character and L0_5 == L1_2.Character or L1_2.Character and type(L0_5) == "userdata" and L0_5.Parent == L1_2.Character
+            if L2_5 then
+              local L3_5 = L156_1 or L28_1("PSelectFinisher", "Shiza")
+              if L3_5 == "None" or L3_5 == "" then
+                return
+              end
+              local L4_5 = L0_2:FindFirstChild("Modules") and L0_2.Modules:FindFirstChild("VFX_Finishers")
+              L4_5 = L4_5 or L0_2:WaitForChild("Modules", 3) and L0_2.Modules:WaitForChild("VFX_Finishers", 3)
+              if not L4_5 then
+                return
+              end
+              local L5_5 = L4_5:FindFirstChild(L3_5)
+              if not L5_5 then
+                return
+              end
+              local L6_5 = require(L5_5)
+              local L7_5 = "Finisher: " .. L3_5
+              if L6_5 and L6_5[L7_5] then
+                task.spawn(function()
+                  pcall(function()
+                    L6_5[L7_5](A1_4)
+                  end)
+                end)
+              end
+            end
+          end
+        end)
+      end)
+    end
+    
+    for L7_2, L8_2 in pairs(L2_2()) do
+      if L8_2:IsA("RemoteEvent") then
+        L3_2(L8_2)
+      end
+    end
+    game.DescendantAdded:Connect(function(A0_3)
+      if A0_3:IsA("RemoteEvent") then
+        L3_2(A0_3)
+      end
+    end)
+    L1_2.CharacterAdded:Connect(function(A0_3)
+      task.wait(0.2)
+      local L1_3 = A0_3:FindFirstChild("RemoteEvent") or A0_3:WaitForChild("RemoteEvent", 2)
+      if L1_3 then
+        L3_2(L1_3)
+      end
+    end)
+    if L1_2.Character then
+      local L4_2 = L1_2.Character:FindFirstChild("RemoteEvent")
+      if L4_2 then
+        L3_2(L4_2)
+      end
+    end
+  end
+  
+  L155_1:Dropdown({
+    Name = "Select Finisher",
+    Options = {
+      "Aincrad",
+      "Announcer",
+      "Bruh Moment",
+      "Crumble",
+      "Disintegrate",
+      "GET OUT",
+      "Gate of Babylon",
+      "God's Lightning",
+      "Huh #2",
+      "Hyperlaser",
+      "Killer Queen Detonate",
+      "Lineage Wipe",
+      "Minecraft",
+      "None",
+      "Pillarman",
+      "Shiza",
+      "Sub-Zero",
+      "Tom",
+      "Vampire Ripple",
+      "Wither"
+    },
+    Default = L28_1("PSelectFinisher", "Shiza"),
+    Callback = function(A0_2)
+      L156_1 = A0_2
+      L27_1("PSelectFinisher", A0_2)
+    end
+  })
+  local L158_1 = L28_1("PEnableFinisher", false)
+  getgenv().CustomFinisherEnabled = L158_1
+  if L158_1 then
+    task.spawn(L157_1)
+  end
+  L155_1:Toggle({
+    Name = "Enable Finisher changer",
+    Default = L158_1,
+    Callback = function(A0_2)
+      getgenv().CustomFinisherEnabled = A0_2
+      L27_1("PEnableFinisher", A0_2)
+      if A0_2 then
+        L157_1()
+      end
+    end
+  })
+  sellSec = L148_1:Section({Side = "Right", Name = "Sell items"})
+  sellSec:Header({Text = "Sell items", AutoLocalize = false})
+  local L159_1 = L28_1 and L28_1("SellSpecificItem", "") or ""
+  sellSec:Dropdown({
+    Name = "Sell specific item",
+    Options = _G.YBAItemFarm and _G.YBAItemFarm.sellSpecificOptions or L139_1 and L139_1.sellSpecificOptions or {},
+    Default = L28_1("SellSpecificItem", ""),
+    Callback = function(A0_2)
+      L159_1 = A0_2 or ""
+      L27_1("SellSpecificItem", L159_1)
+    end
+  })
+  sellSec:Button({
+    Name = "Sell selected item",
+    Callback = function()
+      if L159_1 ~= "" then
+        local L0_2 = _G.YBAItemFarm
+        if L0_2 and L0_2.sellAll then
+          L0_2.sellAll(L159_1)
+        end
+      else
+        L107_1("YBA Script", "Select an item first.")
+      end
+    end
+  })
+  sellSec:Button({
+    Name = "Sell All Items",
+    Callback = function()
+      local L0_2 = _G.YBAItemFarm
+      if L0_2 and L0_2.sellInventory then
+        L0_2.sellInventory()
+      end
+    end
+  })
+  local L160_1 = {}
+  L160_1.displayName = "Jotaro [Lvl. 40+] (Heaven Ascended DIO)"
+  L160_1.enemy = "Heaven Ascension DIO"
+  L160_1.minLvl = 40
+  L160_1.npc = "Jotaro (Tallest Peak)"
+  L160_1.questTitle = "Defeat Heaven Ascended DIO"
+  local L161_1 = {}
+  L161_1["Officer Sam [Lvl. 1+]"] = {
+    displayName = "Officer Sam [Lvl. 1+] (Thug)",
+    enemy = "Thug",
+    minLvl = 1,
+    npc = "Officer Sam [Lvl. 1+]",
+    questTitle = "Take down 5 thugs"
+  }
+  L161_1["Deputy Bertrude [Lvl. 10+]"] = {
+    displayName = "Deputy Bertrude [Lvl. 10+] (Corrupt Police)",
+    enemy = "Corrupt Police",
+    minLvl = 10,
+    npc = "Deputy Bertrude [Lvl. 10+]",
+    questTitle = "Take down 5 corrupt police"
+  }
+  L161_1["Abbacchio's Partner [Lvl. 15+]"] = {
+    displayName = "Abbacchio's Partner [Lvl. 15+] (Alpha Thug)",
+    enemy = "Alpha Thug",
+    minLvl = 15,
+    npc = "Abbacchio's Partner [Lvl 15+]",
+    questTitle = "Take down 5 alpha thugs"
+  }
+  L161_1["Dracula [Lvl. 20+]"] = {
+    displayName = "Dracula [Lvl. 20+] (Zombie Henchman)",
+    enemy = "Zombie Henchman",
+    minLvl = 20,
+    npc = "Dracula [Lvl. 20+]",
+    questTitle = "Take down 5 zombies"
+  }
+  L161_1["William Zeppeli [Lvl. 25+]"] = {
+    displayName = "William Zeppeli [Lvl. 25+] (Vampire)",
+    enemy = "Vampire",
+    minLvl = 25,
+    npc = "William Zeppeli [Lvl. 25+]",
+    questTitle = "Take down 3 vampires"
+  }
+  L161_1["Doppio [Lvl. 30+]"] = {
+    displayName = "Doppio [Lvl. 30+] (DIO)",
+    enemy = "DIO",
+    minLvl = 30,
+    npc = "Doppio [Lvl. 30+]",
+    questTitle = "Defeat DIO"
+  }
+  L161_1["DIO [Lvl. 35+]"] = {
+    displayName = "DIO [Lvl. 35+] (Jotaro)",
+    enemy = "Jotaro",
+    minLvl = 35,
+    npc = "DIO [Lvl. 35+]",
+    questTitle = "Defeat Jotaro"
+  }
+  L161_1["Jotaro [Lvl. 40+]"] = L160_1
+  L161_1.Jotaro = L160_1
+  L161_1["Path to Heaven"] = L160_1
+  local L162_1 = {
+    "Officer Sam [Lvl. 1+] (Thug)",
+    "Deputy Bertrude [Lvl. 10+] (Corrupt Police)",
+    "Abbacchio's Partner [Lvl. 15+] (Alpha Thug)",
+    "Dracula [Lvl. 20+] (Zombie Henchman)",
+    "William Zeppeli [Lvl. 25+] (Vampire)",
+    "Doppio [Lvl. 30+] (DIO)",
+    "DIO [Lvl. 35+] (Jotaro)",
+    "Jotaro [Lvl. 40+] (Heaven Ascended DIO)"
+  }
+  local L163_1 = {
+    "Thug",
+    "Alpha Thug",
+    "Corrupt Police",
+    "Zombie Henchman",
+    "Vampire",
+    "DIO",
+    "Heaven Ascended DIO",
+    "Jotaro",
+    "Jotaro (Part 6)",
+    "Security Guard",
+    "Leaky Eye Luca",
+    "Bucciarati",
+    "Pesci",
+    "Ghiaccio",
+    "Diavolo"
+  }
+  local L164_1 = false
+  local L165_1 = false
+  local L166_1 = L28_1 and L28_1("QF_AutoChoose", false) or false
+  local L167_1 = L28_1 and L28_1("QF_Quest", L162_1[1]) or L162_1[1]
+  local L168_1 = L28_1 and L28_1("QF_TargetNPC", "Thug") or "Thug"
+  
+  local function L169_1(A0_2)
+    if enableNoclip then
+      enableNoclip(A0_2)
+    elseif _G.YBAItemFarm and _G.YBAItemFarm.enableNoclip then
+      _G.YBAItemFarm.enableNoclip(A0_2)
+    elseif getgenv()._YBA_Exports and getgenv()._YBA_Exports.enableNoclip then
+      getgenv()._YBA_Exports.enableNoclip(A0_2)
+    end
+  end
+  
+  local function L170_1(A0_2)
+    if disableNoclip then
+      disableNoclip(A0_2)
+    elseif _G.YBAItemFarm and _G.YBAItemFarm.disableNoclip then
+      _G.YBAItemFarm.disableNoclip(A0_2)
+    elseif getgenv()._YBA_Exports and getgenv()._YBA_Exports.disableNoclip then
+      getgenv()._YBA_Exports.disableNoclip(A0_2)
+    end
+  end
+  
+  local function L171_1(A0_2)
+    if not A0_2 then
+      return "Officer Sam [Lvl. 1+]"
+    end
+    for L4_2, L5_2 in pairs(L161_1) do
+      if L5_2.displayName == A0_2 or L4_2 == A0_2 or L4_2:lower() == A0_2:lower() or L5_2.displayName:lower() == A0_2:lower() then
+        return L4_2
+      end
+    end
+    for L4_2, L5_2 in pairs(L161_1) do
+      local L6_2 = A0_2:lower()
+      if L6_2:find(L5_2.enemy:lower(), 1, true) or L6_2:find(L4_2:lower(), 1, true) or L5_2.npc and L6_2:find(L5_2.npc:lower(), 1, true) then
+        return L4_2
+      end
+    end
+    return "Officer Sam [Lvl. 1+]"
+  end
+  
+  local function L172_1(A0_2)
+    A0_2 = tonumber(A0_2) or 1
+    local L1_2 = -1
+    local L2_2 = "Officer Sam [Lvl. 1+]"
+    for L6_2, L7_2 in pairs(L161_1) do
+      if L7_2.minLvl and A0_2 >= L7_2.minLvl and L1_2 < L7_2.minLvl then
+        L1_2 = L7_2.minLvl
+        L2_2 = L6_2
+      end
+    end
+    return L2_2
+  end
+  
+  local function L173_1(A0_2, A1_2)
+    local L2_2 = L2_1:FindFirstChild("PlayerGui")
+    if not L2_2 then
+      return false
+    end
+    local L3_2 = L2_2:FindFirstChild("DialogueGui") or L2_2:FindFirstChild("Dialogue")
+    if not L3_2 then
+      for L7_2, L8_2 in ipairs(L2_2:GetChildren()) do
+        if L8_2:IsA("ScreenGui") and L8_2.Enabled and L8_2.Name:lower():find("dialog") then
+          L3_2 = L8_2
+          break
+        end
+      end
+    end
+    local L4_2 = false
+    local L5_2 = false
+    if L3_2 and L3_2.Enabled then
+      local L6_2 = L3_2:FindFirstChild("Frame") or L3_2:FindFirstChildWhichIsA("Frame") or L3_2
+      if L6_2 and L6_2.Visible then
+        local L7_2 = L6_2:FindFirstChild("DialogueFrame", true)
+        local L8_2 = ""
+        if L7_2 then
+          for L12_2, L13_2 in ipairs(L7_2:GetDescendants()) do
+            if L13_2:IsA("TextLabel") and L13_2.Text ~= "" then
+              L8_2 = L8_2 .. " " .. L13_2.Text:lower()
+            end
+          end
+        end
+        if L8_2:find("remember") or L8_2:find("promised") or L8_2:find("already") or L8_2:find("come back once") or L8_2:find("found all 4") then
+          L5_2 = true
+        end
+        if L8_2:find("too weak") or L8_2:find("prestige 1") then
+          warn("[Quest Farm] Player must be Prestige 1+ and have a Stand to take this quest.")
+          L5_2 = true
+        end
+        local L9_2 = L8_2:find("combat") or L8_2:find("\208\178 \208\177\208\190\209\142")
+        if L9_2 then
+          local L10_2 = L6_2:FindFirstChild("ClickContinue", true)
+          if L10_2 then
+            L54_1(L10_2)
+          end
+          task.wait(2)
+          return false, false, true
+        end
+        local L10_2 = L6_2:FindFirstChild("Options", true)
+        local L11_2
+        if L10_2 and L10_2.Visible then
+          local L12_2 = {}
+          for L16_2, L17_2 in ipairs(L10_2:GetChildren()) do
+            if L17_2:IsA("GuiObject") and L17_2.Visible and L17_2.Name ~= "UIListLayout" and L17_2.Name ~= "UIPadding" and L17_2.Name ~= "UIGridLayout" then
+              local L18_2 = L17_2:FindFirstChildWhichIsA("TextButton", true) or L17_2:FindFirstChildWhichIsA("GuiButton", true) or L17_2:IsA("GuiButton") and L17_2
+              local L19_2 = ""
+              if L18_2 and L18_2:IsA("TextButton") and L18_2.Text and L18_2.Text ~= "" then
+                L19_2 = L18_2.Text
+              end
+              if L19_2 == "" then
+                for L23_2, L24_2 in ipairs(L17_2:GetDescendants()) do
+                  if (L24_2:IsA("TextLabel") or L24_2:IsA("TextButton")) and L24_2.Text and L24_2.Text ~= "" then
+                    L19_2 = L24_2.Text
+                    break
+                  end
+                end
+              end
+              local L20_2 = L19_2:lower():gsub("^%s+", ""):gsub("%s+$", "")
+              local L21_2 = L20_2:find("no problem") or L20_2:find("thank you") or L20_2:find("nevermind") or L20_2:find("no thanks") or L20_2:find("bye")
+              local L22_2 = L20_2 == "..."
+              if not L21_2 then
+                table.insert(L12_2, {
+                  obj = L17_2,
+                  btn = L18_2 or L17_2,
+                  isDots = L22_2,
+                  y = L17_2.AbsolutePosition and L17_2.AbsolutePosition.Y or 9999
+                })
+              end
+            end
+          end
+          if 0 < #L12_2 then
+            local L13_2 = {}
+            for L17_2, L18_2 in ipairs(L12_2) do
+              if not L18_2.isDots then
+                table.insert(L13_2, L18_2)
+              end
+            end
+            local L14_2 = 0 < #L13_2 and L13_2 or L12_2
+            table.sort(L14_2, function(A0_3, A1_3)
+              return A0_3.y < A1_3.y
+            end)
+            L11_2 = L14_2[1].btn
+          end
+        end
+        if L11_2 then
+          L54_1(L11_2)
+          L4_2 = true
+          task.wait(0.08)
+          L77_1(L3_2)
+        else
+          L77_1(L3_2)
+          L4_2 = true
+          task.wait(0.04)
+        end
+      end
+    end
+    for L9_2, L10_2 in ipairs(L2_2:GetChildren()) do
+      if L10_2:IsA("ScreenGui") and L10_2.Enabled and L10_2 ~= L3_2 then
+        local L11_2 = L10_2.Name:lower()
+        if L11_2:find("dialog") or L11_2:find("quest") then
+          local L12_2 = L10_2:FindFirstChild("Option1", true)
+          if L12_2 and L12_2.Visible then
+            L54_1(L12_2)
+            L4_2 = true
+          end
+          local L13_2 = L10_2:FindFirstChild("ClickContinue", true)
+          if L13_2 and L13_2.Visible then
+            L54_1(L13_2)
+            L4_2 = true
+          end
+        end
+      end
+    end
+    return L4_2, L5_2
+  end
+  
+  local function L174_1(A0_2)
+    local L1_2 = workspace:FindFirstChild("Dialogues")
+    if not L1_2 then
+      return nil
+    end
+    if not A0_2 or A0_2 == "" then
+      return nil
+    end
+    local L2_2 = L1_2:FindFirstChild(A0_2)
+    if L2_2 then
+      return L2_2
+    end
+    
+    local function L3_2(A0_3)
+      if not A0_3 then
+        return ""
+      end
+      return tostring(A0_3):lower():gsub("[%p%s]+", " "):gsub("^%s+", ""):gsub("%s+$", "")
+    end
+    
+    local L4_2 = L3_2(A0_2)
+    local L5_2 = tostring(A0_2):lower():gsub("[%s%p]+", "")
+    for L9_2, L10_2 in ipairs(L1_2:GetChildren()) do
+      if (L10_2:IsA("Model") or L10_2:IsA("Folder") or L10_2:FindFirstChildWhichIsA("BasePart")) and L10_2.Name:lower():gsub("[%s%p]+", "") == L5_2 then
+        return L10_2
+      end
+    end
+    local L6_2 = {
+      "dracula",
+      "sam",
+      "bertrude",
+      "abbacchio",
+      "zeppeli",
+      "doppio",
+      "jotaro",
+      "jill",
+      "luca",
+      "pucci",
+      "darius",
+      "kars",
+      "bucciarati",
+      "giorno"
+    }
+    local L7_2 = L4_2:find("heaven") or L4_2:find("ascen") or L4_2:find("oh") or L4_2:find("tallest") or L4_2:find("peak") or L4_2:find("corpse")
+    local L8_2 = (L4_2 == "dio" or L4_2:find("^dio") or L5_2:find("^dio")) and not L7_2
+    local L9_2 = L4_2:find("6") or L4_2:find("p6")
+    for L13_2, L14_2 in ipairs(L1_2:GetChildren()) do
+      local L15_2 = L14_2.Name
+      local L16_2 = L3_2(L15_2)
+      local L17_2 = L15_2:lower():gsub("[%s%p]+", "")
+      if L7_2 then
+        if L16_2:find("tallest") or L16_2:find("peak") or L16_2:find("heaven") or L16_2:find("ascen") or L16_2:find("oh") then
+          return L14_2
+        end
+      elseif L8_2 then
+        if (L16_2 == "dio" or L16_2:find("^dio") or L17_2:find("^dio")) and not L16_2:find("heaven") and not L16_2:find("ascen") and not L16_2:find("oh") and not L16_2:find("tallest") and not L16_2:find("peak") then
+          return L14_2
+        end
+      elseif L9_2 then
+        if L16_2:find("jotaro") and (L16_2:find("6") or L16_2:find("p6")) then
+          return L14_2
+        end
+      else
+        if L16_2 == L4_2 or L16_2:find(L4_2, 1, true) or L4_2:find(L16_2, 1, true) then
+          return L14_2
+        end
+        for L21_2, L22_2 in ipairs(L6_2) do
+          if L4_2:find(L22_2, 1, true) and L16_2:find(L22_2, 1, true) then
+            return L14_2
+          end
+        end
+      end
+    end
+    local L10_2 = L4_2:match("^(%w+)")
+    if L10_2 and 3 <= #L10_2 then
+      for L14_2, L15_2 in ipairs(L1_2:GetChildren()) do
+        if L3_2(L15_2.Name):find(L10_2, 1, true) then
+          return L15_2
+        end
+      end
+    end
+    return nil
+  end
+  
+  local function L175_1(A0_2)
+    if not A0_2 or A0_2 == "" or A0_2 == "None" then
+      return nil
+    end
+    local L1_2 = A0_2:lower()
+    if L1_2:find("corrupt") or L1_2:find("police") or L1_2:find("bertrude") then
+      return "Corrupt Police"
+    end
+    if L1_2:find("alpha") or L1_2:find("abbacchio") then
+      return "Alpha Thug"
+    end
+    if L1_2:find("thug") or L1_2:find("sam") then
+      return "Thug"
+    end
+    if L1_2:find("zombie") or L1_2:find("dracula") or L1_2:find("henchman") then
+      return "Zombie Henchman"
+    end
+    if L1_2:find("vampire") or L1_2:find("zeppeli") then
+      return "Vampire"
+    end
+    if L1_2:find("heaven") or L1_2:find("ascend") or L1_2:find(" oh") or L1_2:find("corpse") or L1_2:find("path to heaven") then
+      return "Heaven Ascended DIO"
+    end
+    if L1_2:find("dio") or L1_2:find("doppio") then
+      return "DIO"
+    end
+    if L1_2:find("jotaro") then
+      return "Jotaro"
+    end
+    return nil
+  end
+  
+  local function L176_1(A0_2, A1_2, A2_2)
+    if not A0_2 or A0_2 == "" or A0_2 == "None" then
+      return false
+    end
+    if not A1_2 then
+      return false
+    end
+    local L3_2 = A0_2:lower():gsub("[%p%s]+", " "):gsub("^%s+", ""):gsub("%s+$", "")
+    local L4_2 = (A1_2.enemy or ""):lower()
+    local L5_2 = (A2_2 or ""):lower()
+    local L6_2 = L4_2:find("alpha", 1, true) ~= nil or L5_2:find("alpha", 1, true) ~= nil
+    local L7_2 = (L4_2:find("thug", 1, true) ~= nil or L5_2:find("thug", 1, true) ~= nil) and not L6_2
+    local L8_2 = L4_2:find("police", 1, true) ~= nil or L4_2:find("corrupt", 1, true) ~= nil or L5_2:find("corrupt", 1, true) ~= nil or L5_2:find("police", 1, true) ~= nil or L5_2:find("bertrude", 1, true) ~= nil
+    local L9_2 = L4_2:find("zombie", 1, true) ~= nil or L4_2:find("henchman", 1, true) ~= nil or L5_2:find("dracula", 1, true) ~= nil or L5_2:find("zombie", 1, true) ~= nil
+    local L10_2 = L4_2:find("vampire", 1, true) ~= nil or L5_2:find("zeppeli", 1, true) ~= nil or L5_2:find("vampire", 1, true) ~= nil
+    local L11_2 = L4_2:find("heaven", 1, true) ~= nil or L4_2:find("ascend", 1, true) ~= nil or L5_2:find("heaven", 1, true) ~= nil or L5_2:find("40") ~= nil or L4_2:find("\209\128\208\176\208\185", 1, true) ~= nil or L5_2:find("\209\128\208\176\208\185", 1, true) ~= nil or L4_2:find("\208\178\208\190\208\183\208\189\208\181\209\129", 1, true) ~= nil or L5_2:find("\208\178\208\190\208\183\208\189\208\181\209\129", 1, true) ~= nil or L4_2:find("\208\189\208\181\208\177\208\181\209\129", 1, true) ~= nil
+    local L12_2 = (L4_2:find("dio", 1, true) ~= nil or L5_2:find("doppio", 1, true) ~= nil or L5_2:find("^dio", 1, true) and not L5_2:find("35") and not L4_2:find("jotaro", 1, true)) and not L11_2
+    local L13_2 = (L4_2:find("jotaro", 1, true) ~= nil or L5_2:find("35") or L5_2:find("dio", 1, true) and L4_2:find("jotaro", 1, true)) and not L11_2 and L4_2:find("6", 1, true) == nil and L4_2:find("p6", 1, true) == nil
+    local L14_2 = L3_2:find("alpha", 1, true) ~= nil or L3_2:find("\208\176\208\187\209\140\209\132\208\176", 1, true) ~= nil
+    local L15_2 = (L3_2:find("thug", 1, true) ~= nil or L3_2:find("\208\177\208\176\208\189\208\180\208\184\209\130", 1, true) ~= nil or L3_2:find("\208\179\209\128\208\190\208\188\208\184\208\187", 1, true) ~= nil) and not L14_2
+    local L16_2 = L3_2:find("police", 1, true) ~= nil or L3_2:find("corrupt", 1, true) ~= nil or L3_2:find("bertrude", 1, true) ~= nil or L3_2:find("\208\191\208\190\208\187\208\184\209\134", 1, true) ~= nil or L3_2:find("\208\186\208\190\208\191", 1, true) ~= nil
+    local L17_2 = L3_2:find("zombie", 1, true) ~= nil or L3_2:find("dracula", 1, true) ~= nil or L3_2:find("henchman", 1, true) ~= nil or L3_2:find("\208\183\208\190\208\188\208\177\208\184", 1, true) ~= nil
+    local L18_2 = L3_2:find("vampire", 1, true) ~= nil or L3_2:find("zeppeli", 1, true) ~= nil or L3_2:find("\208\178\208\176\208\188\208\191\208\184\209\128", 1, true) ~= nil
+    local L19_2 = L3_2:find("heaven", 1, true) ~= nil or L3_2:find("ascend", 1, true) ~= nil or L3_2:find(" oh", 1, true) ~= nil or L3_2:find("over heaven", 1, true) ~= nil or L3_2:find("corpse", 1, true) ~= nil or L3_2:find("path to heaven", 1, true) ~= nil or L3_2:find("the way to heaven", 1, true) ~= nil or L3_2:find("way to heaven", 1, true) ~= nil or L3_2:find("saint", 1, true) ~= nil or L3_2:find("\209\128\208\176\208\185", 1, true) ~= nil or L3_2:find("\208\191\209\131\209\130\209\140 \208\178 \209\128\208\176\208\185", 1, true) ~= nil or L3_2:find("\208\191\209\131\209\130\209\140 \208\186 \209\128\208\176\209\142", 1, true) ~= nil or L3_2:find("\208\189\208\181\208\177\208\181\209\129", 1, true) ~= nil or L3_2:find("\208\178\208\190\208\183\208\189\208\181\209\129", 1, true) ~= nil
+    local L20_2 = (L3_2:find("dio", 1, true) ~= nil or L3_2:find("doppio", 1, true) ~= nil or L3_2:find("\208\180\208\184\208\190", 1, true) ~= nil) and not L19_2
+    local L21_2 = (L3_2:find("jotaro", 1, true) ~= nil or L3_2:find("\208\180\208\182\208\190\209\130\208\176\209\128\208\190", 1, true) ~= nil) and L3_2:find("6", 1, true) == nil and L3_2:find("p6", 1, true) == nil and L3_2:find("kujo", 1, true) == nil and not L19_2
+    if L6_2 and L14_2 then
+      return true
+    end
+    if L7_2 and L15_2 then
+      return true
+    end
+    if L8_2 and L16_2 then
+      return true
+    end
+    if L9_2 and L17_2 then
+      return true
+    end
+    if L10_2 and L18_2 then
+      return true
+    end
+    if L11_2 and L19_2 then
+      return true
+    end
+    if L12_2 and L20_2 then
+      return true
+    end
+    if L13_2 and L21_2 then
+      return true
+    end
+    return false
+  end
+  
+  local function L177_1()
+    local L0_2 = {}
+    local L1_2 = L2_1:FindFirstChild("PlayerGui")
+    local L2_2 = L1_2 and L1_2:FindFirstChild("HUD") and L1_2.HUD:FindFirstChild("Main") and L1_2.HUD.Main:FindFirstChild("Frames") and L1_2.HUD.Main.Frames:FindFirstChild("Quest") and L1_2.HUD.Main.Frames.Quest:FindFirstChild("Quests")
+    if L2_2 then
+      for L6_2, L7_2 in ipairs(L2_2:GetChildren()) do
+        if L7_2:IsA("GuiObject") and L7_2.Visible and L7_2.Name ~= "Sample" then
+          local L8_2 = L7_2:FindFirstChild("Progress")
+          local L9_2 = L8_2 and L8_2.Text or ""
+          local L10_2, L11_2 = L9_2:match("(%d+)%s*/%s*(%d+)")
+          L10_2 = tonumber(L10_2) or 0
+          L11_2 = tonumber(L11_2) or 0
+          local L12_2 = {
+            L7_2.Name
+          }
+          for L16_2, L17_2 in ipairs(L7_2:GetDescendants()) do
+            if L17_2:IsA("TextLabel") and L17_2 ~= L8_2 and L17_2.Text and L17_2.Text ~= "" then
+              table.insert(L12_2, L17_2.Text)
+            end
+          end
+          local L13_2 = table.concat(L12_2, " ")
+          table.insert(L0_2, {
+            name = L13_2,
+            frame = L7_2,
+            curProg = L10_2,
+            maxProg = L11_2,
+            isCompleted = 0 < L11_2 and L10_2 >= L11_2
+          })
+        end
+      end
+    end
+    return L0_2
+  end
+  
+  local function L178_1(A0_2, A1_2)
+    if not A0_2 then
+      return false
+    end
+    local L2_2 = (A0_2.enemy or ""):lower()
+    local L3_2 = (A1_2 or ""):lower()
+    return L2_2:find("heaven") or L2_2:find("ascen") or L3_2:find("40") or L3_2:find("heaven") or L2_2:find("\209\128\208\176\208\185") or L3_2:find("\209\128\208\176\208\185") or L2_2:find("\208\178\208\190\208\183\208\189\208\181\209\129") or L3_2:find("\208\178\208\190\208\183\208\189\208\181\209\129") or L2_2:find("\208\189\208\181\208\177\208\181\209\129") or L3_2:find("\208\189\208\181\208\177\208\181\209\129")
+  end
+  
+  local function L179_1(A0_2, A1_2)
+    if not A0_2 then
+      return false, 0, 0
+    end
+    local L2_2 = L2_1.Character
+    local L3_2 = L2_2 and L2_2:FindFirstChild("HumanoidRootPart")
+    local L4_2 = L178_1(A0_2, A1_2)
+    local L5_2 = L177_1()
+    for L9_2, L10_2 in ipairs(L5_2) do
+      if L176_1(L10_2.name, A0_2, A1_2) and not L10_2.isCompleted then
+        return true, L10_2.curProg, L10_2.maxProg
+      end
+    end
+    local L6_2 = L2_1:FindFirstChild("PlayerStats")
+    local L7_2 = L6_2 and L6_2:FindFirstChild("Quest") and L6_2.Quest.Value or ""
+    local L8_2 = L6_2 and L6_2:FindFirstChild("QuestProgress") and L6_2.QuestProgress.Value or 0
+    local L9_2 = L6_2 and L6_2:FindFirstChild("QuestMaxProgress") and L6_2.QuestMaxProgress.Value or 0
+    if L176_1(L7_2, A0_2, A1_2) then
+      local L10_2 = 0 < L9_2 and L8_2 >= L9_2
+      if not L10_2 then
+        return true, L8_2, L9_2
+      end
+    end
+    return false, 0, 0
+  end
+  
+  local function L180_1(A0_2, A1_2, A2_2)
+    if L179_1(A1_2, A2_2) then
+      return true
+    end
+    local L3_2 = L2_1.Character
+    local L4_2 = L3_2 and L3_2:FindFirstChild("HumanoidRootPart")
+    local L5_2 = L3_2 and L3_2:FindFirstChildOfClass("Humanoid")
+    if not L4_2 then
+      return false
+    end
+    local L6_2 = L178_1(A1_2, A2_2)
+    if L6_2 and L4_2.Position.X > 6000 and 6000 < L4_2.Position.Z then
+      if L179_1(A1_2, A2_2) then
+        return true
+      end
+      A0_2 = "Jotaro (Heaven)"
+    end
+    local L7_2 = L174_1(A0_2)
+    if not L7_2 then
+      local L8_2 = {
+        workspace:FindFirstChild("NPCs"),
+        workspace:FindFirstChild("Living"),
+        workspace
+      }
+      for L12_2, L13_2 in ipairs(L8_2) do
+        if L13_2 and not L7_2 then
+          for L17_2, L18_2 in ipairs(L13_2:GetChildren()) do
+            if L18_2:IsA("Model") and not L0_1:GetPlayerFromCharacter(L18_2) then
+              do
+                local L19_2 = L18_2.Name:lower()
+                local L20_2 = tostring(A0_2):lower()
+                if L19_2:find(L20_2, 1, true) or L20_2:find(L19_2, 1, true) then
+                  L7_2 = L18_2
+                  break
+                end
+              end
+            end
+          end
+        end
+      end
+    end
+    if not L7_2 then
+      warn("[Quest Farm] Could not locate NPC for quest: " .. tostring(A0_2))
+      return false
+    end
+    local L8_2 = L7_2:FindFirstChild("HumanoidRootPart") or L7_2.PrimaryPart or L7_2:FindFirstChild("Torso") or L7_2:FindFirstChild("UpperTorso") or L7_2:FindFirstChild("Head") or L7_2:FindFirstChildOfClass("BasePart")
+    local L9_2 = L2_1.Character
+    local L10_2 = L9_2 and L9_2:FindFirstChild("HumanoidRootPart")
+    local L11_2 = L9_2 and L9_2:FindFirstChildOfClass("Humanoid")
+    if not L10_2 or not L8_2 then
+      return false
+    end
+    L169_1("quest")
+    local L12_2 = L8_2.CFrame + L8_2.CFrame.LookVector * 3
+    if moveCharacterTo then
+      moveCharacterTo(L12_2)
+    elseif travelToInstant then
+      travelToInstant(L12_2)
+    else
+      L10_2.CFrame = CFrame.new(L12_2.Position, L8_2.Position)
+    end
+    L10_2.CFrame = CFrame.new(L12_2.Position, L8_2.Position)
+    L10_2.AssemblyLinearVelocity = Vector3.zero
+    L10_2.AssemblyAngularVelocity = Vector3.zero
+    if L11_2 then
+      L11_2.Jump = false
+      pcall(function()
+        L11_2:ChangeState(Enum.HumanoidStateType.Running)
+      end)
+    end
+    
+    local function L13_2()
+      L57_1(L10_2, L11_2)
+    end
+    
+    local L14_2 = L7_2:FindFirstChildWhichIsA("ProximityPrompt", true)
+    
+    local function L15_2()
+      L58_1(L14_2, L2_1)
+    end
+    
+    local L16_2 = L7_2:FindFirstChild("Dialogue")
+    local L17_2 = L16_2 and L16_2.Value or L7_2.Name
+    local L18_2 = L9_2 and L9_2:FindFirstChild("RemoteEvent")
+    task.wait(0.1)
+    L15_2()
+    local L19_2 = tick()
+    local L20_2 = 0
+    local L21_2 = false
+    while tick() - L19_2 < 7 do
+      if not L164_1 then
+      end
+      if L11_2 then
+        L11_2.Jump = false
+      end
+      do
+        local L22_2 = L179_1(A1_2, A2_2)
+        local L23_2 = L2_1:FindFirstChild("PlayerGui")
+        local L24_2 = L23_2 and (L23_2:FindFirstChild("DialogueGui") or L23_2:FindFirstChild("Dialogue"))
+        local L25_2 = L24_2 and L24_2.Enabled and L24_2:FindFirstChild("Frame") and L24_2.Frame.Visible
+        if L22_2 and not L25_2 then
+          break
+        end
+        local L26_2 = false
+        local L27_2 = false
+        if L25_2 then
+          local L28_2 = L24_2.Frame:FindFirstChild("DialogueFrame", true)
+          local L29_2 = ""
+          if L28_2 then
+            for L33_2, L34_2 in ipairs(L28_2:GetDescendants()) do
+              if L34_2:IsA("TextLabel") and L34_2.Text ~= "" then
+                L29_2 = L29_2 .. " " .. L34_2.Text:lower()
+              end
+            end
+          end
+          if L29_2:find("teleport") or L29_2:find("beat dio") or L29_2:find("\209\130\208\181\208\187\208\181\208\191\208\190\209\128\209\130") then
+            L21_2 = true
+            pcall(function()
+              local L0_3 = L24_2.Frame:FindFirstChild("ClickContinue", true)
+              if L0_3 then
+                L54_1(L0_3)
+              end
+            end)
+          end
+          L26_2, L27_2 = L173_1(L17_2, L18_2)
+          if L27_2 then
+            pcall(function()
+              local L0_3 = L24_2.Frame:FindFirstChild("ClickContinue")
+              if L0_3 then
+                L54_1(L0_3)
+              end
+            end)
+            break
+          end
+        else
+          if L21_2 then
+            break
+          end
+          if tick() - L20_2 > 0.4 then
+            L20_2 = tick()
+            L15_2()
+          end
+        end
+        task.wait(0.05)
+      end
+    end
+    L13_2()
+    task.wait(0.05)
+    L173_1(L17_2, L18_2)
+    pcall(function()
+      local L0_3 = L2_1:FindFirstChild("PlayerGui")
+      local L1_3 = L0_3 and L0_3:FindFirstChild("DialogueGui")
+      if L1_3 and L1_3:FindFirstChild("Frame") and L1_3.Frame.Visible then
+        local L2_3 = L1_3.Frame:FindFirstChild("ClickContinue")
+        if L2_3 then
+          L54_1(L2_3)
+        end
+        local L3_3 = L1_3.Frame:FindFirstChild("DialogueFrame")
+        if L3_3 then
+          L54_1(L3_3)
+        end
+      end
+    end)
+    if L21_2 or L6_2 then
+      local L22_2 = tick()
+      while tick() - L22_2 < 6 do
+        if not L164_1 then
+        end
+        local L23_2 = L2_1.Character
+        local L24_2 = L23_2 and L23_2:FindFirstChild("HumanoidRootPart")
+        if L24_2 and L24_2.Position.X > 6000 and 6000 < L24_2.Position.Z then
+          break
+        end
+        task.wait(0.2)
+      end
+    end
+    return true
+  end
+  
+  local function L181_1(A0_2)
+    if not A0_2 then
+      return ""
+    end
+    return tostring(A0_2):lower():gsub("[%p%s]+", " "):gsub("^%s+", ""):gsub("%s+$", "")
+  end
+  
+  local function L182_1(A0_2)
+    if not A0_2 then
+      return false
+    end
+    local L1_2 = tostring(A0_2):lower()
+    return L1_2:find("heaven", 1, true) ~= nil or L1_2:find("ascen", 1, true) ~= nil or L1_2:find("dio oh", 1, true) ~= nil or L1_2:find("over heaven", 1, true) ~= nil or L1_2:find("dio (oh)", 1, true) ~= nil or L1_2:find("\209\128\208\176\208\185", 1, true) ~= nil or L1_2:find("\208\189\208\181\208\177\208\181\209\129", 1, true) ~= nil or L1_2:find("\208\178\208\190\208\183\208\189\208\181\209\129", 1, true) ~= nil
+  end
+  
+  local function L183_1(A0_2)
+    if not A0_2 then
+      return false
+    end
+    local L1_2 = tostring(A0_2):lower()
+    if L1_2:find("heaven", 1, true) or L1_2:find("ascen", 1, true) then
+      return false
+    end
+    if L1_2 == "jotaro kujo" or L1_2:find("^jotaro kujo") ~= nil or L1_2:find("jotaro kujo") ~= nil then
+      return true
+    end
+    return L1_2:find("jotaro", 1, true) ~= nil and (L1_2:find("kujo", 1, true) ~= nil or L1_2:find("6", 1, true) ~= nil or L1_2:find("p6", 1, true) ~= nil or L1_2:find("part 6", 1, true) ~= nil or L1_2:find("part6", 1, true) ~= nil)
+  end
+  
+  local function L184_1(A0_2)
+    if not A0_2 then
+      return false
+    end
+    local L1_2 = tostring(A0_2):lower()
+    return L1_2:find("alpha", 1, true) ~= nil
+  end
+  
+  local function L185_1(A0_2)
+    if not A0_2 then
+      return false
+    end
+    local L1_2 = tostring(A0_2):lower():gsub("[%p%s]+", "")
+    return L1_2 == "deo" or L1_2:find("^deo", 1, true) ~= nil
+  end
+  
+  local function L186_1(A0_2)
+    if not A0_2 then
+      return false
+    end
+    local L1_2 = tostring(A0_2):lower()
+    return L1_2:find("diavolo", 1, true) ~= nil
+  end
+  
+  local function L187_1(A0_2)
+    if not A0_2 then
+      return false
+    end
+    if L182_1(A0_2) or L185_1(A0_2) or L186_1(A0_2) then
+      return false
+    end
+    local L1_2 = tostring(A0_2):lower()
+    local L2_2 = L1_2:gsub("[%p%s]+", " ")
+    return L2_2 == "dio" or L2_2:find("^dio ") ~= nil or L2_2:find(" dio") ~= nil or L2_2:find("dio brando") ~= nil
+  end
+  
+  local function L188_1(A0_2)
+    if not A0_2 then
+      return false
+    end
+    if L183_1(A0_2) or L182_1(A0_2) then
+      return false
+    end
+    local L1_2 = tostring(A0_2):lower()
+    return (L1_2 == "jotaro" or L1_2:find("^jotaro") ~= nil or L1_2:find("jotaro %(") ~= nil or L1_2:find("jotaro p3") ~= nil or L1_2:find("jotaro part 3") ~= nil) and not L1_2:find("kujo", 1, true) and not L1_2:find("6", 1, true) and not L1_2:find("p6", 1, true) and not L1_2:find("heaven", 1, true)
+  end
+  
+  local function L189_1(A0_2, A1_2)
+    if not A0_2 or not A1_2 then
+      return false
+    end
+    if A0_2 == A1_2 then
+      return true
+    end
+    local L2_2 = L181_1(A0_2)
+    local L3_2 = L181_1(A1_2)
+    if L2_2 == L3_2 then
+      return true
+    end
+    local L4_2 = L2_2:gsub("[%p]", "")
+    local L5_2 = L3_2:gsub("[%p]", "")
+    if L4_2 == L5_2 then
+      return true
+    end
+    local L6_2 = L182_1(A1_2)
+    local L7_2 = L182_1(A0_2)
+    if L6_2 or L7_2 then
+      if L6_2 and L7_2 then
+        return true
+      end
+      local L8_2 = L2_1.Character
+      local L9_2 = L8_2 and L8_2:FindFirstChild("HumanoidRootPart")
+      local L10_2 = L9_2 and L9_2.Position.X > 6000 and 6000 < L9_2.Position.Z
+      if L6_2 and L10_2 then
+        local L11_2 = L181_1(A0_2):gsub("[%p]", "")
+        if L11_2:find("dio", 1, true) then
+          return true
+        end
+      end
+      return false
+    end
+    local L8_2 = L186_1(A1_2)
+    local L9_2 = L186_1(A0_2)
+    if L8_2 or L9_2 then
+      return L8_2 and L9_2
+    end
+    local L10_2 = L185_1(A1_2)
+    local L11_2 = L185_1(A0_2)
+    if L10_2 or L11_2 then
+      return L10_2 and L11_2
+    end
+    local L12_2 = L183_1(A1_2)
+    local L13_2 = L183_1(A0_2)
+    if L12_2 or L13_2 then
+      return L12_2 and L13_2
+    end
+    local L14_2 = L188_1(A1_2)
+    local L15_2 = L188_1(A0_2)
+    if L14_2 or L15_2 then
+      return L14_2 and L15_2
+    end
+    local L16_2 = L184_1(A1_2)
+    local L17_2 = L184_1(A0_2)
+    if L16_2 or L17_2 then
+      return L16_2 and L17_2
+    end
+    local L18_2 = L5_2 == "thug" or L5_2:find("^thug") ~= nil
+    local L19_2 = L4_2 == "thug" or L4_2:find("^thug") ~= nil
+    if L18_2 or L19_2 then
+      return L18_2 and L19_2 and not L16_2 and not L17_2
+    end
+    local L20_2 = L187_1(A1_2)
+    local L21_2 = L187_1(A0_2)
+    if L20_2 or L21_2 then
+      return L20_2 and L21_2
+    end
+    if (L5_2:find("zombie") or L5_2:find("dracula")) and (L4_2:find("zombie") or L4_2:find("dracula")) then
+      return true
+    end
+    if L5_2:find("vampire") and L4_2:find("vampire") then
+      return true
+    end
+    if (L5_2:find("police") or L5_2:find("cop") or L5_2:find("bertrude")) and (L4_2:find("police") or L4_2:find("cop") or L4_2:find("bertrude")) then
+      return true
+    end
+    if L4_2:find(L5_2, 1, true) or L5_2:find(L4_2, 1, true) then
+      return true
+    end
+    return false
+  end
+  
+  local function L190_1(A0_2)
+    if not A0_2 or not A0_2.Parent then
+      return false
+    end
+    local L1_2 = A0_2:FindFirstChild("HumanoidRootPart") or A0_2.PrimaryPart or A0_2:FindFirstChild("Torso") or A0_2:FindFirstChild("UpperTorso") or A0_2:FindFirstChild("Head")
+    if not L1_2 or not L1_2.Parent then
+      return false
+    end
+    local L2_2 = A0_2:FindFirstChildOfClass("Humanoid")
+    local L3_2 = A0_2:FindFirstChild("Health")
+    local L4_2 = L3_2 and L3_2:IsA("ValueBase") and tonumber(L3_2.Value)
+    if L4_2 and L4_2 <= 0 then
+      return false
+    end
+    if L2_2 then
+      if L2_2:GetState() == Enum.HumanoidStateType.Dead then
+        return false
+      end
+      if L4_2 and 0 < L4_2 then
+        return true
+      end
+      if L2_2.Health <= 0 and 0 < L2_2.MaxHealth then
+        return false
+      end
+    end
+    return true
+  end
+  
+  local L191_1 = {}
+  L191_1["Star Platinum"] = {
+    "Stand Barrage",
+    "Stand Barrage Finisher",
+    "Ora Kicks"
+  }
+  L191_1["Star Platinum: The World"] = {
+    "Stand Barrage",
+    "Stand Barrage Finisher",
+    "Ora Kicks",
+    "Skull Crusher"
+  }
+  L191_1["The World"] = {
+    "Stand Barrage",
+    "Stand Barrage Finisher",
+    "Knives",
+    "Kick Barrage"
+  }
+  L191_1["The World: Alternate Universe"] = {
+    "Stand Barrage",
+    "Stand Barrage Finisher",
+    "Knives",
+    "Gun",
+    "Chop"
+  }
+  L191_1["King Crimson"] = {
+    "Stand Barrage",
+    "Stand Barrage Finisher",
+    "Chop"
+  }
+  L191_1["King Crimson Requiem"] = {
+    "Stand Barrage",
+    "Stand Barrage Finisher",
+    "Chop"
+  }
+  L191_1["Gold Experience"] = {
+    "Stand Barrage",
+    "Stand Barrage Finisher",
+    "Create Life"
+  }
+  L191_1["Gold Experience Requiem"] = {
+    "Stand Barrage",
+    "Stand Barrage Finisher",
+    "Scorpion Beam"
+  }
+  L191_1["Silver Chariot"] = {
+    "Stand Barrage",
+    "Stand Barrage Finisher",
+    "Million Pricks",
+    "Last Shot"
+  }
+  L191_1["Chariot Requiem"] = {
+    "Stand Barrage",
+    "Stand Barrage Finisher"
+  }
+  L191_1["Crazy Diamond"] = {
+    "Stand Barrage",
+    "Stand Barrage Finisher",
+    "Bearing Shot",
+    "Blood Slash"
+  }
+  L191_1["Crazy Diamond Requiem"] = {
+    "Stand Barrage",
+    "Stand Barrage Finisher"
+  }
+  L191_1["Diver Down"] = {
+    "Stand Barrage",
+    "Stand Barrage Finisher"
+  }
+  L191_1["Killer Queen"] = {
+    "Stand Barrage",
+    "Stand Barrage Finisher"
+  }
+  L191_1["Killer Queen: Bites the Dust"] = {
+    "Stand Barrage",
+    "Stand Barrage Finisher"
+  }
+  L191_1.Whitesnake = {
+    "Stand Barrage",
+    "Stand Barrage Finisher",
+    "Acid Spit"
+  }
+  L191_1["C-Moon"] = {
+    "Stand Barrage",
+    "Stand Barrage Finisher",
+    "Surface Inversion Punch"
+  }
+  L191_1["Made in Heaven"] = {
+    "Stand Barrage",
+    "Stand Barrage Finisher",
+    "Speed Slice"
+  }
+  L191_1.D4C = {
+    "Stand Barrage",
+    "Stand Barrage Finisher"
+  }
+  L191_1["D4C: Love Train"] = {
+    "Stand Barrage",
+    "Stand Barrage Finisher"
+  }
+  L191_1["Tusk Act 1"] = {"Nail Shots"}
+  L191_1["Tusk Act 2"] = {
+    "Nail Shots",
+    "Golden Rectangle Nail"
+  }
+  L191_1["Tusk Act 3"] = {
+    "Nail Shots",
+    "Golden Rectangle Nail"
+  }
+  L191_1["Tusk Act 4"] = {
+    "Stand Barrage",
+    "Stand Barrage Finisher",
+    "Golden Rectangle Nail"
+  }
+  L191_1["Hermit Purple"] = {"Vine Slap", "Vine Trap"}
+  L191_1["Magician's Red"] = {
+    "Stand Barrage",
+    "Stand Barrage Finisher",
+    "Crossfire Hurricane"
+  }
+  L191_1["Purple Haze"] = {
+    "Stand Barrage",
+    "Stand Barrage Finisher",
+    "Bulb Throw"
+  }
+  L191_1["Sticky Fingers"] = {
+    "Stand Barrage",
+    "Stand Barrage Finisher",
+    "Extend Arm"
+  }
+  L191_1["The Hand"] = {
+    "Stand Barrage",
+    "Stand Barrage Finisher",
+    "Erasure",
+    "Erasure Pull"
+  }
+  L191_1["Sex Pistols"] = {
+    "Shoot Six Pistols",
+    "Multi Shot",
+    "Rapid Fire",
+    "Prone Shot",
+    "Redirection Barrage",
+    "Stand Barrage Finisher"
+  }
+  L191_1["Six Pistols"] = {
+    "Shoot Six Pistols",
+    "Multi Shot",
+    "Rapid Fire",
+    "Prone Shot",
+    "Redirection Barrage",
+    "Stand Barrage Finisher"
+  }
+  L191_1.Aerosmith = {
+    "Stand Barrage",
+    "Stand Barrage Finisher",
+    "Vola Barrage"
+  }
+  L191_1["Beach Boy"] = {"Hook Slash", "Auto Rod"}
+  L191_1["Mr. President"] = {}
+  L191_1.Anubis = {
+    "Stand Barrage",
+    "Stand Barrage Finisher",
+    "Cursed Blade"
+  }
+  L191_1["Red Hot Chili Pepper"] = {
+    "Stand Barrage",
+    "Stand Barrage Finisher",
+    "Lightning Jab"
+  }
+  L191_1["Soft & Wet"] = {
+    "Stand Barrage",
+    "Stand Barrage Finisher",
+    "Friction Plunder"
+  }
+  L191_1["Soft & Wet: Go Beyond"] = {
+    "Stand Barrage",
+    "Stand Barrage Finisher",
+    "Go Beyond Bubble",
+    "Explosive Spin"
+  }
+  L191_1["Stone Free"] = {
+    "Stand Barrage",
+    "Stand Barrage Finisher",
+    "Ora Kicks",
+    "Home Run",
+    "String Slam",
+    "String Beatdown",
+    "String Lasso"
+  }
+  
+  local function L192_1(A0_2, A1_2)
+    if not A0_2 or not A1_2 then
+      return
+    end
+    pcall(function()
+      local L0_3 = A0_2:FindFirstChild("FocusCam")
+      if not L0_3 then
+        L0_3 = Instance.new("ObjectValue")
+        L0_3.Value = A1_2
+        L0_3.Name = "FocusCam"
+        L0_3.Parent = A0_2
+      elseif L0_3.Value ~= A1_2 then
+        L0_3.Value = A1_2
+      end
+      local L1_3 = workspace.CurrentCamera
+      if L1_3 and (A1_2:IsA("BasePart") or A1_2:IsA("Humanoid")) and L1_3.CameraSubject ~= A1_2 then
+        L1_3.CameraSubject = A1_2
+      end
+    end)
+  end
+  
+  local function L193_1(A0_2)
+    pcall(function()
+      local L0_3 = A0_2 or L2_1 and L2_1.Character or vu81 and vu81.Character
+      if L0_3 then
+        local L1_3 = L0_3:FindFirstChild("FocusCam")
+        if L1_3 then
+          L1_3:Destroy()
+        end
+        local L2_3 = L0_3:FindFirstChildOfClass("Humanoid")
+        local L3_3 = workspace.CurrentCamera
+        if L3_3 and L2_3 and L3_3.CameraSubject ~= L2_3 then
+          L3_3.CameraSubject = L2_3
+        end
+      end
+    end)
+  end
+  
+  local function L194_1(A0_2)
+    local L1_2 = L2_1.Character
+    if not L1_2 or not L1_2.Parent then
+      return false
+    end
+    local L2_2 = L1_2:FindFirstChild("HumanoidRootPart")
+    local L3_2 = L1_2:FindFirstChildOfClass("Humanoid")
+    if not (L2_2 and L3_2) or L3_2.Health <= 0 then
+      return false
+    end
+    local L4_2 = L1_2:FindFirstChild("RemoteFunction")
+    local L5_2 = L1_2:FindFirstChild("RemoteEvent")
+    if not L4_2 or not L5_2 then
+      return false
+    end
+    local L6_2
+    local L7_2 = math.huge
+    local L8_2 = {
+      workspace:FindFirstChild("Living"),
+      workspace:FindFirstChild("Mob_Spawns2"),
+      workspace:FindFirstChild("NPCs"),
+      workspace:FindFirstChild("Entities"),
+      workspace:FindFirstChild("Enemies"),
+      workspace:FindFirstChild("Mobs"),
+      workspace:FindFirstChild("Spawns"),
+      workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("HeavenlyDimension"),
+      workspace:FindFirstChild("HeavenlyDimension"),
+      workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("NPCs"),
+      workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Spawns"),
+      workspace
+    }
+    
+    local function L9_2()
+      local L0_3
+      local L1_3 = math.huge
+      for L5_3, L6_3 in ipairs(L8_2) do
+        if L6_3 then
+          for L10_3, L11_3 in ipairs(L6_3:GetChildren()) do
+            if L11_3:IsA("Model") and not L0_1:GetPlayerFromCharacter(L11_3) and L189_1(L11_3.Name, A0_2) and L190_1(L11_3) then
+              local L12_3 = L11_3:FindFirstChild("HumanoidRootPart") or L11_3.PrimaryPart or L11_3:FindFirstChild("Torso") or L11_3:FindFirstChild("UpperTorso") or L11_3:FindFirstChild("Head")
+              if L12_3 then
+                local L13_3 = (L2_2.Position - L12_3.Position).Magnitude
+                if L1_3 > L13_3 then
+                  L1_3 = L13_3
+                  L0_3 = L11_3
+                end
+              end
+            end
+          end
+        end
+      end
+      return L0_3, L1_3
+    end
+    
+    L6_2, L7_2 = L9_2()
+    if not L6_2 and L182_1(A0_2) and L2_2.Position.X > 6000 and 6000 < L2_2.Position.Z then
+      local L10_2 = tick()
+      while tick() - L10_2 < 4 and not L6_2 do
+        if not L164_1 then
+        end
+        task.wait(0.3)
+        L6_2, L7_2 = L9_2()
+      end
+    end
+    if not L6_2 then
+      task.wait(0.2)
+      return false
+    end
+    local L10_2 = L6_2:FindFirstChild("HumanoidRootPart") or L6_2.PrimaryPart or L6_2:FindFirstChild("Torso") or L6_2:FindFirstChild("UpperTorso") or L6_2:FindFirstChild("Head")
+    if not L10_2 then
+      return false
+    end
+    L169_1("quest")
+    local L11_2 = {}
+    L11_2.None = true
+    L11_2["Beach Boy"] = true
+    L11_2["Sex Pistols"] = true
+    L11_2["Six Pistols"] = true
+    L11_2.Anubis = true
+    L11_2["Hermit Purple"] = true
+    L11_2["Mr. President"] = true
+    L11_2["White Album"] = true
+    L11_2["Scary Monsters"] = true
+    local L12_2 = L2_1:FindFirstChild("PlayerStats")
+    local L13_2 = L12_2 and L12_2:FindFirstChild("Stand") and L12_2.Stand.Value or "None"
+    local L14_2 = L13_2 ~= "None" and not L11_2[L13_2]
+    local L15_2 = L122_1
+    local L16_2 = 0
+    if L13_2 ~= "None" and L1_2:FindFirstChild("SummonedStand") and not L1_2.SummonedStand.Value then
+      pcall(function()
+        L4_2:InvokeServer("ToggleStand", "Toggle")
+      end)
+      L16_2 = tick()
+      task.wait(0.2)
+    end
+    if L14_2 then
+      L15_2(false)
+    end
+    local L17_2 = L91_1(L13_2)
+    local L18_2 = L10_2.Position
+    local L19_2 = L18_2.X > 6000 and 6000 < L18_2.Z
+    local L20_2 = L182_1(A0_2) or L6_2 and L182_1(L6_2.Name)
+    local L21_2 = (L19_2 or L20_2) and 30 or 11.5
+    if L19_2 or L20_2 then
+      L17_2 = 30
+    end
+    local L22_2
+    if L14_2 then
+      L22_2 = CFrame.new(L18_2.X, L18_2.Y - L21_2, L18_2.Z) * CFrame.Angles(math.rad(90), 0, 0)
+    else
+      L22_2 = CFrame.new(L18_2.X, L18_2.Y - L17_2, L18_2.Z) * CFrame.Angles(math.rad(90), 0, 0)
+    end
+    L2_2.CFrame = L22_2
+    L2_2.AssemblyLinearVelocity = Vector3.zero
+    L2_2.AssemblyAngularVelocity = Vector3.zero
+    local L23_2
+    L23_2 = L6_1.Heartbeat:Connect(function()
+      local L0_3 = L2_1.Character
+      local L1_3 = L0_3 and L0_3:FindFirstChild("HumanoidRootPart")
+      local L2_3 = L6_2 and (L6_2:FindFirstChild("HumanoidRootPart") or L6_2.PrimaryPart or L6_2:FindFirstChild("Torso") or L6_2:FindFirstChild("UpperTorso") or L6_2:FindFirstChild("Head"))
+      if L1_3 and L2_3 and L2_3.Parent and L190_1(L6_2) then
+        local L3_3 = L2_3.Position
+        local L4_3 = L121_1(L0_3)
+        if L14_2 and L4_3 then
+          L15_2(false)
+          local L5_3 = L2_3.CFrame.LookVector
+          local L6_3 = Vector3.new(L5_3.X, 0, L5_3.Z)
+          if L6_3.Magnitude > 0.01 then
+            L6_3 = L6_3.Unit
+          else
+            L6_3 = Vector3.new(0, 0, -1)
+          end
+          local L7_3 = L2_3.Position - L6_3 * 1.2 + Vector3.new(0, 0.5, 0)
+          L4_3.CFrame = CFrame.lookAt(L7_3, L2_3.Position)
+          L4_3.AssemblyLinearVelocity = Vector3.zero
+          L4_3.AssemblyAngularVelocity = Vector3.zero
+          L1_3.CFrame = CFrame.new(L3_3.X, L3_3.Y - L21_2, L3_3.Z) * CFrame.Angles(math.rad(90), 0, 0)
+          L1_3.AssemblyLinearVelocity = Vector3.zero
+          L1_3.AssemblyAngularVelocity = Vector3.zero
+          L192_1(L0_3, L4_3)
+        else
+          L1_3.CFrame = CFrame.new(L3_3.X, L3_3.Y - L17_2, L3_3.Z) * CFrame.Angles(math.rad(90), 0, 0)
+          L1_3.AssemblyLinearVelocity = Vector3.zero
+          L1_3.AssemblyAngularVelocity = Vector3.zero
+          L192_1(L0_3, L2_3)
+        end
+      end
+    end)
+    local L24_2 = false
+    local L25_2
+    local L26_2 = L12_2 and L12_2:FindFirstChild("QuestProgress") and L12_2.QuestProgress.Value or 0
+    local L27_2 = L12_2 and L12_2:FindFirstChild("Quest") and L12_2.Quest.Value or ""
+    local L28_2 = 0
+    for L32_2, L33_2 in ipairs(L177_1()) do
+      if L176_1(L33_2.name, {enemy = A0_2}, A0_2) or L189_1(L33_2.name, A0_2) then
+        L28_2 = L33_2.curProg
+        break
+      end
+    end
+    pcall(function()
+      local L0_3 = L2_1.PlayerGui.HUD.Main.DropMoney.Money
+      L25_2 = L0_3.ChildAdded:Connect(function(A0_4)
+        if tonumber(string.match(A0_4.Name, "%d+")) then
+          L24_2 = true
+        end
+      end)
+    end)
+    
+    local function L29_2(A0_3, A1_3)
+      task.spawn(function()
+        pcall(function()
+          local L0_5 = L2_1.Character
+          local L1_5 = L0_5 and L0_5:FindFirstChild("RemoteFunction") or L4_2
+          if L1_5 then
+            L1_5:InvokeServer(A0_3, A1_3)
+          end
+        end)
+      end)
+    end
+    
+    local function L30_2(A0_3, A1_3)
+      task.spawn(function()
+        pcall(function()
+          local L0_5 = L2_1.Character
+          local L1_5 = L0_5 and L0_5:FindFirstChild("RemoteEvent") or L5_2
+          if L1_5 then
+            L1_5:FireServer(A0_3, A1_3)
+          end
+        end)
+      end)
+    end
+    
+    local L31_2 = 0
+    local L32_2 = tick() + 25
+    local L33_2 = tick()
+    while (L164_1 or L165_1) and L32_2 > tick() do
+      if tick() - L33_2 >= 4 then
+        L33_2 = tick()
+        local L34_2 = L2_1.Character
+        local L35_2 = L34_2 and L34_2:FindFirstChild("HumanoidRootPart")
+        local L36_2 = L6_2 and (L6_2:FindFirstChild("HumanoidRootPart") or L6_2.PrimaryPart)
+        if L35_2 and L36_2 then
+          local L37_2 = (Vector2.new(L35_2.Position.X, L35_2.Position.Z) - Vector2.new(L36_2.Position.X, L36_2.Position.Z)).Magnitude
+          if 14 < L37_2 then
+            L18_2 = L36_2.Position
+            local L38_2 = (L19_2 or L20_2) and 30 or L14_2 and L21_2 or L17_2
+            L35_2.CFrame = CFrame.new(L36_2.Position.X, L36_2.Position.Y - L38_2, L36_2.Position.Z) * CFrame.Angles(math.rad(90), 0, 0)
+            L35_2.AssemblyLinearVelocity = Vector3.zero
+            L35_2.AssemblyAngularVelocity = Vector3.zero
+          end
+        end
+      end
+      local L34_2 = L2_1.Character and L2_1.Character:FindFirstChild("Humanoid")
+      if not L34_2 or L34_2.Health <= 0 then
+        break
+      end
+      if L24_2 then
+        break
+      end
+      if L12_2 and L12_2:FindFirstChild("Quest") and L12_2.Quest.Value == L27_2 and L12_2:FindFirstChild("QuestProgress") and L26_2 < L12_2.QuestProgress.Value then
+        L24_2 = true
+        break
+      end
+      if L164_1 and L12_2 and L12_2:FindFirstChild("QuestProgress") and L12_2:FindFirstChild("QuestMaxProgress") and 0 < L12_2.QuestMaxProgress.Value and L12_2.QuestProgress.Value >= L12_2.QuestMaxProgress.Value then
+        L24_2 = true
+        break
+      end
+      for L38_2, L39_2 in ipairs(L177_1()) do
+        if (L176_1(L39_2.name, {enemy = A0_2}, A0_2) or L189_1(L39_2.name, A0_2)) and (L28_2 < L39_2.curProg or L39_2.isCompleted) then
+          L24_2 = true
+          break
+        end
+      end
+      if L24_2 then
+        break
+      end
+      if not L190_1(L6_2) then
+        L24_2 = true
+        break
+      end
+      local L35_2 = L6_2:FindFirstChildOfClass("Humanoid")
+      local L36_2 = L6_2:FindFirstChild("Health")
+      if L35_2 and L35_2.Health <= 0 and 0 < L35_2.MaxHealth or L36_2 and L36_2:IsA("ValueBase") and tonumber(L36_2.Value) and 0 >= tonumber(L36_2.Value) then
+        L24_2 = true
+        break
+      end
+      if L13_2 ~= "None" then
+        local L37_2 = L2_1.Character
+        local L38_2 = L37_2 and L37_2:FindFirstChild("SummonedStand")
+        local L39_2 = L38_2 and L38_2.Value == true
+        if not L39_2 and tick() - L16_2 > 0.35 then
+          L16_2 = tick()
+          pcall(function()
+            local L0_3 = L37_2 and L37_2:FindFirstChild("RemoteFunction") or L4_2
+            if L0_3 then
+              L0_3:InvokeServer("ToggleStand", "Toggle")
+            end
+          end)
+        end
+      end
+      local L37_2 = game:GetService("CollectionService")
+      if L37_2:HasTag(L6_2, "Blocking") then
+        L30_2("InputBegan", {
+          Input = Enum.KeyCode.R
+        })
+        L29_2("Attack", "m2")
+      else
+        local L38_2 = tick()
+        if 0.12 < L38_2 - L31_2 and L13_2 ~= "None" then
+          L31_2 = L38_2
+          local L39_2 = L191_1[L13_2]
+          if L39_2 then
+            for L43_2, L44_2 in ipairs(L39_2) do
+              L29_2("SpecialMove", {Skill = L44_2})
+            end
+          else
+            local L40_2 = L2_1.Character
+            local L41_2 = L40_2 and L40_2:FindFirstChild("StandSkills")
+            if L41_2 then
+              for L45_2, L46_2 in ipairs(L41_2:GetChildren()) do
+                if L46_2:IsA("StringValue") and L46_2.Value ~= "" and not L46_2.Value:lower():find("bandage") and not L46_2.Value:lower():find("barrier") then
+                  L29_2("SpecialMove", {
+                    Skill = L46_2.Value
+                  })
+                end
+              end
+            else
+              L29_2("SpecialMove", {
+                Skill = "Stand Barrage"
+              })
+              L29_2("SpecialMove", {
+                Skill = "Stand Barrage Finisher"
+              })
+            end
+          end
+        end
+        L29_2("Attack", "m1")
+        task.wait(0.08)
+      end
+      local L38_2 = L12_2 and L12_2:FindFirstChild("Spec") and L12_2.Spec.Value
+      local L39_2 = L38_2 and L38_2:lower():find("hamon") or L1_2 and L1_2:FindFirstChild("Hamon")
+      if L39_2 and L1_2:FindFirstChild("Hamon") and L1_2.Hamon.Value < 80 then
+        L29_2("ChargeHamon")
+      end
+      task.wait()
+    end
+    if L25_2 then
+      L25_2:Disconnect()
+    end
+    if L23_2 then
+      L23_2:Disconnect()
+    end
+    pcall(function()
+      local L0_3 = L2_1.Character and L2_1.Character:FindFirstChild("FocusCam")
+      if L0_3 then
+        L0_3:Destroy()
+      end
+    end)
+    if L14_2 then
+      L15_2(true)
+    end
+    L193_1()
+    pcall(function()
+      local L0_3 = L2_1.Character
+      local L1_3 = L0_3 and L0_3:FindFirstChild("HumanoidRootPart")
+      if L1_3 then
+        local L2_3 = L6_2 and (L6_2:FindFirstChild("HumanoidRootPart") or L6_2.PrimaryPart or L6_2:FindFirstChild("Torso") or L6_2:FindFirstChild("Head"))
+        local L3_3 = L2_3 and L2_3.Position or L10_2 and L10_2.Position
+        if L3_3 then
+          if L19_2 or L20_2 then
+            L1_3.CFrame = CFrame.new(L3_3.X, L3_3.Y - L21_2, L3_3.Z) * CFrame.Angles(math.rad(90), 0, 0)
+          else
+            L1_3.CFrame = CFrame.new(L3_3 + Vector3.new(0, 2, 0))
+          end
+        end
+        L1_3.AssemblyLinearVelocity = Vector3.zero
+        L1_3.AssemblyAngularVelocity = Vector3.zero
+      end
+    end)
+    return L24_2
+  end
+  
+  local L195_1 = L148_1:Section({
+    Side = "Right",
+    Name = "Quest & NPC Farm"
+  })
+  L195_1:Header({Text = "Quest Farm", AutoLocalize = false})
+  L195_1:Toggle({
+    Name = "Quest Farm",
+    Default = L28_1("QF_Enabled", false),
+    Callback = function(A0_2)
+      L164_1 = A0_2
+      L27_1("QF_Enabled", A0_2)
+      if A0_2 then
+        if L165_1 then
+          L165_1 = false
+          L27_1("QF_NpcFarm", false)
+        end
+        L107_1("Quest Farm", "Quest Farm started.")
+        task.spawn(function()
+          local L0_3 = 0
+          while L164_1 do
+            local L1_3 = L2_1:FindFirstChild("PlayerStats")
+            while true do
+              if not L1_3 then
+                task.wait(0.5)
+                break
+              end
+              local L2_3 = L171_1(L167_1)
+              local L3_3 = L161_1[L2_3] or L161_1["Officer Sam [Lvl. 1+]"]
+              local L4_3, L5_3, L6_3 = L179_1(L3_3, L2_3)
+              if not L4_3 then
+                if tick() - L0_3 > 3 then
+                  L0_3 = tick()
+                  L107_1("Quest Farm", "Taking quest from " .. tostring(L3_3.npc))
+                end
+                L180_1(L3_3.npc, L3_3, L2_3)
+                task.wait(0.1)
+                L4_3, L5_3, L6_3 = L179_1(L3_3, L2_3)
+                if not L4_3 then
+                  do
+                    local L7_3 = (L3_3.enemy or ""):lower()
+                    local L8_3 = (L2_3 or ""):lower()
+                    local L9_3 = L7_3:find("heaven") or L7_3:find("ascen") or L8_3:find("40") or L8_3:find("heaven") or L7_3:find("\209\128\208\176\208\185") or L8_3:find("\209\128\208\176\208\185") or L7_3:find("\208\178\208\190\208\183\208\189\208\181\209\129") or L8_3:find("\208\178\208\190\208\183\208\189\208\181\209\129") or L7_3:find("\208\189\208\181\208\177\208\181\209\129") or L8_3:find("\208\189\208\181\208\177\208\181\209\129")
+                    if L9_3 then
+                      local L10_3 = tick()
+                      while tick() - L10_3 < 4.5 and L164_1 do
+                        local L11_3 = L2_1.Character
+                        local L12_3 = L11_3 and L11_3:FindFirstChild("HumanoidRootPart")
+                        if L12_3 and L12_3.Position.X > 6000 and 6000 < L12_3.Position.Z then
+                          if not L179_1(L3_3, L2_3) then
+                            L180_1("Jotaro (Heaven)", L3_3, L2_3)
+                            task.wait(0.3)
+                          end
+                          L4_3 = true
+                          break
+                        end
+                        task.wait(0.2)
+                      end
+                    end
+                    if not L4_3 then
+                      task.wait(0.2)
+                      break
+                    end
+                  end
+                end
+              end
+              L194_1(L3_3.enemy)
+              task.wait(0.05)
+              break
+            end
+          end
+          L170_1("quest")
+          L107_1("Quest Farm", "Quest Farm stopped.")
+        end)
+      else
+        L170_1("quest")
+        L107_1("Quest Farm", "Quest Farm disabled.")
+      end
+    end
+  })
+  L195_1:Dropdown({
+    Name = "Select Quest",
+    Options = L162_1,
+    Default = L167_1,
+    Callback = function(A0_2)
+      L167_1 = A0_2 or L162_1[1]
+      L27_1("QF_Quest", L167_1)
+    end
+  })
+  L195_1:Header({
+    Text = "Direct NPC Farm",
+    AutoLocalize = false
+  })
+  L195_1:Toggle({
+    Name = "Farm Target NPC",
+    Default = L28_1("QF_NpcFarm", false),
+    Callback = function(A0_2)
+      L165_1 = A0_2
+      L27_1("QF_NpcFarm", A0_2)
+      if A0_2 then
+        if L164_1 then
+          L164_1 = false
+          L27_1("QF_Enabled", false)
+        end
+        L107_1("NPC Farm", "NPC Farm started for " .. tostring(L168_1))
+        task.spawn(function()
+          while L165_1 do
+            local L0_3 = L194_1(L168_1)
+            if not L0_3 then
+              task.wait(0.3)
+            else
+              task.wait(0.05)
+            end
+          end
+          L170_1("quest")
+          L107_1("NPC Farm", "NPC Farm stopped.")
+        end)
+      else
+        L170_1("quest")
+        L107_1("NPC Farm", "NPC Farm disabled.")
+      end
+    end
+  })
+  npcDropdown = L195_1:Dropdown({
+    Name = "Select NPC",
+    Options = L163_1,
+    Default = L168_1,
+    Callback = function(A0_2)
+      L168_1 = A0_2 or "Thug"
+      L27_1("QF_TargetNPC", L168_1)
+    end
+  })
+  local L196_1 = {}
+  L196_1["jotaro kujo"] = true
+  for L200_1, L201_1 in ipairs(L163_1) do
+    L196_1[L201_1:lower()] = true
+  end
+  local L197_1 = false
+  
+  local function L198_1()
+    if not npcDropdown or L197_1 then
+      return
+    end
+    L197_1 = true
+    local L0_2 = {
+      "stand",
+      "morph",
+      "clone",
+      "camera",
+      "tree",
+      "punch",
+      "victim",
+      "effect",
+      "part",
+      "arm",
+      "head",
+      "debris"
+    }
+    local L1_2 = {
+      workspace:FindFirstChild("Living"),
+      workspace:FindFirstChild("Mob_Spawns2"),
+      workspace:FindFirstChild("NPCs")
+    }
+    for L5_2, L6_2 in ipairs(L1_2) do
+      if L6_2 then
+        for L10_2, L11_2 in ipairs(L6_2:GetChildren()) do
+          if L11_2:IsA("Model") and not L0_1:GetPlayerFromCharacter(L11_2) and L11_2:FindFirstChildOfClass("Humanoid") then
+            local L12_2 = L11_2.Name:gsub("^%s+", ""):gsub("%s+$", "")
+            local L13_2 = L12_2:lower()
+            if 1 < #L12_2 and not L196_1[L13_2] then
+              local L14_2 = false
+              for L18_2, L19_2 in ipairs(L0_2) do
+                if L13_2:find(L19_2, 1, true) then
+                  L14_2 = true
+                  break
+                end
+              end
+              if not L14_2 then
+                L196_1[L13_2] = true
+                table.insert(L163_1, L12_2)
+                pcall(function()
+                  if npcDropdown.InsertOptions then
+                    npcDropdown:InsertOptions({L12_2})
+                  end
+                end)
+              end
+            end
+          end
+        end
+      end
+    end
+    L197_1 = false
+  end
+  
+  task.spawn(function()
+    L198_1()
+    pcall(function()
+      if workspace:FindFirstChild("Living") then
+        workspace.Living.ChildAdded:Connect(function()
+          task.wait(1.5)
+          L198_1()
+        end)
+      end
+      if workspace:FindFirstChild("Mob_Spawns2") then
+        workspace.Mob_Spawns2.ChildAdded:Connect(function()
+          task.wait(1.5)
+          L198_1()
+        end)
+      end
+    end)
+  end)
+end
+
+local function L147_1()
+  local L0_2 = L28_1 and L28_1("StandFarmKeep")
+  local L1_2 = {}
+  if type(L0_2) == "table" then
+    if L0_2[1] ~= nil then
+      for L5_2, L6_2 in ipairs(L0_2) do
+        if type(L6_2) == "string" and L6_2 ~= "" and not table.find(L1_2, L6_2) then
+          table.insert(L1_2, L6_2)
+        end
+      end
+    else
+      for L5_2, L6_2 in pairs(L0_2) do
+        if (L6_2 == true or L6_2 == 1) and type(L5_2) == "string" and L5_2 ~= "" and not table.find(L1_2, L5_2) then
+          table.insert(L1_2, L5_2)
+        end
+      end
+    end
+  elseif type(L0_2) == "string" and L0_2 ~= "" then
+    table.insert(L1_2, L0_2)
+  end
+  return L1_2
+end
+
+local function L148_1()
+  local L0_2 = L28_1 and L28_1("StandFarmShinies")
+  local L1_2 = {}
+  if type(L0_2) == "table" then
+    if L0_2[1] ~= nil then
+      for L5_2, L6_2 in ipairs(L0_2) do
+        if type(L6_2) == "string" and L6_2 ~= "" and not table.find(L1_2, L6_2) then
+          table.insert(L1_2, L6_2)
+        end
+      end
+    else
+      for L5_2, L6_2 in pairs(L0_2) do
+        if (L6_2 == true or L6_2 == 1) and type(L5_2) == "string" and L5_2 ~= "" and not table.find(L1_2, L5_2) then
+          table.insert(L1_2, L5_2)
+        end
+      end
+    end
+  elseif type(L0_2) == "string" and L0_2 ~= "" then
+    table.insert(L1_2, L0_2)
+  end
+  return L1_2
+end
+
+local L149_1 = {}
+L149_1.standFarmRunning = false
+L149_1.ribFarmRunning = false
+L149_1.shinyFarmRunning = false
+L149_1.standFarmTarget = L147_1()
+L149_1.shinyFarmTarget = L148_1()
+L149_1.keepAnyShiny = L28_1("SKS", false)
+L149_1.autoRequiem = L28_1 and L28_1("SAR", false) or false
+L149_1.serverHopNoItems = L28_1 and L28_1("SF_HopNoItems", false) or false
+L149_1.farmMethod = L28_1 and L28_1("SFM", "Arrow") or "Arrow"
+L149_1.farmStats = {
+  arrowsUsed = 0,
+  rokasUsed = 0,
+  ribsUsed = 0,
+  luckyArrowsUsed = 0,
+  standsGot = 0,
+  startTime = 0
+}
+L149_1.standFarmRespawnConn = nil
+L149_1.ribFarmRespawnConn = nil
+L149_1.shinyFarmRespawnConn = nil
+
+function L149_1.getFarmMethod()
+  return L149_1.farmMethod
+end
+
+function L149_1.setFarmMethod(A0_2)
+  L149_1.farmMethod = A0_2 or "Arrow"
+end
+
+function L149_1.setKeepAnyShiny(A0_2)
+  L149_1.keepAnyShiny = A0_2
+end
+
+function L149_1.setAutoRequiem(A0_2)
+  L149_1.autoRequiem = A0_2
+  if _G.YBAItemFarm then
+    _G.YBAItemFarm.autoRequiem = A0_2
+  end
+end
+
+function L149_1.setServerHopNoItems(A0_2)
+  L149_1.serverHopNoItems = A0_2
+  if _G.YBAItemFarm then
+    _G.YBAItemFarm.serverHopNoItems = A0_2
+  end
+end
+
+do
+  local function L150_1(...)
+    return L139_1.sfCountItem and L139_1.sfCountItem(...)
+  end
+  
+  local function L151_1(...)
+    return L139_1.moveCharacterTo and L139_1.moveCharacterTo(...)
+  end
+  
+  local function L152_1(...)
+    return L139_1.farmItemByName and L139_1.farmItemByName(...)
+  end
+  
+  local function L153_1(...)
+    return L139_1.serverHopToRandom and L139_1.serverHopToRandom(...)
+  end
+  
+  local function L154_1(...)
+    return L139_1.normalizeItemName and L139_1.normalizeItemName(...)
+  end
+  
+  local L155_1 = L139_1.maxLimits or {}
+  
+  local function L156_1()
+    return L139_1.serverHopFarmEnabled and L139_1.serverHopFarmEnabled() or L28_1 and L28_1("SHF", true) or true
+  end
+  
+  local function L157_1(...)
+    return L139_1.getServerHopDelay and L139_1.getServerHopDelay(...) or getServerHopDelay and getServerHopDelay(...) or 0
+  end
+  
+  local function L158_1(...)
+    if L139_1.enableNoclipState then
+      return L139_1.enableNoclipState(...)
+    end
+  end
+  
+  local function L159_1(...)
+    return L139_1.sellItem and L139_1.sellItem(...) or sellItem and sellItem(...)
+  end
+  
+  local function L160_1(...)
+    return L139_1.isSellableItem and L139_1.isSellableItem(...) or isSellableItem and isSellableItem(...)
+  end
+  
+  local function L161_1(...)
+    return L139_1.isCandyItem and L139_1.isCandyItem(...) or isCandyItem and isCandyItem(...)
+  end
+  
+  local L162_1 = L139_1.sellableItems or {
+    "Mysterious Arrow",
+    "Rokakaka",
+    "Gold Coin",
+    "Diamond",
+    "Pure Rokakaka",
+    "Quinton's Glove",
+    "Steel Ball",
+    "Rib Cage of The Saint's Corpse",
+    "Zepellin's Headband",
+    "Zeppeli's Hat",
+    "Caesar's Headband",
+    "Clackers",
+    "Stone Mask",
+    "Ancient Scroll",
+    "Dio's Diary"
+  }
+  
+  local function L163_1(...)
+    return L139_1.findNearestItem and L139_1.findNearestItem(...)
+  end
+  
+  local function L164_1(...)
+    return L139_1.collectSingleItemNormal and L139_1.collectSingleItemNormal(...)
+  end
+  
+  local function L165_1(...)
+    return L139_1.randomSkyRoam and L139_1.randomSkyRoam(...)
+  end
+  
+  local function L166_1(...)
+    return L139_1.getRandomSkyCFrame and L139_1.getRandomSkyCFrame(...)
+  end
+  
+  local function L167_1(...)
+    if L139_1.disableNoclipState then
+      return L139_1.disableNoclipState(...)
+    end
+  end
+  
+  local function L168_1(...)
+    if L139_1.cleanupItemStick then
+      return L139_1.cleanupItemStick(...)
+    end
+  end
+  
+  local L169_1 = CFrame.new(914.264832, 126.484932, -194.080887, 0.0349707194, 1.18272225E-9, 0.999388337, -5.95965366E-9, 1, -9.74905157E-10, -0.999388337, -5.9219154E-9, 0.0349707194)
+  L149_1.standFarmPosition = L169_1
+  
+  local function L170_1(A0_2)
+    L107_1("Stand Farm", A0_2)
+  end
+  
+  L149_1.sfNotify = L170_1
+  
+  local function L171_1()
+    local L0_2 = L2_1.Character
+    if not L0_2 then
+      return "None"
+    end
+    local L1_2 = L0_2:FindFirstChild("RemoteFunction") or L0_2:WaitForChild("RemoteFunction", 5)
+    if not L1_2 then
+      return "None"
+    end
+    local L2_2, L3_2 = pcall(function()
+      return L1_2:InvokeServer("ReturnStandSkin", "Stand")
+    end)
+    return L2_2 and L3_2 or "None"
+  end
+  
+  L149_1.sfCheckShiny = L171_1
+  
+  local function L172_1(A0_2)
+    if not A0_2 then
+      return ""
+    end
+    local L1_2 = tostring(A0_2):lower():gsub("[^%a%d]", "")
+    if L1_2 == "sixpistols" then
+      L1_2 = "sexpistols"
+    end
+    if L1_2 == "goldenexperience" then
+      L1_2 = "goldexperience"
+    end
+    if L1_2 == "goldenexperiencerequiem" then
+      L1_2 = "goldexperiencerequiem"
+    end
+    if L1_2 == "redhotchilipeppers" then
+      L1_2 = "redhotchilipepper"
+    end
+    if L1_2 == "silverchariotrequiem" then
+      L1_2 = "chariotrequiem"
+    end
+    if L1_2 == "shadowdio" then
+      L1_2 = "shadowtheworld"
+    end
+    return L1_2
+  end
+  
+  L149_1.sfNormalizeStandName = L172_1
+  
+  function sfTableCount(A0_2)
+    if not A0_2 or type(A0_2) ~= "table" then
+      return 0
+    end
+    local L1_2 = 0
+    for L5_2, L6_2 in pairs(A0_2) do
+      if type(L6_2) == "string" and L6_2 ~= "" then
+        L1_2 = L1_2 + 1
+      elseif type(L5_2) == "string" and (L6_2 == true or L6_2 == 1) then
+        L1_2 = L1_2 + 1
+      end
+    end
+    return L1_2
+  end
+  
+  L149_1.sfTableCount = sfTableCount
+  
+  local function L173_1(A0_2, A1_2)
+    if not A0_2 or type(A0_2) ~= "table" then
+      return false
+    end
+    local L2_2 = L172_1(A1_2)
+    if L2_2 == "" then
+      return false
+    end
+    for L6_2, L7_2 in pairs(A0_2) do
+      if type(L7_2) == "string" and (L7_2 == A1_2 or L172_1(L7_2) == L2_2) then
+        return true
+      end
+      if type(L6_2) == "string" and (L7_2 == true or L7_2 == 1 or type(L7_2) == "string") and (L6_2 == A1_2 or L172_1(L6_2) == L2_2) then
+        return true
+      end
+    end
+    return false
+  end
+  
+  L149_1.sfFindTable = L173_1
+  
+  local function L174_1(A0_2, A1_2)
+    A1_2 = A1_2 or 2
+    if not A0_2 then
+      return nil
+    end
+    local L2_2 = A0_2:FindFirstChild("RemoteFunction")
+    if L2_2 and L2_2:IsA("RemoteFunction") then
+      return L2_2
+    end
+    local L3_2 = tick()
+    while A1_2 > tick() - L3_2 do
+      L2_2 = A0_2:FindFirstChild("RemoteFunction")
+      if L2_2 and L2_2:IsA("RemoteFunction") then
+        return L2_2
+      end
+      task.wait(0.05)
+    end
+    return L2_2 and L2_2:IsA("RemoteFunction") and L2_2 or nil
+  end
+  
+  function sfLearnWorthiness(A0_2)
+    local L1_2 = L2_1.Character
+    if not L1_2 then
+      return false
+    end
+    if not A0_2 and L1_2:GetAttribute("WorthinessLearned") then
+      return true
+    end
+    local L2_2 = L174_1(L1_2, 2)
+    if not L2_2 then
+      return false
+    end
+    pcall(function()
+      L1_2:SetAttribute("WorthinessLearned", true)
+    end)
+    local L3_2 = {
+      "Agility I",
+      "Agility II",
+      "Agility III",
+      "Worthiness"
+    }
+    for L7_2, L8_2 in ipairs(L3_2) do
+      pcall(function()
+        L2_2:InvokeServer("LearnSkill", {Skill = L8_2, SkillTreeType = "Character"})
+      end)
+      task.wait(0.03)
+    end
+    return true
+  end
+  
+  local function L175_1(A0_2, A1_2)
+    pcall(function()
+      if not A0_2 then
+        return
+      end
+      local L0_3 = tick()
+      while A0_2 and A0_2.Parent and tick() - L0_3 < 5 do
+        local L1_3 = A0_2:FindFirstChild("Frame")
+        if L1_3 then
+          local L2_3 = L1_3:FindFirstChild("ClickContinue")
+          if L2_3 then
+            if type(getconnections) == "function" and L2_3.MouseButton1Click then
+              for L6_3, L7_3 in pairs(getconnections(L2_3.MouseButton1Click)) do
+                if L7_3.Fire then
+                  L7_3:Fire()
+                end
+              end
+            elseif type(L51_1) == "function" then
+              L51_1(L2_3.MouseButton1Click)
+            end
+          end
+          local L3_3 = L1_3:FindFirstChild("Options")
+          if L3_3 then
+            local L4_3 = L3_3:FindFirstChild("Option1")
+            if L4_3 then
+              local L5_3 = L4_3:FindFirstChild("TextButton") or L4_3:IsA("GuiButton") and L4_3
+              if L5_3 then
+                if type(getconnections) == "function" and L5_3.MouseButton1Click then
+                  for L9_3, L10_3 in pairs(getconnections(L5_3.MouseButton1Click)) do
+                    if L10_3.Fire then
+                      L10_3:Fire()
+                    end
+                  end
+                elseif type(L51_1) == "function" then
+                  L51_1(L5_3.MouseButton1Click)
+                  L51_1(L5_3.Activated)
+                end
+              end
+            end
+          end
+        end
+        task.wait(0.1)
+      end
+    end)
+  end
+  
+  function clickDialogueFrame(A0_2, A1_2)
+    if not A0_2 or not A0_2.Parent then
+      return
+    end
+    pcall(function()
+      local L0_3 = A0_2:FindFirstChild("Frame")
+      if not L0_3 then
+        return
+      end
+      local L1_3 = L0_3:FindFirstChild("ClickContinue")
+      if L1_3 then
+        local L2_3 = false
+        if type(getconnections) == "function" and L1_3.MouseButton1Click then
+          for L6_3, L7_3 in pairs(getconnections(L1_3.MouseButton1Click)) do
+            if L7_3.Fire then
+              L7_3:Fire()
+              L2_3 = true
+            end
+          end
+        end
+        if not L2_3 and type(L51_1) == "function" then
+          L51_1(L1_3.MouseButton1Click)
+        end
+      end
+      local L2_3 = L0_3:FindFirstChild("Options")
+      if L2_3 then
+        local L3_3 = L2_3:FindFirstChild(A1_2 or "Option1") or L2_3:FindFirstChild("Option1")
+        if L3_3 then
+          local L4_3 = L3_3:FindFirstChild("TextButton") or L3_3:IsA("GuiButton") and L3_3
+          if L4_3 then
+            local L5_3 = false
+            if type(getconnections) == "function" and L4_3.MouseButton1Click then
+              for L9_3, L10_3 in pairs(getconnections(L4_3.MouseButton1Click)) do
+                if L10_3.Fire then
+                  L10_3:Fire()
+                  L5_3 = true
+                end
+              end
+            end
+            if not L5_3 and type(L51_1) == "function" then
+              L51_1(L4_3.MouseButton1Click)
+              L51_1(L4_3.Activated)
+            end
+          end
+        end
+      end
+    end)
+  end
+  
+  function useItemDirect(A0_2, A1_2, A2_2, A3_2)
+    local L4_2 = L2_1 or game:GetService("Players").LocalPlayer
+    local L5_2 = L4_2 and (L4_2.Character or workspace:FindFirstChild("Living") and workspace.Living:FindFirstChild(L4_2.Name))
+    if not L5_2 then
+      return false
+    end
+    local L6_2 = L5_2:FindFirstChildWhichIsA("Humanoid")
+    if not L6_2 or L6_2.Health <= 0 then
+      return false
+    end
+    local L7_2 = L4_2:FindFirstChild("Backpack")
+    local L8_2 = L7_2 and L7_2:FindFirstChild(A0_2) or L5_2:FindFirstChild(A0_2)
+    if not L8_2 and L154_1 then
+      local L9_2 = L154_1(A0_2)
+      for L13_2, L14_2 in ipairs({L7_2, L5_2}) do
+        if L14_2 then
+          for L18_2, L19_2 in ipairs(L14_2:GetChildren()) do
+            if L19_2:IsA("Tool") and L154_1(L19_2.Name) == L9_2 then
+              L8_2 = L19_2
+              break
+            end
+          end
+        end
+        if L8_2 then
+          break
+        end
+      end
+    end
+    if not L8_2 then
+      return false
+    end
+    getgenv()._YBA_IsUsingItem = true
+    pcall(function()
+      L6_2:EquipTool(L8_2)
+    end)
+    local L9_2 = L5_2:WaitForChild(L8_2.Name, 2) or L8_2
+    local L10_2 = L4_2:FindFirstChild("PlayerGui")
+    local L11_2 = tick()
+    repeat
+      pcall(function()
+        L9_2:Activate()
+      end)
+      task.wait(0.05)
+    until L10_2 and L10_2:FindFirstChild("DialogueGui") or 2 < tick() - L11_2
+    local L12_2 = L10_2 and L10_2:FindFirstChild("DialogueGui")
+    if L12_2 then
+      local L13_2 = tick()
+      while L12_2 and L12_2.Parent and tick() - L13_2 < 5 do
+        clickDialogueFrame(L12_2, A3_2)
+        task.wait(0.1)
+        L12_2 = L10_2 and L10_2:FindFirstChild("DialogueGui")
+      end
+      getgenv()._YBA_IsUsingItem = false
+      return true
+    end
+    getgenv()._YBA_IsUsingItem = false
+    return false
+  end
+  
+  local L176_1 = {}
+  L176_1["King Crimson"] = "King Crimson Requiem"
+  L176_1["Silver Chariot"] = "Chariot Requiem"
+  L176_1["Star Platinum"] = "Star Platinum: The World"
+  L176_1["Gold Experience"] = "Gold Experience Requiem"
+  L176_1["Killer Queen"] = "Killer Queen: Bites the Dust"
+  L149_1.requiemEvolutions = L176_1
+  local L177_1 = {}
+  L177_1["King Crimson Requiem"] = "King Crimson"
+  L177_1["Chariot Requiem"] = "Silver Chariot"
+  L177_1["Star Platinum: The World"] = "Star Platinum"
+  L177_1["Gold Experience Requiem"] = "Gold Experience"
+  L177_1["Killer Queen: Bites the Dust"] = "Killer Queen"
+  L149_1.requiemEvolvedToBase = L177_1
+  
+  local function L178_1()
+    local L0_2 = L2_1.Character
+    if not L0_2 then
+      return false
+    end
+    local L1_2 = L174_1(L0_2, 2)
+    if not L1_2 then
+      return false
+    end
+    for L5_2 = 1, 5 do
+      pcall(function()
+        L1_2:InvokeServer("LearnSkill", {Skill = "Worthiness", SkillTreeType = "Character"})
+      end)
+      task.wait(0.04)
+    end
+    for L5_2, L6_2 in ipairs({
+      "Worthiness I",
+      "Worthiness II",
+      "Worthiness III",
+      "Worthiness IV",
+      "Worthiness V"
+    }) do
+      pcall(function()
+        L1_2:InvokeServer("LearnSkill", {Skill = L6_2, SkillTreeType = "Character"})
+      end)
+      task.wait(0.04)
+    end
+    return true
+  end
+  
+  L149_1.sfLearnWorthinessV = L178_1
+  
+  local function L179_1()
+    local L0_2 = workspace:FindFirstChild("Dialogues") and workspace.Dialogues:FindFirstChild("Suno the Arrowsmith")
+    if not L0_2 then
+      for L4_2, L5_2 in ipairs(workspace:GetDescendants()) do
+        if L5_2.Name == "Suno the Arrowsmith" and (L5_2:IsA("Model") or L5_2:IsA("Folder")) then
+          L0_2 = L5_2
+          break
+        end
+      end
+    end
+    if not L0_2 then
+      L170_1("Suno the Arrowsmith NPC not found!")
+      return false, "no_npc"
+    end
+    local L1_2 = L2_1.PlayerStats and L2_1.PlayerStats:FindFirstChild("Money") and L2_1.PlayerStats.Money.Value or 0
+    if L1_2 < 7500 then
+      L170_1("Need $7,500 to buy Requiem Arrow from Suno (have $" .. L1_2 .. ")!")
+      return false, "no_money"
+    end
+    local L2_2 = L150_1("Mysterious Arrow")
+    if L2_2 < 1 then
+      if 8250 <= L1_2 then
+        L170_1("Buying 1 Mysterious Arrow for Suno ($750)...")
+        local L3_2 = L2_1.Character and L2_1.Character:FindFirstChild("RemoteEvent")
+        if L3_2 then
+          pcall(function()
+            L3_2:FireServer("PurchaseShopItem", {
+              ItemName = "1x Mysterious Arrow"
+            }, 1, 2)
+          end)
+          task.wait(0.35)
+          L2_2 = L150_1("Mysterious Arrow")
+        end
+      end
+      if L2_2 < 1 then
+        L170_1("Need 1 Mysterious Arrow + $7,500 to buy Requiem Arrow from Suno!")
+        return false, "no_arrow"
+      end
+    end
+    local L3_2 = L0_2:FindFirstChildWhichIsA("ProximityPrompt", true)
+    if not L3_2 then
+      L170_1("ProximityPrompt on Suno not found!")
+      return false, "no_prompt"
+    end
+    local L4_2 = L2_1.Character and L2_1.Character:FindFirstChild("HumanoidRootPart")
+    local L5_2 = L4_2 and L4_2.CFrame
+    local L6_2 = L0_2:GetPivot()
+    local L7_2 = L6_2.Position + L6_2.LookVector * 3.2 + Vector3.new(0, 1, 0)
+    L151_1(CFrame.new(L7_2, L6_2.Position))
+    task.wait(0.3)
+    
+    local function L8_2()
+      if type(fireproximityprompt) == "function" then
+        pcall(function()
+          fireproximityprompt(L3_2, 0, true)
+        end)
+      end
+      if type(firesignal) == "function" then
+        pcall(function()
+          firesignal(L3_2.Triggered, L2_1)
+          firesignal(L3_2.PromptTriggered, L2_1)
+        end)
+      end
+    end
+    
+    L8_2()
+    local L9_2 = L2_1:FindFirstChild("PlayerGui")
+    local L10_2
+    local L11_2 = tick()
+    while tick() - L11_2 < 3.5 do
+      L10_2 = L9_2 and L9_2:FindFirstChild("DialogueGui")
+      if L10_2 and L10_2.Enabled then
+        break
+      end
+      L8_2()
+      task.wait(0.2)
+    end
+    if not L10_2 or not L10_2.Enabled then
+      L170_1("Failed to open dialogue with Suno")
+      if L5_2 then
+        L151_1(L5_2)
+      end
+      return false, "dialogue_timeout"
+    end
+    local L12_2 = L150_1("Requiem Arrow")
+    local L13_2 = tick()
+    local L14_2 = false
+    while L10_2 and L10_2.Parent and L10_2.Enabled and tick() - L13_2 < 6.5 do
+      local L15_2 = false
+      for L19_2, L20_2 in ipairs(L10_2:GetDescendants()) do
+        if L20_2:IsA("TextLabel") and L20_2.Text then
+          do
+            local L21_2 = L20_2.Text:upper()
+            if L21_2:find("SPEAK TO THE PRESTIGE MASTER") or L21_2:find("STEEL BALL RUN") then
+              L15_2 = true
+              break
+            end
+          end
+        end
+      end
+      if L15_2 then
+        L14_2 = true
+        L170_1("Suno: Steel Ball Run quest required to buy Requiem Arrow!")
+        break
+      end
+      pcall(function()
+        local L0_3 = L10_2:FindFirstChild("Frame")
+        if L0_3 then
+          local L1_3 = L0_3:FindFirstChild("ClickContinue")
+          if L1_3 and L1_3.Visible then
+            L54_1(L1_3)
+            if L51_1 then
+              L51_1(L1_3.MouseButton1Click)
+              L51_1(L1_3.Activated)
+            end
+          end
+          local L2_3 = L0_3:FindFirstChild("Options")
+          if L2_3 and L2_3.Visible then
+            local L3_3
+            for L7_3, L8_3 in ipairs(L2_3:GetChildren()) do
+              local L9_3 = L8_3:FindFirstChildWhichIsA("GuiButton", true) or L8_3:IsA("GuiButton") and L8_3
+              if L9_3 then
+                do
+                  local L10_3 = L8_3:FindFirstChildWhichIsA("TextLabel", true) or L9_3:IsA("TextButton") and L9_3
+                  local L11_3 = (L10_3 and L10_3.Text or ""):lower()
+                  if L11_3:find("yes") or L11_3:find("requiem") or L11_3:find("forge") or L11_3:find("trade") or L11_3:find("sure") or L11_3:find("arrow") or L11_3:find("\208\180\208\176") or L11_3:find("\209\129\209\130\209\128\208\181\208\187") then
+                    L3_3 = L9_3
+                    break
+                  end
+                end
+              end
+            end
+            if not L3_3 then
+              local L4_3 = L2_3:FindFirstChild("Option1") or L2_3:FindFirstChildWhichIsA("GuiButton")
+              if L4_3 then
+                L3_3 = L4_3:FindFirstChildWhichIsA("GuiButton", true) or L4_3:IsA("GuiButton") and L4_3
+              end
+            end
+            if L3_3 then
+              L54_1(L3_3)
+              if L51_1 then
+                L51_1(L3_3.MouseButton1Click)
+                L51_1(L3_3.Activated)
+              end
+            end
+          end
+        end
+      end)
+      task.wait(0.2)
+      if L12_2 < L150_1("Requiem Arrow") then
+        break
+      end
+    end
+    task.wait(0.35)
+    if L78_1 then
+      pcall(L78_1)
+    end
+    if L5_2 then
+      L151_1(L5_2)
+    end
+    if L12_2 < L150_1("Requiem Arrow") then
+      L170_1("\226\156\168 Bought Requiem Arrow from Suno the Arrowsmith!")
+      return true, "success"
+    end
+    if L14_2 then
+      return false, "need_quest"
+    end
+    return false, "dialogue_failed"
+  end
+  
+  L149_1.buyRequiemFromSuno = L179_1
+  
+  local function L180_1()
+    local L0_2 = L2_1 or game:GetService("Players").LocalPlayer
+    if not L0_2 then
+      return false
+    end
+    local L1_2 = L0_2.Character
+    local L2_2 = L0_2:FindFirstChild("Backpack")
+    local L3_2 = {}
+    
+    local function L4_2(A0_3)
+      if not A0_3 then
+        return
+      end
+      for L4_3, L5_3 in ipairs(A0_3:GetChildren()) do
+        if L5_3:IsA("Tool") then
+          local L6_3 = L5_3.Name
+          local L7_3 = L154_1 and L154_1(L6_3) or L6_3
+          local L8_3 = L7_3:lower()
+          local L9_3 = L8_3:find("roka") ~= nil or L8_3:find("rib") ~= nil or L8_3:find("arrow") ~= nil or L8_3:find("candy") ~= nil or L8_3:find("\208\186\208\190\208\189\209\132\208\181\209\130") ~= nil or L8_3:find("\208\187\208\181\208\180\208\181\208\189") ~= nil or L161_1 and (L161_1(L6_3) or L161_1(L7_3) or L161_1(L5_3))
+          if not L9_3 and L160_1 and L160_1(L6_3) then
+            table.insert(L3_2, L6_3)
+          end
+        end
+      end
+    end
+    
+    L4_2(L2_2)
+    L4_2(L1_2)
+    local L5_2 = false
+    local L6_2 = L159_1 or L139_1 and L139_1.sellItem
+    if L6_2 and 0 < #L3_2 then
+      local L7_2 = {}
+      for L11_2, L12_2 in ipairs(L3_2) do
+        if not L7_2[L12_2] then
+          L7_2[L12_2] = true
+          local L13_2 = L6_2(L12_2, true)
+          if L13_2 then
+            L5_2 = true
+            task.wait(0.12)
+          end
+        end
+      end
+    end
+    return L5_2
+  end
+  
+  L149_1.sfSellItemsForRequiem = L180_1
+  
+  local function L181_1()
+    if L150_1("Requiem Arrow") >= 1 then
+      return true, "already_have"
+    end
+    local L0_2 = L2_1.PlayerStats and L2_1.PlayerStats:FindFirstChild("Money") and L2_1.PlayerStats.Money.Value or 0
+    local L1_2 = L150_1("Mysterious Arrow")
+    if 7500 <= L0_2 and (1 <= L1_2 or 8250 <= L0_2) then
+      local L2_2, L3_2 = L179_1()
+      if L2_2 or L150_1("Requiem Arrow") >= 1 then
+        return true, "bought"
+      end
+      if L3_2 == "need_quest" then
+        return false, "need_quest"
+      end
+    end
+    L170_1("Auto Requiem: Checking inventory to sell items (keeping Rokas, Ribs, Arrows)...")
+    local L2_2 = L180_1()
+    if L2_2 then
+      task.wait(0.25)
+    end
+    L0_2 = L2_1.PlayerStats and L2_1.PlayerStats:FindFirstChild("Money") and L2_1.PlayerStats.Money.Value or 0
+    L1_2 = L150_1("Mysterious Arrow")
+    if 7500 <= L0_2 and (1 <= L1_2 or 8250 <= L0_2) then
+      local L3_2, L4_2 = L179_1()
+      if L3_2 or L150_1("Requiem Arrow") >= 1 then
+        return true, "bought"
+      end
+      if L4_2 == "need_quest" then
+        return false, "need_quest"
+      end
+    end
+    local L3_2 = L149_1.serverHopNoItems ~= false and L28_1 and L28_1("SHF", true) ~= false
+    L170_1("Auto Requiem: Farming items for cash to buy Requiem Arrow from Suno...")
+    local L4_2 = tick()
+    local L5_2 = L3_2 and 180 or 3600
+    local L6_2 = 0
+    while L149_1.standFarmRunning and L150_1("Requiem Arrow") < 1 and L5_2 > tick() - L4_2 do
+      if L90_1() then
+        task.wait(0.4)
+      else
+        L0_2 = L2_1.PlayerStats and L2_1.PlayerStats:FindFirstChild("Money") and L2_1.PlayerStats.Money.Value or 0
+        L1_2 = L150_1("Mysterious Arrow")
+        if 7500 <= L0_2 and (1 <= L1_2 or 8250 <= L0_2) then
+          local L7_2, L8_2 = L179_1()
+          if L7_2 or L150_1("Requiem Arrow") >= 1 then
+            return true, "bought"
+          end
+          if L8_2 == "need_quest" then
+            return false, "need_quest"
+          end
+        end
+        local L7_2 = workspace:FindFirstChild("Item_Spawns") and workspace.Item_Spawns:FindFirstChild("Items")
+        local L8_2 = L7_2 and #L7_2:GetChildren() or 0
+        local L9_2 = {}
+        if L1_2 < 1 and L0_2 < 8250 then
+          table.insert(L9_2, "Mysterious Arrow")
+        end
+        for L13_2, L14_2 in ipairs(L162_1) do
+          local L15_2 = L154_1 and L154_1(L14_2) or L14_2
+          local L16_2 = L15_2:lower()
+          if not L16_2:find("roka") and not L16_2:find("rib") and not L16_2:find("arrow") then
+            table.insert(L9_2, L14_2)
+          end
+        end
+        local L10_2 = L163_1 or L139_1 and L139_1.findNearestItem or getgenv()._YBA_Exports and getgenv()._YBA_Exports.findNearestItem
+        local L11_2 = L164_1 or L139_1 and L139_1.collectSingleItemNormal or getgenv()._YBA_Exports and getgenv()._YBA_Exports.collectSingleItemNormal
+        local L12_2 = L10_2 and L10_2(L9_2)
+        if L12_2 and not L90_1() then
+          L6_2 = 0
+          standEnableNoclip()
+          if L11_2 then
+            L11_2(L12_2)
+          end
+          task.wait(0.15)
+          L180_1()
+        else
+          L6_2 = L6_2 + 1
+          local L13_2 = L157_1 and L157_1() or L139_1 and L139_1.getServerHopDelay and L139_1.getServerHopDelay() or 0
+          local L14_2 = L13_2 == 0 and 1 or math.max(1, math.ceil(L13_2 / 1.5))
+          if (L8_2 == 0 or L6_2 >= L14_2) and L149_1.serverHopNoItems ~= false then
+            L170_1("Auto Requiem: No items on map to farm cash. Hopping server...")
+            L153_1()
+            task.wait(3)
+            return false, "hopping"
+          end
+          local L15_2 = L165_1 or L139_1 and L139_1.randomSkyRoam or getgenv()._YBA_Exports and getgenv()._YBA_Exports.randomSkyRoam
+          if L15_2 then
+            L15_2(2)
+          else
+            local L16_2 = L166_1 and L166_1() or L139_1 and L139_1.getRandomSkyCFrame and L139_1.getRandomSkyCFrame()
+            if L16_2 then
+              L151_1(L16_2)
+            end
+            task.wait(0.625)
+          end
+          task.wait(0.2)
+        end
+      end
+    end
+    L168_1()
+    local L7_2 = L2_1.Character and L2_1.Character:FindFirstChild("HumanoidRootPart")
+    if L7_2 then
+      L7_2.AssemblyLinearVelocity = Vector3.zero
+      L7_2.AssemblyAngularVelocity = Vector3.zero
+      L151_1(L169_1)
+      task.wait(0.1)
+    end
+    if L150_1("Requiem Arrow") < 1 then
+      L0_2 = L2_1.PlayerStats and L2_1.PlayerStats:FindFirstChild("Money") and L2_1.PlayerStats.Money.Value or 0
+      L1_2 = L150_1("Mysterious Arrow")
+      if 7500 <= L0_2 and (1 <= L1_2 or 8250 <= L0_2) then
+        local L8_2, L9_2 = L179_1()
+        if L8_2 or L150_1("Requiem Arrow") >= 1 then
+          return true, "bought"
+        end
+        if L9_2 == "need_quest" then
+          return false, "need_quest"
+        end
+      end
+    end
+    return L150_1("Requiem Arrow") >= 1, "finished"
+  end
+  
+  L149_1.sfEnsureRequiemArrow = L181_1
+  L149_1.ensureRequiemArrow = L181_1
+  
+  local function L182_1(A0_2)
+    if not L149_1.autoRequiem then
+      return A0_2, nil
+    end
+    if not A0_2 or A0_2 == "None" or A0_2 == "" then
+      return A0_2, nil
+    end
+    if not L176_1[A0_2] then
+      return A0_2, nil
+    end
+    local L1_2 = L171_1()
+    if not L1_2 or L1_2 == "None" or L1_2 == "" then
+      task.wait(0.12)
+      L1_2 = L171_1()
+    end
+    if L1_2 and L1_2 ~= "None" and L1_2 ~= "" then
+      L170_1("\226\156\168 " .. tostring(A0_2) .. " has shiny skin [" .. tostring(L1_2) .. "]! Skipping Auto Requiem.")
+      return A0_2, nil
+    end
+    local L2_2 = L149_1.standFarmTarget or {}
+    local L3_2 = L176_1[A0_2]
+    local L4_2 = #L2_2 == 0 or L173_1(L2_2, A0_2) or L3_2 and L173_1(L2_2, L3_2)
+    if not L4_2 then
+      return A0_2, nil
+    end
+    local L5_2 = L2_1.PlayerStats and L2_1.PlayerStats:FindFirstChild("Prestige") and L2_1.PlayerStats.Prestige.Value or 0
+    if L5_2 < 1 then
+      L170_1("Auto Requiem: Need Prestige 1+ to use Requiem Arrow! Skipping evolution.")
+      return A0_2, nil
+    end
+    local L6_2 = L150_1("Requiem Arrow")
+    if L6_2 < 1 then
+      L170_1("Auto Requiem: No Requiem Arrow in inventory! Ensuring Requiem Arrow...")
+      local L7_2, L8_2 = L181_1()
+      if L8_2 == "hopping" then
+        return A0_2, "hopping"
+      elseif L8_2 == "need_quest" then
+        L170_1("Auto Requiem: Suno requires Steel Ball Run quest! Skipping evolution.")
+        return A0_2, nil
+      end
+      L6_2 = L150_1("Requiem Arrow")
+    end
+    if L6_2 < 1 then
+      L170_1("Auto Requiem: Could not obtain Requiem Arrow for " .. A0_2 .. "! Continuing farm.")
+      return A0_2, nil
+    end
+    L170_1("Auto Requiem: Applying Requiem Arrow to " .. A0_2 .. "...")
+    L178_1()
+    task.wait(0.3)
+    local L7_2 = A0_2
+    local L8_2 = useItemDirect("Requiem Arrow", "Requiem Arrow")
+    if L8_2 then
+      local L9_2 = tick()
+      while tick() - L9_2 < 6 and L149_1.standFarmRunning do
+        local L10_2 = L2_1:FindFirstChild("PlayerStats")
+        local L11_2 = L10_2 and L10_2:FindFirstChild("Stand") and L10_2.Stand.Value or "None"
+        if L11_2 ~= "None" and L11_2 ~= L7_2 then
+          L170_1("\226\156\168 Requiem success! Stand evolved: " .. L11_2)
+          return L11_2, "evolved"
+        end
+        task.wait(0.1)
+      end
+    else
+      L170_1("Auto Requiem: Failed to equip/use Requiem Arrow.")
+    end
+    local L9_2 = L2_1:FindFirstChild("PlayerStats")
+    local L10_2 = L9_2 and L9_2:FindFirstChild("Stand") and L9_2.Stand.Value or A0_2
+    return L10_2, nil
+  end
+  
+  L149_1.sfHandleAutoRequiem = L182_1
+  
+  function sfUseRoka(A0_2)
+    A0_2 = A0_2 or 3
+    if L85_1 or getgenv()._YBA_SellingBusy then
+      return false
+    end
+    local L1_2 = 0
+    L84_1 = true
+    getgenv()._YBA_IsEatingRoka = true
+    if L149_1 then
+      L149_1.isEatingRoka = true
+    end
+    local L2_2 = false
+    pcall(function()
+      while L1_2 < A0_2 and L149_1.standFarmRunning do
+        local L0_3 = L2_1.PlayerStats and L2_1.PlayerStats.Stand.Value or "None"
+        if L0_3 == "None" then
+          L2_2 = true
+          break
+        end
+        if L150_1("Rokakaka") == 0 then
+          L2_2 = false
+          break
+        end
+        local L1_3 = L2_1.Character
+        useItemDirect("Rokakaka", "Rokakaka")
+        local L2_3 = tick()
+        while tick() - L2_3 < 5 and L149_1.standFarmRunning do
+          local L3_3 = L2_1.PlayerStats and L2_1.PlayerStats.Stand.Value or "None"
+          if L3_3 == "None" then
+            L149_1.farmStats.rokasUsed = L149_1.farmStats.rokasUsed + 1
+            do
+              local L4_3 = tick()
+              while tick() - L4_3 < 8 and L149_1.standFarmRunning do
+                do
+                  local L5_3 = L2_1.Character
+                  local L6_3 = L5_3 and L5_3:FindFirstChild("HumanoidRootPart")
+                  local L7_3 = L5_3 and L5_3:FindFirstChildOfClass("Humanoid")
+                  if L5_3 and L5_3 ~= L1_3 and L6_3 and L7_3 and 0 < L7_3.Health and L5_3.Parent == workspace.Living then
+                    do
+                      local L8_3 = tick()
+                      while true do
+                        if not (tick() - L8_3 < 2 and L149_1.standFarmRunning) or L2_1.Backpack and 0 < #L2_1.Backpack:GetChildren() then
+                          break
+                        end
+                        task.wait(0.1)
+                      end
+                      pcall(function()
+                        L6_3.CFrame = L169_1
+                        L6_3.AssemblyLinearVelocity = Vector3.zero
+                        L6_3.AssemblyAngularVelocity = Vector3.zero
+                      end)
+                      task.wait(0.1)
+                      sfLearnWorthiness()
+                      L2_2 = true
+                    end
+                    break
+                  end
+                  task.wait(0.1)
+                end
+              end
+            end
+            break
+          end
+          task.wait(0.1)
+        end
+        if L2_2 then
+          break
+        end
+        L1_2 = L1_2 + 1
+        task.wait(0.5)
+      end
+    end)
+    task.wait(0.2)
+    L84_1 = false
+    getgenv()._YBA_IsEatingRoka = false
+    if L149_1 then
+      L149_1.isEatingRoka = false
+    end
+    return (L2_1.PlayerStats and L2_1.PlayerStats.Stand.Value or "None") == "None"
+  end
+  
+  function sfUseArrow(A0_2)
+    A0_2 = A0_2 or 5
+    local L1_2 = 0
+    while A0_2 > L1_2 and L149_1.standFarmRunning do
+      local L2_2 = L2_1.PlayerStats and L2_1.PlayerStats.Stand.Value or "None"
+      if L2_2 ~= "None" then
+        return true
+      end
+      if L150_1("Mysterious Arrow") == 0 then
+        L170_1("No arrow in inventory")
+        return false
+      end
+      sfLearnWorthiness()
+      local L3_2 = L150_1("Mysterious Arrow")
+      useItemDirect("Mysterious Arrow", "Mysterious Arrow")
+      local L4_2 = tick()
+      while tick() - L4_2 < 3 and L149_1.standFarmRunning do
+        local L5_2 = L2_1.PlayerStats and L2_1.PlayerStats.Stand.Value or "None"
+        if L5_2 ~= "None" and L5_2 ~= L2_2 then
+          L149_1.farmStats.arrowsUsed = L149_1.farmStats.arrowsUsed + 1
+          L149_1.farmStats.standsGot = L149_1.farmStats.standsGot + 1
+          L170_1("Stand obtained: " .. L5_2)
+          return true
+        end
+        task.wait(0.1)
+      end
+      local L5_2 = L150_1("Mysterious Arrow")
+      if L3_2 > L5_2 then
+        L149_1.farmStats.arrowsUsed = L149_1.farmStats.arrowsUsed + 1
+        local L6_2 = tick()
+        while tick() - L6_2 < 2 and L149_1.standFarmRunning do
+          local L7_2 = L2_1.PlayerStats and L2_1.PlayerStats.Stand.Value or "None"
+          if L7_2 ~= "None" then
+            L149_1.farmStats.standsGot = L149_1.farmStats.standsGot + 1
+            return true
+          end
+          task.wait(0.1)
+        end
+      else
+        warn("[sfUseArrow] arrow NOT consumed (before=" .. tostring(L3_2) .. " after=" .. tostring(L5_2) .. "), Stand=" .. tostring(L2_1.PlayerStats and L2_1.PlayerStats.Stand.Value))
+      end
+      L1_2 = L1_2 + 1
+      task.wait(2)
+    end
+    return (L2_1.PlayerStats and L2_1.PlayerStats.Stand.Value or "None") ~= "None"
+  end
+  
+  function sfUseRib()
+    local L0_2 = L2_1.Character
+    if not L0_2 then
+      return
+    end
+    local L1_2 = L0_2:FindFirstChild("RemoteEvent")
+    if not L1_2 then
+      return
+    end
+    L149_1.farmStats.ribsUsed = L149_1.farmStats.ribsUsed + 1
+    useItemDirect("Rib Cage of The Saint's Corpse", "Rib Cage of The Saint's Corpse")
+  end
+  
+  function sfUseRokaDirect()
+    L84_1 = true
+    local L0_2 = useItemDirect("Rokakaka", "Rokakaka")
+    task.spawn(function()
+      task.wait(3)
+      L84_1 = false
+    end)
+    return L0_2
+  end
+  
+  function skipCurrentShinyStand()
+    local L0_2 = L2_1:FindFirstChild("PlayerStats")
+    local L1_2 = L0_2 and L0_2:FindFirstChild("Stand") and L0_2.Stand.Value or "None"
+    if L1_2 == "None" then
+      L107_1("Stand Farm", "No stand to skip.")
+      return
+    end
+    local L2_2 = L171_1()
+    if not L2_2 or L2_2 == "None" or L2_2 == "" then
+      task.wait(0.2)
+      L2_2 = L171_1()
+    end
+    if L150_1("Rokakaka") < 1 then
+      L107_1("Stand Farm", "No Rokakaka available to skip shiny.")
+      return
+    end
+    local L3_2 = false
+    if sfUseRokaDirect and sfUseRokaDirect() then
+      L3_2 = true
+    elseif sfUseRoka and sfUseRoka() then
+      L3_2 = true
+    end
+    if L3_2 then
+      L107_1("Stand Farm", "Skipping shiny stand with Rokakaka...")
+      task.spawn(function()
+        local L0_3 = tick()
+        while tick() - L0_3 < 5 do
+          task.wait(0.2)
+          if (L0_2 and L0_2:FindFirstChild("Stand") and L0_2.Stand.Value or "None") == "None" then
+            break
+          end
+        end
+        task.wait(0.6)
+        L84_1 = false
+        if getgenv then
+          getgenv()._YBA_IsEatingRoka = false
+        end
+        if L149_1 then
+          L149_1.isEatingRoka = false
+        end
+        local L1_3 = L20_1.StandFarmEnabled or L28_1 and L28_1("SF", false)
+        if L1_3 then
+          L107_1("Stand Farm", "Shiny skipped! Resuming stand farm...")
+          if startStandFarm then
+            startStandFarm()
+          elseif L149_1 and L149_1.startStandFarm then
+            L149_1.startStandFarm()
+          end
+        end
+      end)
+    else
+      L107_1("Stand Farm", "Failed to use Rokakaka.")
+    end
+  end
+  
+  L169_1 = CFrame.new(914.264832, 126.484932, -194.080887, 0.0349707194, 1.18272225E-9, 0.999388337, -5.95965366E-9, 1, -9.74905157E-10, -0.999388337, -5.9219154E-9, 0.0349707194)
+  safePosAnchor = Instance.new("Part")
+  safePosAnchor.Name = "StandFarmSafeAnchor"
+  safePosAnchor.Anchored = true
+  safePosAnchor.CanCollide = false
+  safePosAnchor.Transparency = 1
+  safePosAnchor.Size = Vector3.new(1, 1, 1)
+  safePosAnchor.CFrame = L169_1
+  safePosAnchor.Parent = L10_1.Terrain
+  
+  function refreshFarmRoamPosition()
+    local L0_2 = L166_1()
+    waitingPosition = L0_2
+    L169_1 = L0_2
+    safePosAnchor.CFrame = L0_2
+    return L0_2
+  end
+  
+  function moveToFarmRoamPos()
+    return L151_1(refreshFarmRoamPosition())
+  end
+  
+  function teleportToSafePos()
+    local L0_2 = L2_1.Character and L2_1.Character:FindFirstChild("HumanoidRootPart")
+    if L0_2 then
+      task.wait(0.1)
+      L151_1(L169_1)
+    end
+  end
+  
+  function standEnableNoclip()
+    L158_1("stand")
+  end
+  
+  function standDisableNoclip()
+    L167_1("stand")
+  end
+  
+  function sfSendWebhook(A0_2, A1_2)
+    if L132_1 and A0_2 and A0_2 ~= "None" and A0_2 ~= "" then
+      L132_1(A0_2, A1_2)
+    end
+  end
+  
+  function getShinySoundAsset()
+    if shinySoundAsset then
+      return shinySoundAsset
+    end
+    local L0_2 = L18_1 .. "/fears_notification.mp3"
+    local L1_2 = getcustomasset or getsynasset
+    if type(isfile) == "function" and isfile(L0_2) and L1_2 then
+      local L2_2, L3_2 = pcall(L1_2, L0_2)
+      if L2_2 and type(L3_2) == "string" and L3_2 ~= "" then
+        shinySoundAsset = L3_2
+        return shinySoundAsset
+      end
+    end
+    if type(writefile) == "function" and L1_2 then
+      L22_1()
+      local L2_2 = pcall(function()
+        writefile(L0_2, game:HttpGet("https://www.myinstants.com/media/sounds/fears-to-fathom-notification-sound.mp3"))
+      end)
+      if L2_2 then
+        local L3_2, L4_2 = pcall(L1_2, L0_2)
+        if L3_2 and type(L4_2) == "string" and L4_2 ~= "" then
+          shinySoundAsset = L4_2
+          return shinySoundAsset
+        end
+      end
+    end
+    return nil
+  end
+  
+  function playShinyNotificationSound()
+    local L0_2 = getShinySoundAsset()
+    if not L0_2 then
+      return
+    end
+    pcall(function()
+      local L0_3 = Instance.new("Sound")
+      L0_3.Name = "RAILhubShinySound"
+      L0_3.SoundId = L0_2
+      L0_3.Volume = 5
+      L0_3.Parent = game:GetService("SoundService")
+      L0_3.Ended:Connect(function()
+        L0_3:Destroy()
+      end)
+      L0_3:Play()
+    end)
+  end
+  
+  function sfCheckStandResult(A0_2, A1_2)
+    if not A0_2 or A0_2 == "None" or A0_2 == "" then
+      return "continue"
+    end
+    local L2_2 = L149_1.standFarmTarget or {}
+    local L3_2 = L149_1.shinyFarmTarget or {}
+    local L4_2 = sfTableCount(L2_2)
+    local L5_2 = sfTableCount(L3_2)
+    local L6_2 = 0 < L4_2 and (L173_1(L2_2, A0_2) or L177_1 and L177_1[A0_2] and L173_1(L2_2, L177_1[A0_2]) or L176_1 and L176_1[A0_2] and L173_1(L2_2, L176_1[A0_2]))
+    local L7_2 = A1_2 and A1_2 ~= "None" and A1_2 ~= ""
+    if not L7_2 and (not A1_2 or A1_2 == "None" or A1_2 == "") then
+      task.wait(0.12)
+      A1_2 = L171_1()
+      L7_2 = A1_2 and A1_2 ~= "None" and A1_2 ~= ""
+    end
+    local L8_2 = L7_2 and 0 < L5_2 and L173_1(L3_2, A1_2)
+    local L9_2 = L149_1.keepAnyShiny == true
+    if L8_2 then
+      L170_1("\226\156\168 Got desired shiny: " .. A0_2 .. " [" .. A1_2 .. "]! Keeping it.")
+      playShinyNotificationSound()
+      sfSendWebhook(A0_2, A1_2)
+      return "stop"
+    end
+    if L6_2 then
+      if L7_2 then
+        L170_1("\226\156\168 Got target shiny stand: " .. A0_2 .. " [" .. A1_2 .. "]! Keeping it.")
+        playShinyNotificationSound()
+        sfSendWebhook(A0_2, A1_2)
+        return "stop"
+      end
+      if L9_2 then
+        L170_1("Got target stand: " .. A0_2 .. " (waiting for shiny because 'Keep only Shiny' is ON) - continuing")
+        return "continue"
+      end
+      L170_1("\226\156\168 Got desired stand: " .. A0_2 .. "! Keeping it.")
+      sfSendWebhook(A0_2, nil)
+      return "stop"
+    end
+    if L7_2 then
+      if 0 < L5_2 and not L9_2 and not L8_2 then
+        L170_1("Got shiny stand: " .. A0_2 .. " [" .. A1_2 .. "] (not in target shinies) - continuing")
+        return "continue"
+      end
+      L170_1("\226\156\168 Got shiny stand: " .. A0_2 .. " [" .. A1_2 .. "]! Keeping it.")
+      playShinyNotificationSound()
+      sfSendWebhook(A0_2, A1_2)
+      return "stop"
+    end
+    if L4_2 == 0 and L5_2 == 0 then
+      L170_1("Got stand: " .. A0_2 .. " - continuing to farm (no targets selected)")
+      return "continue"
+    end
+    return "continue"
+  end
+  
+  function sfUseResetItem(A0_2, A1_2, A2_2, A3_2, A4_2, A5_2, A6_2, A7_2)
+    local function L8_2(A0_3, A1_3)
+      local L2_3 = sfCheckStandResult(A0_3, L171_1())
+      
+      if L2_3 == "stop" then
+        if stopStandFarm then
+          stopStandFarm()
+        elseif L149_1 and L149_1.stopStandFarm then
+          L149_1.stopStandFarm()
+        else
+          L149_1.standFarmRunning = false
+          L27_1("SF", false)
+          L20_1.StandFarmEnabled = false
+          if L149_1.standFarmRespawnConn then
+            L149_1.standFarmRespawnConn:Disconnect()
+          end
+          L149_1.standFarmRespawnConn = nil
+          standDisableNoclip()
+        end
+        return false
+      elseif L2_3 == "continue" then
+        local L3_3 = L150_1("Rokakaka")
+        if 0 < L3_3 then
+          L170_1("Got stand from " .. tostring(A1_3 or "item") .. ", using roka immediately...")
+          local L4_3 = sfUseRoka()
+          if L4_3 then
+            local L5_3 = tick()
+            while true do
+              if not (tick() - L5_3 < 1.5 and L149_1.standFarmRunning) or A7_2.Stand.Value == "None" then
+                break
+              end
+              task.wait(0.08)
+            end
+          end
+        end
+      end
+      return L149_1.standFarmRunning
+    end
+    
+    if L90_1() then
+      return true
+    end
+    local L9_2 = L2_1.Character
+    local L10_2 = L9_2 and L9_2:FindFirstChild("HumanoidRootPart")
+    if L10_2 and (L10_2.Position - L169_1.Position).Magnitude > 15 then
+      L151_1(L169_1)
+      task.wait(0.1)
+    end
+    if A0_2 then
+      if 0 < A1_2 then
+        local L11_2 = sfUseRoka()
+        if L11_2 then
+          local L12_2 = tick()
+          while true do
+            if not (tick() - L12_2 < 1.5 and L149_1.standFarmRunning) or A7_2.Stand.Value == "None" then
+              break
+            end
+            task.wait(0.08)
+          end
+          return L149_1.standFarmRunning
+        else
+          L170_1("Roka failed after retries")
+          return true
+        end
+      else
+        return true
+      end
+    end
+    if not A0_2 then
+      if L90_1() then
+        return true
+      end
+      local L11_2 = L150_1("Lucky Arrow")
+      if 0 < L11_2 and L149_1.farmMethod == "Lucky Arrow" then
+        L170_1("Using Lucky Arrow (no stand)...")
+        local L12_2 = A7_2.Stand.Value
+        local L13_2 = useItemDirect("Lucky Arrow", "Lucky Arrow")
+        if not L13_2 then
+          L170_1("Lucky Arrow not found / failed to equip")
+          task.wait(1)
+          return true
+        end
+        local L14_2 = tick()
+        while true do
+          if not (tick() - L14_2 < 2.5 and L149_1.standFarmRunning) or A7_2.Stand.Value ~= "None" and A7_2.Stand.Value ~= L12_2 then
+            break
+          end
+          task.wait(0.05)
+        end
+        local L15_2 = A7_2.Stand.Value
+        if L15_2 ~= "None" and L15_2 ~= L12_2 then
+          L149_1.farmStats.luckyArrowsUsed = L149_1.farmStats.luckyArrowsUsed + 1
+          L149_1.farmStats.standsGot = L149_1.farmStats.standsGot + 1
+          L170_1("Lucky Arrow gave stand: " .. L15_2)
+          local L16_2
+          L15_2, L16_2 = L182_1(L15_2)
+          if L16_2 == "hopping" then
+            return true
+          end
+          local L17_2 = sfCheckStandResult(L15_2, L171_1())
+          if L17_2 == "stop" then
+            if stopStandFarm then
+              stopStandFarm()
+            elseif L149_1 and L149_1.stopStandFarm then
+              L149_1.stopStandFarm()
+            else
+              L149_1.standFarmRunning = false
+              L27_1("SF", false)
+              L20_1.StandFarmEnabled = false
+              if L149_1.standFarmRespawnConn then
+                L149_1.standFarmRespawnConn:Disconnect()
+              end
+              L149_1.standFarmRespawnConn = nil
+              standDisableNoclip()
+            end
+            return false
+          end
+          return L149_1.standFarmRunning
+        else
+          L170_1("Lucky Arrow failed to give stand")
+          task.wait(1)
+          return true
+        end
+      elseif L149_1.farmMethod == "Rib Cage" and 0 < A2_2 then
+        L170_1("Using Rib Cage (no stand)...")
+        sfLearnWorthiness()
+        sfUseRib()
+        task.wait(0.1)
+        local L12_2 = tick()
+        while true do
+          if not (tick() - L12_2 < 2 and L149_1.standFarmRunning) or A7_2.Stand.Value ~= "None" then
+            break
+          end
+          task.wait(0.08)
+        end
+        local L13_2 = A7_2.Stand.Value
+        if L13_2 ~= "None" then
+          return L8_2(L13_2, "Rib")
+        end
+        return L149_1.standFarmRunning
+      elseif 0 < A3_2 then
+        local L12_2 = L150_1("Mysterious Arrow")
+        if L12_2 == 0 then
+          warn("[SF] sfUseResetItem: cached arrowCount=" .. tostring(A3_2) .. " but live=0, skipping")
+          return true
+        end
+        L170_1("Using Arrow (no stand)...")
+        local L13_2 = sfUseArrow()
+        if L13_2 then
+          local L14_2 = tick()
+          while true do
+            if not (tick() - L14_2 < 1.5 and L149_1.standFarmRunning) or A7_2.Stand.Value ~= "None" then
+              break
+            end
+            task.wait(0.08)
+          end
+          local L15_2 = A7_2.Stand.Value
+          if L15_2 ~= "None" then
+            local L16_2
+            L15_2, L16_2 = L182_1(L15_2)
+            if L16_2 == "hopping" then
+              return true
+            end
+            return L8_2(L15_2, "arrow")
+          end
+          return L149_1.standFarmRunning
+        else
+          L170_1("Arrow failed to give stand")
+          task.wait(2)
+          return true
+        end
+      end
+    end
+    return true
+  end
+  
+  function sfFarmItemLoop(A0_2, A1_2, A2_2)
+    return L152_1(A0_2, A1_2, function()
+      return L149_1.standFarmRunning and not L90_1()
+    end)
+  end
+  
+  function sfHandleItemFarm(A0_2, A1_2, A2_2, A3_2, A4_2, A5_2, A6_2)
+    if L90_1() then
+      return
+    end
+    local L7_2 = L155_1["Rib Cage of The Saint's Corpse"] or 10
+    local L8_2 = L149_1.farmMethod or "Arrow"
+    local L9_2 = L8_2 ~= "Lucky Arrow" and A3_2 < A4_2
+    local L10_2 = (L8_2 == "Arrow" or L8_2 == "Lucky Arrow" or L8_2 == "Rib Cage") and A1_2 < A5_2
+    local L11_2 = L8_2 == "Rib Cage" and L7_2 > L150_1("Rib Cage of The Saint's Corpse")
+    local L12_2 = L8_2 == "Lucky Arrow" and L150_1("Lucky Arrow") < 1
+    if not L10_2 and not L11_2 and not L9_2 and not L12_2 then
+      return
+    end
+    local L13_2
+    if L8_2 == "Lucky Arrow" and not A0_2 and L12_2 then
+      L13_2 = "Lucky Arrow"
+    elseif L8_2 == "Arrow" and not A0_2 and A3_2 == 0 then
+      L13_2 = "Mysterious Arrow"
+    elseif L8_2 == "Rib Cage" and not A0_2 and A2_2 == 0 then
+      L13_2 = "Rib Cage of The Saint's Corpse"
+    elseif A0_2 and L10_2 then
+      L13_2 = "Rokakaka"
+    elseif L8_2 == "Arrow" and not A0_2 and L9_2 then
+      L13_2 = "Mysterious Arrow"
+    elseif L8_2 == "Rib Cage" and not A0_2 and L11_2 then
+      L13_2 = "Rib Cage of The Saint's Corpse"
+    end
+    if not L13_2 then
+      if L8_2 == "Arrow" then
+        L13_2 = A1_2 == 0 and "Rokakaka" or "Mysterious Arrow"
+      elseif L8_2 == "Lucky Arrow" then
+        L13_2 = A1_2 == 0 and "Rokakaka" or "Lucky Arrow"
+      else
+        L13_2 = A1_2 == 0 and "Rokakaka" or "Rib Cage of The Saint's Corpse"
+      end
+    end
+    L170_1("Farming: " .. L13_2)
+    standEnableNoclip()
+    local L14_2 = L150_1(L13_2)
+    local L15_2 = L13_2 == "Rokakaka" and A5_2 or L13_2 == "Rib Cage of The Saint's Corpse" and L7_2 or L13_2 == "Lucky Arrow" and (L155_1["Lucky Arrow"] or 9) or A4_2
+    local L16_2 = math.min(L14_2 + 5, L15_2)
+    local L17_2 = 0
+    if L13_2 ~= "Lucky Arrow" then
+      L17_2 = sfFarmItemLoop(L13_2, L16_2 - L14_2, L15_2)
+    end
+    local L18_2 = L2_1.Character
+    if L18_2 and L18_2:FindFirstChild("HumanoidRootPart") then
+      local L19_2 = L18_2.HumanoidRootPart
+      L19_2.AssemblyLinearVelocity = Vector3.zero
+      L19_2.AssemblyAngularVelocity = Vector3.zero
+      L151_1(L169_1)
+    end
+    if L17_2 == 0 and L150_1(L13_2) == 0 and not L90_1() then
+      local L19_2 = L2_1.PlayerStats and L2_1.PlayerStats.Money.Value or 0
+      local L20_2 = L2_1.Character and L2_1.Character:FindFirstChild("RemoteEvent")
+      if L20_2 then
+        do
+          local L21_2
+          local L22_2 = 0
+          if L13_2 == "Rokakaka" then
+            L21_2 = "1x Rokakaka"
+            L22_2 = 2500
+          elseif L13_2 == "Mysterious Arrow" then
+            L21_2 = "1x Mysterious Arrow"
+            L22_2 = 750
+          elseif L13_2 == "Lucky Arrow" then
+            L21_2 = "1x Lucky Arrow"
+            L22_2 = 75000
+          end
+          if L21_2 and L19_2 >= L22_2 then
+            local L23_2 = math.min(math.floor(L19_2 / L22_2), 5)
+            L170_1("Buying " .. L23_2 .. "x " .. L13_2 .. " from shop...")
+            for L27_2 = 1, L23_2 do
+              pcall(function()
+                L20_2:FireServer("PurchaseShopItem", {ItemName = L21_2}, 1, 2)
+              end)
+              task.wait(0.15)
+            end
+          else
+            task.wait(0.2)
+          end
+        end
+      else
+        task.wait(0.2)
+      end
+    end
+  end
+  
+  function sfBuyMissingItem(A0_2)
+    if L90_1() then
+      return false
+    end
+    local L1_2 = L2_1.Character
+    local L2_2 = L1_2 and L1_2:FindFirstChild("RemoteEvent")
+    if not L2_2 then
+      return false
+    end
+    local L3_2, L4_2
+    if A0_2 == "Rokakaka" then
+      L3_2, L4_2 = "1x Rokakaka", 2500
+    elseif A0_2 == "Mysterious Arrow" then
+      L3_2, L4_2 = "1x Mysterious Arrow", 750
+    elseif A0_2 == "Lucky Arrow" then
+      L3_2, L4_2 = "1x Lucky Arrow", 75000
+    else
+      return false
+    end
+    local L5_2 = L2_1.PlayerStats and L2_1.PlayerStats.Money.Value or 0
+    if L4_2 > L5_2 then
+      return false
+    end
+    local L6_2 = L150_1(A0_2)
+    local L7_2 = L155_1[A0_2] or 25
+    local L8_2 = math.max(1, math.min(5, L7_2) - L6_2)
+    local L9_2 = math.floor(L5_2 / L4_2)
+    local L10_2 = math.min(L9_2, L8_2)
+    if L10_2 <= 0 then
+      return false
+    end
+    L170_1("Buying " .. L10_2 .. "x " .. A0_2 .. " from shop...")
+    for L14_2 = 1, L10_2 do
+      pcall(function()
+        L2_2:FireServer("PurchaseShopItem", {ItemName = L3_2}, 1, 2)
+      end)
+      task.wait(0.15)
+    end
+    task.wait(0.2)
+    return L6_2 < L150_1(A0_2)
+  end
+  
+  function sfFocusedFarmMissingItems(A0_2, A1_2, A2_2)
+    local L3_2 = L157_1 and L157_1() or L139_1 and L139_1.getServerHopDelay and L139_1.getServerHopDelay() or 0
+    if L156_1() or L149_1 and L149_1.serverHopNoItems then
+      A2_2 = L3_2
+    else
+      A2_2 = A2_2 or 20
+    end
+    local L4_2 = tick() + A2_2
+    local L5_2 = false
+    getgenv()._blacklistedItems = {}
+    getgenv()._lastItemTarget = nil
+    local L6_2 = workspace:FindFirstChild("Item_Spawns") and workspace.Item_Spawns:FindFirstChild("Items")
+    if (L156_1() or L149_1 and L149_1.serverHopNoItems) and L3_2 == 0 and L6_2 and #L6_2:GetChildren() == 0 then
+      return false
+    end
+    while true do
+      if not (L149_1.standFarmRunning and L4_2 >= tick()) or L90_1() then
+        break
+      end
+      local L7_2 = A0_2()
+      if #L7_2 == 0 then
+        break
+      end
+      local L8_2 = L163_1 or getgenv()._YBA_Exports and getgenv()._YBA_Exports.findNearestItem
+      local L9_2 = L164_1 or getgenv()._YBA_Exports and getgenv()._YBA_Exports.collectSingleItemNormal
+      local L10_2 = L8_2 and L8_2(L7_2)
+      if L10_2 and not L90_1() then
+        L5_2 = true
+        if L9_2 then
+          L9_2(L10_2)
+        end
+        task.wait(0.1)
+      else
+        getgenv()._lastItemTarget = nil
+        getgenv()._blacklistedItems = {}
+        if not L90_1() then
+          local L11_2 = L165_1 or getgenv()._YBA_Exports and getgenv()._YBA_Exports.randomSkyRoam
+          if L11_2 then
+            L11_2(2)
+          else
+            local L12_2 = L166_1 and L166_1() or L139_1 and L139_1.getRandomSkyCFrame and L139_1.getRandomSkyCFrame()
+            if L12_2 then
+              L151_1(L12_2)
+            end
+            task.wait(0.625)
+          end
+        end
+        task.wait(0.2)
+      end
+    end
+    L168_1()
+    local L7_2 = L2_1.Character and L2_1.Character:FindFirstChild("HumanoidRootPart")
+    if L149_1.standFarmRunning and L7_2 then
+      L7_2.AssemblyLinearVelocity = Vector3.zero
+      L7_2.AssemblyAngularVelocity = Vector3.zero
+      L151_1(L169_1)
+      task.wait(0.1)
+    end
+    return L5_2
+  end
+  
+  L149_1.standFarmPosition = L169_1
+  L149_1.teleportToSafePos = teleportToSafePos
+  L149_1.standEnableNoclip = standEnableNoclip
+  L149_1.standDisableNoclip = standDisableNoclip
+  L149_1.sfCheckStandResult = sfCheckStandResult
+  L149_1.sfUseResetItem = sfUseResetItem
+  L149_1.sfFocusedFarmMissingItems = sfFocusedFarmMissingItems
+  L149_1.sfBuyMissingItem = sfBuyMissingItem
+  L149_1.sfUseRib = sfUseRib
+  L149_1.playShinyNotificationSound = playShinyNotificationSound
+  L149_1.sfUseRoka = sfUseRoka
+  L149_1.sfUseArrow = sfUseArrow
+  L149_1.skipCurrentShinyStand = skipCurrentShinyStand
+  L149_1.sfLearnWorthiness = sfLearnWorthiness
+  L149_1.sfHandleAutoRequiem = L182_1
+  L149_1.buyRequiemFromSuno = L179_1
+end
+do
+  local function L150_1(...)
+    return L149_1.teleportToSafePos(...)
+  end
+  
+  local function L151_1(...)
+    return L149_1.standDisableNoclip(...)
+  end
+  
+  local function L152_1(...)
+    return L149_1.standEnableNoclip(...)
+  end
+  
+  local function L153_1(...)
+    return L149_1.sfCheckShiny(...)
+  end
+  
+  local function L154_1(...)
+    return L149_1.sfCheckStandResult(...)
+  end
+  
+  local function L155_1(...)
+    return L149_1.sfHandleAutoRequiem and L149_1.sfHandleAutoRequiem(...)
+  end
+  
+  local function L156_1(...)
+    return L149_1.buyRequiemFromSuno and L149_1.buyRequiemFromSuno(...)
+  end
+  
+  local function L157_1(...)
+    return L139_1.sfCountItem(...)
+  end
+  
+  local function L158_1(...)
+    return L149_1.sfLearnWorthiness(...)
+  end
+  
+  local function L159_1(...)
+    return L149_1.sfUseResetItem(...)
+  end
+  
+  local function L160_1(...)
+    return L149_1.sfFocusedFarmMissingItems(...)
+  end
+  
+  local function L161_1(...)
+    return L149_1.sfBuyMissingItem(...)
+  end
+  
+  local function L162_1(...)
+    return L149_1.sfNotify(...)
+  end
+  
+  local function L163_1(...)
+    return L139_1.moveCharacterTo(...)
+  end
+  
+  local function L164_1(...)
+    return L139_1.serverHopToRandom(...)
+  end
+  
+  local function L165_1(...)
+    return L139_1.wakeUpPhysicsAndSync(...)
+  end
+  
+  local L166_1 = L139_1.maxLimits
+  local L167_1 = L149_1.standFarmPosition
+  local L168_1 = L149_1.standFarmTarget
+  local L169_1 = L149_1.shinyFarmTarget
+  
+  local function L170_1()
+    return L149_1.getFarmMethod and L149_1.getFarmMethod() or L149_1.farmMethod or L28_1 and L28_1("SFM", "Arrow") or "Arrow"
+  end
+  
+  local function L171_1()
+    if not L62_1 or not L62_1() then
+      local L0_2 = tick()
+      while tick() - L0_2 < 180 and L149_1.standFarmRunning do
+        task.wait(0.5)
+        if L62_1 and L62_1() then
+          break
+        end
+      end
+      if not L62_1 or not L62_1() then
+        L149_1.standFarmRunning = false
+        return
+      end
+    end
+    task.wait(0.15)
+    L150_1()
+    task.wait(0.05)
+    if L149_1.standFarmRespawnConn then
+      L149_1.standFarmRespawnConn:Disconnect()
+    end
+    L149_1.standFarmRespawnConn = L2_1.CharacterAdded:Connect(function(A0_3)
+      task.wait(0.1)
+      if not L62_1 or not L62_1() then
+        return
+      end
+      local L1_3 = A0_3:WaitForChild("HumanoidRootPart", 5)
+      if L1_3 and L149_1.standFarmRunning then
+        L163_1(L167_1)
+        L1_3.AssemblyLinearVelocity = Vector3.zero
+        L1_3.AssemblyAngularVelocity = Vector3.zero
+        task.wait(0.1)
+        L158_1()
+      end
+    end)
+    local L0_2 = tick()
+    local L1_2 = 0
+    while L149_1.standFarmRunning do
+      local L2_2 = false
+      while true do
+        L1_2 = L1_2 + 1
+        if 100000 < L1_2 then
+          L149_1.standFarmRunning = false
+          L151_1()
+          L2_2 = true
+          break
+        end
+        if tick() - L0_2 > 7200 then
+          L149_1.standFarmRunning = false
+          L151_1()
+          task.wait(1)
+          if getgenv().YBAItemFarm and getgenv().YBAItemFarm.startStandFarm then
+            getgenv().YBAItemFarm.startStandFarm()
+          end
+          return
+        end
+        task.wait(0.05)
+        do
+          local L3_2 = L2_1.Character
+          if not L3_2 or not L3_2.Parent then
+            local L4_2 = L2_1.CharacterAdded:Wait()
+            task.wait(0.5)
+            L3_2 = L4_2 or L2_1.Character
+          end
+          if not L3_2 then
+            task.wait(0.1)
+            break
+          end
+          local L4_2 = L3_2:FindFirstChildOfClass("Humanoid")
+          local L5_2 = L3_2:FindFirstChild("HumanoidRootPart")
+          if not L4_2 or 0 >= L4_2.Health or not L5_2 then
+            task.wait(0.2)
+            break
+          end
+          if L90_1() then
+            task.wait(0.3)
+            break
+          end
+          if L2_1.Backpack and #L2_1.Backpack:GetChildren() == 0 then
+            local L6_2 = tick()
+            while true do
+              if not (tick() - L6_2 < 1.5 and L149_1.standFarmRunning) or L2_1.Backpack and 0 < #L2_1.Backpack:GetChildren() then
+                break
+              end
+              task.wait(0.1)
+            end
+          end
+          if L90_1() then
+            task.wait(0.3)
+            break
+          end
+          if (L5_2.Position - L167_1.Position).Magnitude > 25 then
+            L163_1(L167_1)
+            L5_2.AssemblyLinearVelocity = Vector3.zero
+            L5_2.AssemblyAngularVelocity = Vector3.zero
+            task.wait(0.1)
+          end
+          if not L3_2:FindFirstChild("RemoteFunction") then
+            L3_2:WaitForChild("RemoteFunction", 0.5)
+            if not L3_2:FindFirstChild("RemoteFunction") then
+              break
+            end
+          end
+          local L6_2 = L2_1:FindFirstChild("PlayerStats")
+          L6_2 = L6_2 or L2_1:WaitForChild("PlayerStats", 1)
+          if not L6_2 or not L6_2:FindFirstChild("Stand") then
+            break
+          end
+          if not L3_2:GetAttribute("WorthinessLearned") then
+            L158_1()
+            pcall(function()
+              L3_2:SetAttribute("WorthinessLearned", true)
+            end)
+          end
+          local L7_2 = L6_2.Stand.Value
+          local L8_2 = L7_2 ~= "None"
+          if L8_2 then
+            do
+              local L9_2
+              L7_2, L9_2 = L155_1(L7_2)
+              if L9_2 == "hopping" then
+                task.wait(3)
+                break
+              end
+              local L10_2 = L153_1()
+              local L11_2 = L154_1(L7_2, L10_2)
+              if L11_2 == "stop" then
+                if stopStandFarm then
+                  stopStandFarm()
+                elseif L149_1 and L149_1.stopStandFarm then
+                  L149_1.stopStandFarm()
+                else
+                  L149_1.standFarmRunning = false
+                  L27_1("SF", false)
+                  L20_1.StandFarmEnabled = false
+                  if L149_1.standFarmRespawnConn then
+                    L149_1.standFarmRespawnConn:Disconnect()
+                  end
+                  L149_1.standFarmRespawnConn = nil
+                  L151_1()
+                end
+                L2_2 = true
+                break
+              end
+            end
+          end
+          local L9_2 = L157_1("Mysterious Arrow")
+          local L10_2 = L157_1("Rokakaka")
+          local L11_2 = L157_1("Rib Cage of The Saint's Corpse")
+          local L12_2 = L157_1("Lucky Arrow")
+          local L13_2 = L166_1["Mysterious Arrow"] or 25
+          local L14_2 = L166_1.Rokakaka or 25
+          local L15_2 = L166_1["Rib Cage of The Saint's Corpse"] or 10
+          local L16_2 = false
+          local L17_2 = L170_1()
+          if L17_2 == "Arrow" then
+            if L8_2 and 0 < L10_2 then
+              L16_2 = true
+            elseif not L8_2 and 0 < L9_2 then
+              L16_2 = true
+            end
+          elseif L17_2 == "Lucky Arrow" then
+            if L8_2 and 0 < L10_2 then
+              L16_2 = true
+            elseif not L8_2 and 0 < L12_2 then
+              L16_2 = true
+            end
+          elseif L17_2 == "Rib Cage" then
+            if L8_2 and 0 < L10_2 then
+              L16_2 = true
+            elseif not L8_2 and 0 < L11_2 then
+              L16_2 = true
+            end
+          end
+          if L16_2 then
+            if (L5_2.Position - L167_1.Position).Magnitude > 15 then
+              L163_1(L167_1)
+              L5_2.AssemblyLinearVelocity = Vector3.zero
+              L5_2.AssemblyAngularVelocity = Vector3.zero
+              task.wait(0.1)
+            end
+            do
+              local L18_2 = L159_1(L8_2, L10_2, L11_2, L9_2, L13_2, L14_2, L15_2, L6_2)
+              if not L18_2 then
+                L151_1()
+                return
+              end
+              task.wait(0.1)
+            end
+            break
+          end
+          if L90_1() then
+            task.wait(0.3)
+            break
+          end
+          
+          local function L18_2()
+            local L0_3 = {}
+            local L1_3 = L157_1("Mysterious Arrow")
+            local L2_3 = L157_1("Rokakaka")
+            local L3_3 = L157_1("Rib Cage of The Saint's Corpse")
+            local L4_3 = L157_1("Lucky Arrow")
+            local L5_3 = L170_1()
+            local L6_3 = math.min(5, L166_1.Rokakaka or 25)
+            local L7_3 = math.min(5, L166_1["Mysterious Arrow"] or 25)
+            local L8_3 = math.min(5, L166_1["Rib Cage of The Saint's Corpse"] or 10)
+            if L5_3 == "Arrow" then
+              if L2_3 < L6_3 then
+                table.insert(L0_3, "Rokakaka")
+              end
+              if L1_3 < L7_3 then
+                table.insert(L0_3, "Mysterious Arrow")
+              end
+            elseif L5_3 == "Lucky Arrow" then
+              if L2_3 < L6_3 then
+                table.insert(L0_3, "Rokakaka")
+              end
+              if L4_3 < 1 then
+                table.insert(L0_3, "Lucky Arrow")
+              end
+            elseif L5_3 == "Rib Cage" then
+              if L2_3 < L6_3 then
+                table.insert(L0_3, "Rokakaka")
+              end
+              if L3_3 < L8_3 then
+                table.insert(L0_3, "Rib Cage of The Saint's Corpse")
+              end
+            end
+            return L0_3
+          end
+          
+          local function L19_2()
+            local L0_3 = L170_1()
+            if L0_3 == "Arrow" then
+              return {
+                "Rokakaka",
+                "Mysterious Arrow"
+              }
+            elseif L0_3 == "Lucky Arrow" then
+              return {"Rokakaka"}
+            elseif L0_3 == "Rib Cage" then
+              return {
+                "Rokakaka",
+                "Rib Cage of The Saint's Corpse"
+              }
+            end
+            return {}
+          end
+          
+          if L170_1() == "Lucky Arrow" and L157_1("Lucky Arrow") == 0 then
+            local L20_2 = L2_1.PlayerStats and L2_1.PlayerStats.Money.Value or 0
+            if 75000 <= L20_2 then
+              do
+                local L21_2 = L2_1.Character and L2_1.Character:FindFirstChild("RemoteEvent")
+                if L21_2 then
+                  local L22_2 = L166_1["Lucky Arrow"] or 9
+                  local L23_2 = math.min(math.floor(L20_2 / 75000), L22_2 - L157_1("Lucky Arrow"))
+                  L162_1("Buying " .. L23_2 .. "x Lucky Arrow from shop...")
+                  for L27_2 = 1, L23_2 do
+                    pcall(function()
+                      L21_2:FireServer("PurchaseShopItem", {
+                        ItemName = "1x Lucky Arrow"
+                      }, 1, 2)
+                    end)
+                    task.wait(0.15)
+                  end
+                  task.wait(0.2)
+                  if L157_1("Lucky Arrow") == 0 then
+                    L162_1("Lucky Arrow purchase failed - stopping farm.")
+                    L149_1.standFarmRunning = false
+                    L151_1()
+                    return
+                  end
+                else
+                  L162_1("RemoteEvent not found for Lucky Arrow purchase - stopping farm.")
+                  L149_1.standFarmRunning = false
+                  L151_1()
+                  return
+                end
+              end
+            else
+              L162_1("Not enough money for Lucky Arrow (need 75000, have " .. L20_2 .. ")! Farm paused.")
+              L149_1.standFarmRunning = false
+              L151_1()
+              return
+            end
+          end
+          if L90_1() then
+            task.wait(0.3)
+            break
+          end
+          local L20_2 = L18_2()
+          if 0 < #L20_2 and not L90_1() then
+            L152_1()
+            do
+              local L21_2 = L160_1(L18_2, L19_2, 15)
+              local L22_2 = L2_1.Character and L2_1.Character:FindFirstChild("HumanoidRootPart")
+              if L22_2 then
+                L163_1(L167_1)
+                L22_2.AssemblyLinearVelocity = Vector3.zero
+                L22_2.AssemblyAngularVelocity = Vector3.zero
+                task.wait(0.1)
+              end
+              if L90_1() then
+                break
+              end
+              local L23_2 = L18_2()
+              if 0 < #L23_2 and not L90_1() then
+                local L24_2 = false
+                for L28_2, L29_2 in ipairs(L23_2) do
+                  if L161_1(L29_2) then
+                    L24_2 = true
+                  end
+                end
+                L23_2 = L18_2()
+                if 0 < #L23_2 and not L21_2 and (L149_1 and L149_1.serverHopNoItems or isServerHopFarmEnabled and isServerHopFarmEnabled()) then
+                  L162_1("Auto Stand: No items on map. Hopping server...")
+                  L164_1()
+                  task.wait(3)
+                  break
+                end
+              end
+            end
+          end
+          break
+        end
+      end
+      if L2_2 then
+        break
+      end
+    end
+    L151_1()
+  end
+  
+  function startStandFarm()
+    if L149_1.standFarmRunning then
+      return
+    end
+    if not L62_1 or not L62_1() then
+      task.spawn(function()
+        local L0_3 = tick()
+        while tick() - L0_3 < 180 and (not L62_1 or not L62_1()) do
+          task.wait(1)
+        end
+        if L62_1 and L62_1() then
+          startStandFarm()
+        end
+      end)
+      return
+    end
+    if getgenv then
+      getgenv()._YBA_startStandFarmWaiting = false
+    end
+    L17_1("stand farm STARTED (in main game)")
+    if L165_1 then
+      pcall(L165_1)
+    end
+    if sfTableCount(L149_1.standFarmTarget) == 0 and not L149_1.keepAnyShiny then
+      L162_1("No stands selected - farming all stands (use Keep only Shiny to stop on shinies)")
+    end
+    _G._farmDebugNotified = false
+    _G._standDebugDone = false
+    local L0_2 = L170_1()
+    L149_1.standFarmRunning = true
+    L162_1("Stand farming started (Method: " .. tostring(L0_2) .. ")!")
+    task.spawn(L171_1)
+  end
+  
+  function stopStandFarm()
+    if getgenv then
+      getgenv()._YBA_startStandFarmWaiting = false
+    end
+    L149_1.standFarmRunning = false
+    L27_1("SF", false)
+    L20_1.StandFarmEnabled = false
+    if L149_1.standFarmRespawnConn then
+      L149_1.standFarmRespawnConn:Disconnect()
+    end
+    L149_1.standFarmRespawnConn = nil
+    task.defer(L151_1)
+    local L0_2 = L149_1.standFarmToggleWidget
+    if L0_2 and L0_2.UpdateState then
+      L149_1._toggleSyncing = true
+      pcall(function()
+        L0_2:UpdateState(false)
+      end)
+      L149_1._toggleSyncing = nil
+    end
+    L162_1("Stand farming stopped!")
+  end
+  
+  getgenv().RAILhub_StandFarmCleanup = function()
+    L149_1.standFarmRunning = false
+    if L149_1.standFarmRespawnConn then
+      L149_1.standFarmRespawnConn:Disconnect()
+    end
+    L149_1.standFarmRespawnConn = nil
+  end
+  L149_1.startStandFarm = startStandFarm
+  L149_1.stopStandFarm = stopStandFarm
+end
+do
+  local function L150_1(...)
+    return L149_1.sfLearnWorthiness and L149_1.sfLearnWorthiness(...)
+  end
+  
+  local function L151_1(...)
+    return L149_1.sfUseRib and L149_1.sfUseRib(...)
+  end
+  
+  local L152_1 = L149_1.standFarmTarget
+  local L153_1 = L149_1.keepAnyShiny
+  
+  local function L154_1(...)
+    return L139_1.sfCountItem and L139_1.sfCountItem(...) or 0
+  end
+  
+  local function L155_1(...)
+    return L149_1.sfCheckShiny and L149_1.sfCheckShiny(...) or "None"
+  end
+  
+  local function L156_1(...)
+    return L149_1.sfFindTable and L149_1.sfFindTable(...) or false
+  end
+  
+  local function L157_1(...)
+    return L149_1.sfNotify and L149_1.sfNotify(...) or L107_1 and L107_1("Stand Farm", ...)
+  end
+  
+  local function L158_1(...)
+    return L149_1.playShinyNotificationSound and L149_1.playShinyNotificationSound(...)
+  end
+  
+  local function L159_1(...)
+    return L139_1.moveCharacterTo and L139_1.moveCharacterTo(...)
+  end
+  
+  local function L160_1(...)
+    return L139_1.farmItemByName and L139_1.farmItemByName(...)
+  end
+  
+  local function L161_1(...)
+    return L139_1.serverHopToRandom and L139_1.serverHopToRandom(...)
+  end
+  
+  local function L162_1()
+    return L139_1.serverHopFarmEnabled and L139_1.serverHopFarmEnabled() or L28_1 and L28_1("SHF", true) or true
+  end
+  
+  local function L163_1()
+    return L162_1()
+  end
+  
+  local L164_1 = L149_1.standFarmPosition
+  
+  local function L165_1(...)
+    return L149_1.sfUseRoka and L149_1.sfUseRoka(...)
+  end
+  
+  local function L166_1(...)
+    if L139_1.enableNoclipState then
+      return L139_1.enableNoclipState(...)
+    end
+  end
+  
+  local function L167_1(...)
+    if L139_1.disableNoclipState then
+      return L139_1.disableNoclipState(...)
+    end
+  end
+  
+  local function L168_1()
+    if not L62_1 or not L62_1() then
+      local L0_2 = tick()
+      while tick() - L0_2 < 180 and L149_1.ribFarmRunning do
+        task.wait(0.5)
+        if L62_1 and L62_1() then
+          break
+        end
+      end
+      if not L62_1 or not L62_1() then
+        L149_1.ribFarmRunning = false
+        return
+      end
+    end
+    
+    local function L0_2()
+      L166_1("rib")
+    end
+    
+    local function L1_2()
+      L167_1("rib")
+    end
+    
+    task.wait(0.15)
+    local L2_2 = L2_1.Character and L2_1.Character:FindFirstChild("HumanoidRootPart")
+    if L2_2 then
+      L159_1(L164_1)
+    end
+    task.wait(0.1)
+    if L149_1.ribFarmRespawnConn then
+      L149_1.ribFarmRespawnConn:Disconnect()
+    end
+    L149_1.ribFarmRespawnConn = L2_1.CharacterAdded:Connect(function(A0_3)
+      task.wait(0.1)
+      if not L62_1 or not L62_1() then
+        return
+      end
+      local L1_3 = A0_3:WaitForChild("HumanoidRootPart", 10)
+      if L1_3 and L149_1.ribFarmRunning then
+        L159_1(L164_1)
+      end
+    end)
+    local L3_2 = tick()
+    local L4_2 = 7200
+    local L5_2 = 0
+    local L6_2 = 100000
+    while L149_1.ribFarmRunning do
+      local L7_2 = false
+      L5_2 = L5_2 + 1
+      while true do
+        if L6_2 < L5_2 then
+          L149_1.ribFarmRunning = false
+          L1_2()
+          L7_2 = true
+          break
+        end
+        if L4_2 < tick() - L3_2 then
+          L149_1.ribFarmRunning = false
+          L1_2()
+          task.wait(1)
+          if getgenv().YBAItemFarm and getgenv().YBAItemFarm.startRibFarm then
+            getgenv().YBAItemFarm.startRibFarm()
+          end
+          return
+        end
+        task.wait()
+        local L8_2 = L2_1.Character
+        if not L8_2 then
+          local L9_2 = L2_1.CharacterAdded:Wait()
+          task.wait(0.5)
+          L8_2 = L9_2 or L2_1.Character
+        end
+        if not L8_2 then
+          task.wait(0.5)
+          break
+        end
+        local L9_2 = L8_2:FindFirstChildOfClass("Humanoid")
+        if not L9_2 or 0 >= L9_2.Health then
+          task.wait(0.5)
+          break
+        end
+        if L154_1("Rib Cage of The Saint's Corpse") == 0 then
+          do
+            local L10_2 = L160_1("Rib Cage of The Saint's Corpse", 1, function()
+              return L149_1.ribFarmRunning
+            end)
+            if 0 < L10_2 then
+              local L11_2 = L2_1.Character and L2_1.Character:FindFirstChild("HumanoidRootPart")
+              if L11_2 then
+                L159_1(L164_1)
+                L11_2.AssemblyLinearVelocity = Vector3.zero
+              end
+              task.wait(0.1)
+            elseif L162_1() then
+              L157_1("No Rib Cages found. Hopping server...")
+              L161_1()
+              task.wait(3)
+              break
+            end
+          end
+        end
+        local L10_2 = L2_1:FindFirstChild("PlayerStats")
+        if not L10_2 or not L10_2:FindFirstChild("Stand") then
+          task.wait(0.5)
+          break
+        end
+        local L11_2 = L10_2.Stand.Value
+        local L12_2 = L11_2 ~= "None" and L155_1() or "None"
+        
+        local function L13_2(A0_3, A1_3)
+          if A0_3 then
+            L157_1(A0_3)
+          end
+          if A1_3 then
+            L158_1()
+          end
+          L149_1.ribFarmRunning = false
+          if L149_1.ribFarmRespawnConn then
+            L149_1.ribFarmRespawnConn:Disconnect()
+          end
+          L149_1.ribFarmRespawnConn = nil
+          L1_2()
+        end
+        
+        if L11_2 ~= "None" then
+          do
+            local L14_2 = L149_1.shinyFarmTarget or {}
+            local L15_2 = sfTableCount(L14_2)
+            local L16_2 = L12_2 ~= "None" and 0 < L15_2 and L156_1(L14_2, L12_2)
+            local L17_2 = L149_1.keepAnyShiny == true
+            if L16_2 then
+              L13_2("\226\156\168 Got desired shiny: " .. L11_2 .. " (" .. L12_2 .. ")! Keeping it.", true)
+              L7_2 = true
+              break
+            end
+            if L156_1(L149_1.standFarmTarget, L11_2) then
+              if L12_2 ~= "None" then
+                L13_2("\226\156\168 Got target shiny stand: " .. L11_2 .. " (" .. L12_2 .. ")! Keeping it.", true)
+                L7_2 = true
+                break
+              elseif L17_2 then
+                L157_1("Got target stand: " .. L11_2 .. " (waiting for shiny because 'Keep only Shiny' is ON) - continuing")
+              else
+                L13_2("\226\156\168 Got desired stand: " .. L11_2 .. "! Keeping it.", false)
+                L7_2 = true
+                break
+              end
+            elseif L12_2 ~= "None" and (L17_2 or L15_2 == 0) then
+              L13_2("\226\156\168 Got shiny stand: " .. L11_2 .. " (" .. L12_2 .. ")! Keeping it.", true)
+              L7_2 = true
+              break
+            end
+          end
+        end
+        local L14_2 = L154_1("Rib Cage of The Saint's Corpse")
+        if L11_2 == "None" and 0 < L14_2 then
+          L150_1()
+          L151_1()
+          task.wait(0.1)
+          do
+            local L15_2 = tick()
+            while true do
+              if not (tick() - L15_2 < 2 and L149_1.ribFarmRunning) or L10_2.Stand.Value ~= "None" then
+                break
+              end
+              task.wait(0.08)
+            end
+          end
+          break
+        end
+        if L11_2 ~= "None" and 0 < L154_1("Rokakaka") then
+          L165_1()
+          do
+            local L15_2 = tick()
+            while true do
+              if not (tick() - L15_2 < 1.5 and L149_1.ribFarmRunning) or L10_2.Stand.Value == "None" then
+                break
+              end
+              task.wait(0.08)
+            end
+          end
+          break
+        end
+        if L11_2 == "None" or L154_1("Rokakaka") ~= 0 then
+          break
+        end
+        local L15_2 = L160_1("Rokakaka", 1, function()
+          return L149_1.ribFarmRunning
+        end)
+        if 0 < L15_2 then
+          do
+            local L16_2 = L2_1.Character and L2_1.Character:FindFirstChild("HumanoidRootPart")
+            if L16_2 then
+              L159_1(L164_1)
+              L16_2.AssemblyLinearVelocity = Vector3.zero
+            end
+            task.wait(0.1)
+          end
+          break
+        end
+        if L162_1 and L162_1() or L149_1 and L149_1.serverHopNoItems then
+          L157_1("No Rokakaka found. Hopping server...")
+          L161_1()
+          task.wait(3)
+          break
+        end
+        break
+      end
+      if L7_2 then
+        break
+      end
+    end
+    if L149_1.ribFarmRespawnConn then
+      L149_1.ribFarmRespawnConn:Disconnect()
+    end
+    L149_1.ribFarmRespawnConn = nil
+    L1_2()
+  end
+  
+  local function L169_1()
+    if L149_1.ribFarmRunning then
+      return
+    end
+    if not L62_1 or not L62_1() then
+      task.spawn(function()
+        local L0_3 = tick()
+        while tick() - L0_3 < 180 and (not L62_1 or not L62_1()) do
+          task.wait(1)
+        end
+        if L62_1 and L62_1() then
+          L169_1()
+        end
+      end)
+      return
+    end
+    L149_1.ribFarmRunning = true
+    L157_1("Rib farming started!")
+    task.spawn(L168_1)
+  end
+  
+  local function L170_1()
+    L149_1.ribFarmRunning = false
+    L27_1("SF", false)
+    L20_1.StandFarmEnabled = false
+    if L149_1.ribFarmRespawnConn then
+      L149_1.ribFarmRespawnConn:Disconnect()
+    end
+    L149_1.ribFarmRespawnConn = nil
+    L157_1("Rib farming stopped!")
+  end
+  
+  L149_1.startRibFarm = L169_1
+  L149_1.stopRibFarm = L170_1
+end
+do
+  local function L150_1(...)
+    return L139_1.sfCountItem and L139_1.sfCountItem(...) or 0
+  end
+  
+  local function L151_1(...)
+    return L149_1.sfCheckShiny and L149_1.sfCheckShiny(...) or "None"
+  end
+  
+  local function L152_1(...)
+    return L149_1.sfFindTable and L149_1.sfFindTable(...) or false
+  end
+  
+  local function L153_1(...)
+    return L149_1.sfNotify and L149_1.sfNotify(...) or L107_1 and L107_1("Stand Farm", ...)
+  end
+  
+  local function L154_1(...)
+    return L149_1.playShinyNotificationSound and L149_1.playShinyNotificationSound(...)
+  end
+  
+  local function L155_1(...)
+    return L139_1.moveCharacterTo and L139_1.moveCharacterTo(...)
+  end
+  
+  local function L156_1(...)
+    return L139_1.farmItemByName and L139_1.farmItemByName(...)
+  end
+  
+  local function L157_1(...)
+    return L139_1.serverHopToRandom and L139_1.serverHopToRandom(...)
+  end
+  
+  local function L158_1()
+    return L139_1.serverHopFarmEnabled and L139_1.serverHopFarmEnabled() or L28_1 and L28_1("SHF", true) or true
+  end
+  
+  local function L159_1()
+    return L158_1()
+  end
+  
+  local L160_1 = L149_1.standFarmPosition
+  local L161_1 = L149_1.shinyFarmTarget
+  
+  local function L162_1(...)
+    return L149_1.sfUseRoka and L149_1.sfUseRoka(...)
+  end
+  
+  local function L163_1(...)
+    return L149_1.sfUseArrow and L149_1.sfUseArrow(...)
+  end
+  
+  local function L164_1(...)
+    if L139_1.enableNoclipState then
+      return L139_1.enableNoclipState(...)
+    end
+  end
+  
+  local function L165_1(...)
+    if L139_1.disableNoclipState then
+      return L139_1.disableNoclipState(...)
+    end
+  end
+  
+  local function L166_1(...)
+    if L149_1.startStandFarm then
+      return L149_1.startStandFarm(...)
+    end
+  end
+  
+  local function L167_1(...)
+    if L149_1.stopStandFarm then
+      return L149_1.stopStandFarm(...)
+    end
+  end
+  
+  local function L168_1(...)
+    if L149_1.startRibFarm then
+      return L149_1.startRibFarm(...)
+    end
+  end
+  
+  local function L169_1(...)
+    if L149_1.stopRibFarm then
+      return L149_1.stopRibFarm(...)
+    end
+  end
+  
+  local function L170_1()
+    if not L62_1 or not L62_1() then
+      local L0_2 = tick()
+      while tick() - L0_2 < 180 and L149_1.shinyFarmRunning do
+        task.wait(0.5)
+        if L62_1 and L62_1() then
+          break
+        end
+      end
+      if not L62_1 or not L62_1() then
+        L149_1.shinyFarmRunning = false
+        return
+      end
+    end
+    
+    local function L0_2()
+      L164_1("shiny")
+    end
+    
+    local function L1_2()
+      L165_1("shiny")
+    end
+    
+    task.wait(0.15)
+    local L2_2 = L2_1.Character and L2_1.Character:FindFirstChild("HumanoidRootPart")
+    if L2_2 then
+      L155_1(L160_1)
+    end
+    task.wait(0.1)
+    if L149_1.shinyFarmRespawnConn then
+      L149_1.shinyFarmRespawnConn:Disconnect()
+    end
+    L149_1.shinyFarmRespawnConn = L2_1.CharacterAdded:Connect(function(A0_3)
+      task.wait(0.1)
+      if not L62_1 or not L62_1() then
+        return
+      end
+      local L1_3 = A0_3:WaitForChild("HumanoidRootPart", 10)
+      if L1_3 and L149_1.shinyFarmRunning then
+        L155_1(L160_1)
+      end
+    end)
+    local L3_2 = tick()
+    local L4_2 = 7200
+    local L5_2 = 0
+    local L6_2 = 100000
+    while L149_1.shinyFarmRunning do
+      local L7_2 = false
+      L5_2 = L5_2 + 1
+      while true do
+        if L6_2 < L5_2 then
+          L149_1.shinyFarmRunning = false
+          L1_2()
+          L7_2 = true
+          break
+        end
+        if L4_2 < tick() - L3_2 then
+          L149_1.shinyFarmRunning = false
+          L1_2()
+          task.wait(1)
+          if getgenv().YBAItemFarm and getgenv().YBAItemFarm.startShinyFarm then
+            getgenv().YBAItemFarm.startShinyFarm()
+          end
+          return
+        end
+        task.wait(0.15)
+        local L8_2 = L2_1.Character
+        if not L8_2 then
+          local L9_2 = L2_1.CharacterAdded:Wait()
+          task.wait(0.5)
+          L8_2 = L9_2 or L2_1.Character
+        end
+        if not L8_2 then
+          task.wait(0.5)
+          break
+        end
+        local L9_2 = L2_1:FindFirstChild("PlayerStats")
+        local L10_2 = L9_2 and L9_2:FindFirstChild("Stand") and L9_2.Stand.Value or "None"
+        local L11_2 = L151_1()
+        if L10_2 ~= "None" and L11_2 ~= "None" and L152_1(L149_1.shinyFarmTarget, L11_2) then
+          L153_1("Got target shiny: " .. L11_2)
+          L154_1()
+          L149_1.shinyFarmRunning = false
+          if L149_1.shinyFarmRespawnConn then
+            L149_1.shinyFarmRespawnConn:Disconnect()
+          end
+          L149_1.shinyFarmRespawnConn = nil
+          L7_2 = true
+          break
+        end
+        local L12_2 = 1 > L150_1("Mysterious Arrow")
+        local L13_2 = 1 > L150_1("Rokakaka")
+        if L12_2 or L13_2 then
+          do
+            local L14_2 = false
+            if L12_2 then
+              L14_2 = 0 < L156_1("Mysterious Arrow", 1, function()
+                return L149_1.shinyFarmRunning
+              end) or L14_2
+            end
+            if L13_2 then
+              L14_2 = 0 < L156_1("Rokakaka", 1, function()
+                return L149_1.shinyFarmRunning
+              end) or L14_2
+            end
+            if not L14_2 and (L158_1 and L158_1() or L149_1 and L149_1.serverHopNoItems) then
+              L153_1("Required items not found. Hopping server...")
+              L157_1()
+              task.wait(3)
+              break
+            end
+          end
+        end
+        if L10_2 ~= "None" then
+          L162_1()
+        else
+          L163_1()
+        end
+        task.wait(0.15)
+        break
+      end
+      if L7_2 then
+        break
+      end
+    end
+    if L149_1.shinyFarmRespawnConn then
+      L149_1.shinyFarmRespawnConn:Disconnect()
+    end
+    L149_1.shinyFarmRespawnConn = nil
+  end
+  
+  local function L171_1()
+    if L149_1.shinyFarmRunning then
+      return
+    end
+    if #(L149_1.shinyFarmTarget or {}) == 0 then
+      L107_1("Shiny Farm", "No shinies selected!")
+      return
+    end
+    if not L62_1 or not L62_1() then
+      task.spawn(function()
+        local L0_3 = tick()
+        while tick() - L0_3 < 180 and (not L62_1 or not L62_1()) do
+          task.wait(1)
+        end
+        if L62_1 and L62_1() then
+          L171_1()
+        end
+      end)
+      return
+    end
+    L149_1.shinyFarmRunning = true
+    L153_1("Shiny farming started!")
+    task.spawn(L170_1)
+  end
+  
+  local function L172_1()
+    L149_1.shinyFarmRunning = false
+    L27_1("SF", false)
+    if L149_1.shinyFarmRespawnConn then
+      L149_1.shinyFarmRespawnConn:Disconnect()
+    end
+    L149_1.shinyFarmRespawnConn = nil
+    L153_1("Shiny farming stopped!")
+  end
+  
+  L149_1.startShinyFarm = L171_1
+  L149_1.stopShinyFarm = L172_1
+  _G.YBAItemFarm.standFarmTarget = L149_1.standFarmTarget
+  _G.YBAItemFarm.shinyFarmTarget = L149_1.shinyFarmTarget
+  
+  function _G.YBAItemFarm.setKeepAnyShiny(A0_2)
+    L149_1.keepAnyShiny = A0_2
+  end
+  
+  function _G.YBAItemFarm.setAutoRequiem(A0_2)
+    L149_1.autoRequiem = A0_2
+    _G.YBAItemFarm.autoRequiem = A0_2
+  end
+  
+  _G.YBAItemFarm.autoRequiem = L149_1.autoRequiem
+  
+  function _G.YBAItemFarm.setServerHopNoItems(A0_2)
+    L149_1.serverHopNoItems = A0_2
+    _G.YBAItemFarm.serverHopNoItems = A0_2
+  end
+  
+  _G.YBAItemFarm.serverHopNoItems = L149_1.serverHopNoItems
+  
+  function _G.YBAItemFarm.buyRequiemFromSuno(...)
+    if L149_1.buyRequiemFromSuno then
+      return L149_1.buyRequiemFromSuno(...)
+    end
+  end
+  
+  function _G.YBAItemFarm.ensureRequiemArrow(...)
+    if L149_1.ensureRequiemArrow then
+      return L149_1.ensureRequiemArrow(...)
+    end
+  end
+  
+  function _G.YBAItemFarm.startStandFarm()
+    if L149_1.startStandFarm then
+      L149_1.startStandFarm()
+    end
+  end
+  
+  function _G.YBAItemFarm.stopStandFarm()
+    if L149_1.stopStandFarm then
+      L149_1.stopStandFarm()
+    end
+  end
+  
+  function _G.YBAItemFarm.startRibFarm()
+    if L149_1.startRibFarm then
+      L149_1.startRibFarm()
+    end
+  end
+  
+  function _G.YBAItemFarm.stopRibFarm()
+    if L149_1.stopRibFarm then
+      L149_1.stopRibFarm()
+    end
+  end
+  
+  function _G.YBAItemFarm.startShinyFarm()
+    if L149_1.startShinyFarm then
+      L149_1.startShinyFarm()
+    end
+  end
+  
+  function _G.YBAItemFarm.stopShinyFarm()
+    if L149_1.stopShinyFarm then
+      L149_1.stopShinyFarm()
+    end
+  end
+end
+do
+  local function L150_1(...)
+    if L149_1.startStandFarm then
+      return L149_1.startStandFarm(...)
+    elseif _G.YBAItemFarm and _G.YBAItemFarm.startStandFarm then
+      return _G.YBAItemFarm.startStandFarm(...)
+    end
+  end
+  
+  local function L151_1(...)
+    if L149_1.stopStandFarm then
+      return L149_1.stopStandFarm(...)
+    elseif _G.YBAItemFarm and _G.YBAItemFarm.stopStandFarm then
+      return _G.YBAItemFarm.stopStandFarm(...)
+    end
+  end
+  
+  local function L152_1(...)
+    if L149_1.startRibFarm then
+      return L149_1.startRibFarm(...)
+    elseif _G.YBAItemFarm and _G.YBAItemFarm.startRibFarm then
+      return _G.YBAItemFarm.startRibFarm(...)
+    end
+  end
+  
+  local function L153_1(...)
+    if L149_1.stopRibFarm then
+      return L149_1.stopRibFarm(...)
+    elseif _G.YBAItemFarm and _G.YBAItemFarm.stopRibFarm then
+      return _G.YBAItemFarm.stopRibFarm(...)
+    end
+  end
+  
+  local function L154_1(...)
+    if L149_1.skipCurrentShinyStand then
+      return L149_1.skipCurrentShinyStand(...)
+    end
+  end
+  
+  local function L155_1(A0_2, A1_2)
+    if not A0_2 then
+      return {}
+    end
+    for L5_2 = #A0_2, 1, -1 do
+      table.remove(A0_2, L5_2)
+    end
+    if type(A1_2) == "table" then
+      if A1_2[1] ~= nil then
+        for L5_2, L6_2 in ipairs(A1_2) do
+          if type(L6_2) == "string" and L6_2 ~= "" and not table.find(A0_2, L6_2) then
+            table.insert(A0_2, L6_2)
+          end
+        end
+      else
+        for L5_2, L6_2 in pairs(A1_2) do
+          if (L6_2 == true or L6_2 == 1 or L6_2 == L5_2) and type(L5_2) == "string" and L5_2 ~= "" and not table.find(A0_2, L5_2) then
+            table.insert(A0_2, L5_2)
+          end
+        end
+      end
+    elseif type(A1_2) == "string" and A1_2 ~= "" then
+      table.insert(A0_2, A1_2)
+    end
+    return A0_2
+  end
+  
+  local L156_1 = {
+    "Aerosmith",
+    "Anubis",
+    "Beach Boy",
+    "C-Moon",
+    "Chariot Requiem",
+    "Crazy Diamond",
+    "Cream",
+    "D4C",
+    "D4C Love Train",
+    "Diver Down",
+    "Gold Experience",
+    "Gold Experience Requiem",
+    "Hermit Purple",
+    "Hierophant Green",
+    "Killer Queen",
+    "Killer Queen: Bites the Dust",
+    "King Crimson",
+    "King Crimson Requiem",
+    "Made in Heaven",
+    "Magician's Red",
+    "Mr. President",
+    "Purple Haze",
+    "Red Hot Chili Pepper",
+    "Scary Monsters",
+    "Shadow The World",
+    "Silver Chariot",
+    "Six Pistols",
+    "Sex Pistols",
+    "Soft & Wet",
+    "Soft & Wet: Go Beyond",
+    "Star Platinum",
+    "Star Platinum: The World",
+    "Sticky Fingers",
+    "Stone Free",
+    "The Hand",
+    "The World",
+    "The World Alternate Universe",
+    "The World Over Heaven",
+    "Tusk ACT 1",
+    "Tusk ACT 2",
+    "Tusk ACT 3",
+    "Tusk ACT 4",
+    "White Album",
+    "Whitesnake"
+  }
+  local L157_1 = {
+    "Ace",
+    "Action-Figure Platinum",
+    "Actually Red Hot Chili Pepper",
+    "Aerosleigh",
+    "Aerosmith Over Heaven",
+    "All-Starsnake",
+    "Anti Umbral",
+    "Arlong",
+    "Asuna",
+    "Autumn Vines",
+    "Baseball Platinum",
+    "Biblically Accurate Experience",
+    "Blade of The Exile",
+    "Bloodthirster",
+    "Bondrewd",
+    "Bone Gloves",
+    "Boxing Claws",
+    "Bubblegum Diver Down",
+    "Buggy D. Clown",
+    "Candycorn Snake",
+    "CandySnake",
+    "Casull",
+    "Charged Creeper Queen",
+    "Charmy Green",
+    "Chromo Hando",
+    "Comic Venom Spider-Man",
+    "Cornsnake",
+    "Cracked WORLD",
+    "Crazy Idol",
+    "Crazy Overseer",
+    "Cream Nog",
+    "Creeper Queen",
+    "Crimson Mist",
+    "Crystal",
+    "Cthulhu",
+    "Cursed Scythe",
+    "D4She",
+    "Dark Determination",
+    "Dead Experience",
+    "Deadeye Drifter",
+    "Deep Sea Diver",
+    "Deimos Crimson Requiem",
+    "Deimos Queen",
+    "Deimos Snake",
+    "Devil's Moon",
+    "Devil4C",
+    "Diamond",
+    "Digital SPTW",
+    "Diva Down",
+    "Eldritch Green",
+    "Elf Pistols",
+    "Elizabeth Liones",
+    "Elucidator & Dark Repulser",
+    "Emerald",
+    "Emperor",
+    "Female Hando",
+    "Festive Free",
+    "Festive Platinum",
+    "Festive Platinum: The World",
+    "Festive World",
+    "Frostbite",
+    "Frozone",
+    "Fury Nautilodaunt",
+    "Gear 4 Luffy",
+    "Ghost World",
+    "Ghostface",
+    "Glacier Trackstar",
+    "Glock-18",
+    "Glock-18 | Fade",
+    "Go/Jo",
+    "Gold",
+    "Gold Platinum",
+    "Golden & Wet",
+    "Golden Frieza",
+    "Grim Reaper",
+    "Gummy Worm",
+    "Haunted Jack-O-Platinum",
+    "Haunted Jacko SPTW",
+    "Headhunter",
+    "Heaven Act 4",
+    "Heaven Spirit",
+    "Helsing's Crossbow",
+    "Hexed Experience Requiem",
+    "Hidden Leaf Hero",
+    "Hierophant Frost",
+    "Hollow Ace",
+    "Holly's Sickness",
+    "Horseman of Heaven",
+    "Ice Cold Chili Pepper",
+    "Jack o Platinum",
+    "Jack O' Platinum",
+    "Jack-O-Platinum",
+    "Jade Peace",
+    "Jaguar Platinum",
+    "Jester Crimson",
+    "Joe's Pride",
+    "Kanshou & Bakuya",
+    "Kikoku",
+    "Killer Queen: Bites the Ice",
+    "Killer Reveal",
+    "King Krampus",
+    "King of The End",
+    "Light Bringer",
+    "Linked Anubis",
+    "Linked Sword",
+    "Lord Boros",
+    "Luffy Gear 4",
+    "Made in Christmas Future",
+    "Magellan",
+    "Magician's Red Over Heaven",
+    "Manga Crimson",
+    "Manga Diver Down",
+    "MCU Spider-Man",
+    "Megumin",
+    "Mermaid",
+    "Mintsnake",
+    "Mirage of Phantoms",
+    "Misaka Mikoto",
+    "Moon of Christmas Present",
+    "Movie Venom",
+    "MR Jukes Angels",
+    "Mr. Joestar",
+    "Mr. Pekin",
+    "Mr. Tentacles",
+    "Ms. Aerosmith",
+    "Muffet",
+    "Nah, I'd Win",
+    "Nautilodaunt",
+    "NEO TWAU",
+    "Neo WORLD",
+    "Neon Ascension Diamond",
+    "Nerf Jolt",
+    "Nexus Crimson",
+    "Nocturne",
+    "Nonosama Bo",
+    "O5 Keycard",
+    "Obsidian",
+    "ODM Gear",
+    "Old President",
+    "One Above All",
+    "OVA Emperor",
+    "OVA Platinum",
+    "OVA Silver Chariot",
+    "OVA The World",
+    "Peppermint Crimson",
+    "Pillage & Plunder",
+    "Pinky Fingers",
+    "Platinum",
+    "Polar President",
+    "Pumpkin Patch",
+    "Pyro",
+    "Queen Crimson",
+    "Rainbow",
+    "Retro The World Over Heaven",
+    "Reverse Monsters",
+    "Rock Unleashed",
+    "Ruby",
+    "Sakara",
+    "Sakura",
+    "Sapphire",
+    "Sasageyo",
+    "Scarlet Queen",
+    "Scary Monsters: Retro The World",
+    "Scary Monsters: The World",
+    "Scary Monsters: The World Alternate Universe",
+    "SCP-106",
+    "Scythe",
+    "Shadow Killer Queen",
+    "Shadow The World",
+    "Shadow The World Alternate",
+    "Sheared Snow Golem",
+    "Shining Ruby",
+    "Silver",
+    "Smelter Chariot",
+    "Snake of Christmas Past",
+    "Snow Golem",
+    "Soft & Starry",
+    "Sorcerer's Red",
+    "Spiderman",
+    "Spirit Bomb",
+    "Spunch Bop",
+    "Star Platinum OVA",
+    "Star Striped Eagle",
+    "Star Waifu",
+    "Star Waifu: The World",
+    "Stone Platinum",
+    "Stop Sign",
+    "STW Alternate",
+    "Sukuna",
+    "Sukuna King Crimson Requiem",
+    "Sumo Star Platinum",
+    "Sumo The World",
+    "Tentacle Black",
+    "Tentacle Purple",
+    "Tentacle Yellow",
+    "Thanos",
+    "The Doorman",
+    "The Other Hand",
+    "The Waifu Alternate Universe",
+    "The Waifu Over Heaven",
+    "The Waifu V1",
+    "The Waifu V2",
+    "The Waifu v2",
+    "The World 2",
+    "The World OVA",
+    "The World Ultimate",
+    "The World's Greatest High",
+    "The World: Greatest High",
+    "The World: Ultimate",
+    "Tomb Crypt Tusk",
+    "Toy Sticky Fingers",
+    "Train to Hell",
+    "Triangle Guard",
+    "Tsunade",
+    "Tsunate",
+    "Tyrant Crimson",
+    "Uber Spy",
+    "Undead Flare",
+    "Undead Hand",
+    "Vampire The World",
+    "Vanilla Ice Cream",
+    "Vela Nova",
+    "Venom",
+    "Vexus Crimson",
+    "Vinegar Crimson",
+    "Virus Vessel",
+    "Volcanic Experience Requiem",
+    "Warhammer Titan",
+    "Whisper",
+    "Wispy Chariot",
+    "Yuji Itadori",
+    "\226\151\143\226\151\143|\226\151\143\226\151\143\226\151\143\226\151\143\226\151\143|\226\151\143\226\151\143|\226\151\143"
+  }
+  local L158_1 = L146_1.Stands
+  local L159_1 = L158_1:Section({Side = "Left", Name = "Stand Farm"})
+  L159_1:Header({
+    Text = "Farm stands",
+    AutoLocalize = false
+  })
+  L159_1:Dropdown({
+    Name = "Select Stands to Keep",
+    Options = L156_1,
+    Multi = true,
+    Default = L147_1(),
+    Callback = function(A0_2)
+      local L1_2 = _G.YBAItemFarm and _G.YBAItemFarm.standFarmTarget or L149_1.standFarmTarget
+      L1_2 = L1_2 or {}
+      L155_1(L1_2, A0_2)
+      if _G.YBAItemFarm then
+        _G.YBAItemFarm.standFarmTarget = L1_2
+      end
+      L149_1.standFarmTarget = L1_2
+      L27_1("StandFarmKeep", L1_2)
+      L107_1("Stand Farm", "Selected " .. #L1_2 .. " stands: " .. table.concat(L1_2, ", "))
+    end
+  })
+  L159_1:Toggle({
+    Name = "Keep only Shiny",
+    Default = L28_1("SKS", false),
+    Callback = function(A0_2)
+      if L149_1.setKeepAnyShiny then
+        L149_1.setKeepAnyShiny(A0_2)
+      end
+      if _G.YBAItemFarm and _G.YBAItemFarm.setKeepAnyShiny then
+        _G.YBAItemFarm.setKeepAnyShiny(A0_2)
+      end
+      L27_1("SKS", A0_2)
+    end
+  })
+  L159_1:Dropdown({
+    Name = "Select Shinies to Keep",
+    Options = L157_1,
+    Multi = true,
+    Default = L148_1(),
+    Callback = function(A0_2)
+      local L1_2 = _G.YBAItemFarm and _G.YBAItemFarm.shinyFarmTarget or L149_1.shinyFarmTarget
+      L1_2 = L1_2 or {}
+      L155_1(L1_2, A0_2)
+      if _G.YBAItemFarm then
+        _G.YBAItemFarm.shinyFarmTarget = L1_2
+      end
+      L149_1.shinyFarmTarget = L1_2
+      L27_1("StandFarmShinies", L1_2)
+      L107_1("Stand Farm", "Selected " .. #L1_2 .. " shinies: " .. table.concat(L1_2, ", "))
+    end
+  })
+  L159_1:Toggle({
+    Name = "Auto Requiem",
+    Default = L28_1("SAR", false),
+    Callback = function(A0_2)
+      if L149_1.setAutoRequiem then
+        L149_1.setAutoRequiem(A0_2)
+      end
+      if _G.YBAItemFarm and _G.YBAItemFarm.setAutoRequiem then
+        _G.YBAItemFarm.setAutoRequiem(A0_2)
+      end
+      L27_1("SAR", A0_2)
+    end
+  })
+  L159_1:Button({
+    Name = "Buy Requiem Arrow",
+    Callback = function()
+      task.spawn(function()
+        if L149_1.ensureRequiemArrow then
+          L149_1.ensureRequiemArrow()
+        elseif L149_1.buyRequiemFromSuno then
+          L149_1.buyRequiemFromSuno()
+        end
+      end)
+    end
+  })
+  L159_1:Toggle({
+    Name = "Server Hop If No Items",
+    Default = L28_1("SF_HopNoItems", false),
+    Callback = function(A0_2)
+      if L149_1.setServerHopNoItems then
+        L149_1.setServerHopNoItems(A0_2)
+      else
+        L149_1.serverHopNoItems = A0_2
+      end
+      L27_1("SF_HopNoItems", A0_2)
+    end
+  })
+  L159_1:Slider({
+    Name = "Server Hop Wait Delay",
+    Default = tonumber(L28_1 and L28_1("SH_Delay", 3)) or 3,
+    Minimum = 0,
+    Maximum = 5,
+    DisplayMethod = "Value",
+    Precision = 0,
+    Suffix = "s",
+    Callback = function(A0_2)
+      local L1_2 = tonumber(A0_2) or 0
+      L27_1("SH_Delay", L1_2)
+      if _G.YBAItemFarm then
+        _G.YBAItemFarm.serverHopDelay = L1_2
+      end
+      if L139_1 then
+        L139_1.serverHopDelay = L1_2
+      end
+      if L149_1 then
+        L149_1.serverHopDelay = L1_2
+      end
+    end
+  })
+  L159_1:Button({
+    Name = "Skip current Shiny",
+    Callback = function()
+      L154_1()
+    end
+  })
+  local L160_1 = L159_1:Toggle({
+    Name = "Enable Farm",
+    Default = L28_1("SF", false),
+    Callback = function(A0_2)
+      if L149_1._toggleSyncing then
+        return
+      end
+      L27_1("SF", A0_2)
+      L20_1.StandFarmEnabled = A0_2
+      if A0_2 then
+        L149_1.farmStats = {
+          arrowsUsed = 0,
+          rokasUsed = 0,
+          ribsUsed = 0,
+          luckyArrowsUsed = 0,
+          standsGot = 0,
+          startTime = tick()
+        }
+        farmStats = L149_1.farmStats
+        L150_1()
+      else
+        L151_1()
+        L153_1()
+      end
+    end
+  })
+  L149_1.standFarmToggleWidget = L160_1
+  L159_1:Dropdown({
+    Name = "Farm Method",
+    Options = {
+      "Arrow",
+      "Lucky Arrow",
+      "Rib Cage"
+    },
+    Default = L28_1("SFM", "Arrow"),
+    Callback = function(A0_2)
+      local L1_2 = A0_2 or "Arrow"
+      L27_1("SFM", L1_2)
+      if L149_1.setFarmMethod then
+        L149_1.setFarmMethod(L1_2)
+      end
+      if L149_1.standFarmRunning or L149_1.ribFarmRunning then
+        L151_1()
+        L153_1()
+        task.wait(0.5)
+        L150_1()
+      end
+    end
+  })
+  if (L20_1.StandFarmEnabled or L28_1("SF", false)) and not L92_1 then
+    L17_1("autostart scheduled: stand farm")
+    task.delay(3, function()
+      L149_1.farmStats = {
+        arrowsUsed = 0,
+        rokasUsed = 0,
+        ribsUsed = 0,
+        luckyArrowsUsed = 0,
+        standsGot = 0,
+        startTime = tick()
+      }
+      farmStats = L149_1.farmStats
+      L150_1()
+    end)
+  end
+end
+do
+  local function L150_1()
+    local L0_2 = gethui and gethui() or game:GetService("CoreGui")
+    
+    local L1_2 = L105_1 and L105_1.Settings
+    local L2_2 = L1_2 and L1_2.Title or "RAIL|hub"
+    local L3_2 = L1_2 and L1_2.Subtitle or "YBA"
+    local L4_2
+    for L8_2, L9_2 in ipairs(L0_2:GetChildren()) do
+      if L9_2:IsA("ScreenGui") then
+        for L13_2, L14_2 in ipairs(L9_2:GetDescendants()) do
+          if L14_2:IsA("TextLabel") and L14_2.Text == L2_2 then
+            L4_2 = L14_2
+            break
+          end
+        end
+      end
+      if L4_2 then
+        break
+      end
+    end
+    if not L4_2 then
+      return false
+    end
+    local L5_2 = L4_2.Parent
+    if not L5_2 or not L5_2:IsA("GuiObject") then
+      return false
+    end
+    local L6_2 = L5_2:FindFirstChild("MenuHeaderPadding")
+    if not L6_2 then
+      L6_2 = Instance.new("UIPadding")
+      L6_2.Name = "MenuHeaderPadding"
+      L6_2.Parent = L5_2
+    end
+    L6_2.PaddingLeft = UDim.new(0, 40)
+    L4_2.AnchorPoint = Vector2.new(0, 0)
+    L4_2.TextSize = math.max(16, L4_2.TextSize or 0)
+    L4_2:SetAttribute("WaveRawText", L4_2.Text)
+    
+    local function L7_2(A0_3)
+      if A0_3:GetAttribute("MenuOffsetX") == nil then
+        local L1_3 = L5_2.AbsolutePosition
+        local L2_3 = A0_3.AbsolutePosition
+        A0_3:SetAttribute("MenuOffsetX", math.floor(L2_3.X - L1_3.X + 0.5))
+        A0_3:SetAttribute("MenuOffsetY", math.floor(L2_3.Y - L1_3.Y + 0.5))
+      end
+      local L1_3 = A0_3:GetAttribute("MenuOffsetX") or A0_3.Position.X.Offset
+      local L2_3 = A0_3:GetAttribute("MenuOffsetY") or A0_3.Position.Y.Offset
+      A0_3.Position = UDim2.new(0, L1_3, 0, L2_3)
+    end
+    
+    L7_2(L4_2)
+    for L11_2, L12_2 in ipairs(L5_2:GetChildren()) do
+      if L12_2:IsA("TextLabel") and L12_2.Text == L3_2 then
+        L12_2.AnchorPoint = Vector2.new(0, 0)
+        L7_2(L12_2)
+        break
+      end
+    end
+    local L8_2 = "MenuLeftImage"
+    
+    local function L9_2(A0_3)
+      if not A0_3 then
+        return
+      end
+      local L1_3 = A0_3:FindFirstChild("Base", true)
+      local L2_3 = L1_3 and L1_3:FindFirstChild("Sidebar", true)
+      local L3_3 = L2_3 and L2_3:FindFirstChild("Information", true)
+      local L4_3 = L3_3 and L3_3:FindFirstChild("InformationHolder", true)
+      if L4_3 then
+        return L4_3
+      end
+      for L8_3, L9_3 in ipairs(A0_3:GetDescendants()) do
+        if L9_3:IsA("Frame") and L9_3.Name == "InformationHolder" then
+          return L9_3
+        end
+      end
+    end
+    
+    local L10_2 = L4_2:FindFirstAncestorWhichIsA("ScreenGui") or game:GetService("CoreGui")
+    local L11_2 = L9_2(L10_2)
+    local L12_2 = L5_2:FindFirstChild(L8_2)
+    if L12_2 then
+      L12_2:Destroy()
+    end
+    if L11_2 then
+      L12_2 = L11_2:FindFirstChild(L8_2)
+      if L12_2 then
+        L12_2:Destroy()
+      end
+    end
+    local L13_2 = Instance.new("ImageLabel")
+    L13_2.Name = L8_2
+    L13_2.BackgroundTransparency = 1
+    L13_2.Size = UDim2.new(0, 40, 0, 40)
+    L13_2.ScaleType = Enum.ScaleType.Crop
+    L13_2.ZIndex = L4_2.ZIndex
+    local L14_2 = Instance.new("UICorner")
+    L14_2.Parent = L13_2
+    L13_2.Image = getgenv()._YBA_resolveMenuHeaderImage and getgenv()._YBA_resolveMenuHeaderImage() or ""
+    L13_2.AnchorPoint = Vector2.new(0, 0)
+    if L11_2 then
+      L13_2.Parent = L11_2
+      L13_2.Position = UDim2.new(0, -10, 1, -40)
+    else
+      L13_2.Parent = L4_2
+      L13_2.Position = UDim2.new(0, -50, 1, -12)
+    end
+    return true
+  end
+  
+  task.spawn(function()
+    for L3_2 = 1, 40 do
+      if L150_1() then
+        return
+      end
+      task.wait(0.2)
+    end
+  end)
+end
+do
+  local L150_1 = L146_1.Player
+  blockBotSec = L150_1:Section({Side = "Left", Name = "Block Bot"})
+  blockBotSettingsSec = L150_1:Section({Side = "Right", Name = "Settings"})
+  blockBotSettingsSec:Header({Text = "Movement", AutoLocalize = false})
+  getgenv().PlayerMoveCfg = getgenv().PlayerMoveCfg or {
+    Speed = L28_1("PMS", false),
+    WalkSpeed = L28_1("PWS", 35),
+    JumpPowerEnabled = L28_1("PJP_E", false),
+    JumpPower = L28_1("PJP", 50),
+    Fly = L28_1("PFLY", false),
+    FlySpeed = L28_1("PFS", 75)
+  }
+  moveLoop = moveLoop or L6_1.Heartbeat:Connect(function()
+    local L0_2 = getgenv().PlayerMoveCfg
+    local L1_2 = L2_1.Character
+    local L2_2 = L1_2 and L1_2:FindFirstChildOfClass("Humanoid")
+    local L3_2 = L1_2 and L1_2:FindFirstChild("HumanoidRootPart")
+    if L2_2 then
+      L2_2.UseJumpPower = true
+    end
+    if not L2_2 or not L3_2 then
+      return
+    end
+    if L0_2.Fly then
+      local L4_2 = L10_1.CurrentCamera and L10_1.CurrentCamera.CFrame or L3_2.CFrame
+      local L5_2 = L4_2.LookVector
+      local L6_2 = L4_2.RightVector
+      local L7_2 = L4_2.UpVector
+      local L8_2 = Vector3.zero
+      if L5_2.Magnitude > 0 then
+        L5_2 = L5_2.Unit
+      end
+      if L6_2.Magnitude > 0 then
+        L6_2 = L6_2.Unit
+      end
+      if L7_2.Magnitude > 0 then
+        L7_2 = L7_2.Unit
+      end
+      if L7_1:IsKeyDown(Enum.KeyCode.W) then
+        L8_2 = L8_2 + L5_2
+      end
+      if L7_1:IsKeyDown(Enum.KeyCode.S) then
+        L8_2 = L8_2 - L5_2
+      end
+      if L7_1:IsKeyDown(Enum.KeyCode.D) then
+        L8_2 = L8_2 + L6_2
+      end
+      if L7_1:IsKeyDown(Enum.KeyCode.A) then
+        L8_2 = L8_2 - L6_2
+      end
+      if L7_1:IsKeyDown(Enum.KeyCode.Space) then
+        L8_2 = L8_2 + L7_2
+      end
+      if L7_1:IsKeyDown(Enum.KeyCode.LeftShift) or L7_1:IsKeyDown(Enum.KeyCode.LeftControl) then
+        L8_2 = L8_2 - L7_2
+      end
+      if L8_2.Magnitude > 0 then
+        L8_2 = L8_2.Unit * L0_2.FlySpeed
+      end
+      L3_2.AssemblyLinearVelocity = L8_2
+      L2_2:ChangeState(Enum.HumanoidStateType.Freefall)
+    elseif L0_2.Speed and 0 < L2_2.MoveDirection.Magnitude then
+      local L4_2 = L2_2.MoveDirection.Unit * L0_2.WalkSpeed
+      L3_2.AssemblyLinearVelocity = Vector3.new(L4_2.X, L3_2.AssemblyLinearVelocity.Y, L4_2.Z)
+    end
+  end)
+  blockBotSettingsSec:Toggle({
+    Name = "Speed Changer",
+    Default = L28_1("PMS", false),
+    Callback = function(A0_2)
+      getgenv().PlayerMoveCfg.Speed = A0_2
+      L27_1("PMS", A0_2)
+    end
+  })
+  blockBotSettingsSec:Slider({
+    Name = "WalkSpeed",
+    Default = tonumber(L28_1 and L28_1("PWS", getgenv().PlayerMoveCfg.WalkSpeed)) or 35,
+    Minimum = 0,
+    Maximum = 200,
+    DisplayMethod = "Value",
+    Precision = 0,
+    Callback = function(A0_2)
+      getgenv().PlayerMoveCfg.WalkSpeed = math.max(0, A0_2)
+      L27_1("PWS", getgenv().PlayerMoveCfg.WalkSpeed)
+    end,
+    onInputComplete = function(A0_2)
+      L107_1("Player", "WalkSpeed: " .. A0_2)
+    end
+  })
+  blockBotSettingsSec:Toggle({
+    Name = "JumpPower Changer",
+    Default = L28_1("PJP_E", false),
+    Callback = function(A0_2)
+      getgenv().PlayerMoveCfg.JumpPowerEnabled = A0_2
+      L27_1("PJP_E", A0_2)
+    end
+  })
+  blockBotSettingsSec:Slider({
+    Name = "JumpPower",
+    Default = tonumber(L28_1 and L28_1("PJP", getgenv().PlayerMoveCfg.JumpPower)) or 50,
+    Minimum = 0,
+    Maximum = 200,
+    DisplayMethod = "Value",
+    Precision = 0,
+    Callback = function(A0_2)
+      getgenv().PlayerMoveCfg.JumpPower = math.max(0, A0_2)
+      L27_1("PJP", getgenv().PlayerMoveCfg.JumpPower)
+    end,
+    onInputComplete = function(A0_2)
+      L107_1("Player", "JumpPower: " .. A0_2)
+    end
+  })
+  blockBotSettingsSec:Toggle({
+    Name = "Fly",
+    Default = L28_1("PFLY", false),
+    Callback = function(A0_2)
+      getgenv().PlayerMoveCfg.Fly = A0_2
+      L27_1("PFLY", A0_2)
+    end
+  })
+  blockBotSettingsSec:Slider({
+    Name = "Fly Speed",
+    Default = tonumber(L28_1 and L28_1("PFS", getgenv().PlayerMoveCfg.FlySpeed)) or 75,
+    Minimum = 0,
+    Maximum = 300,
+    DisplayMethod = "Value",
+    Precision = 0,
+    Callback = function(A0_2)
+      getgenv().PlayerMoveCfg.FlySpeed = math.max(0, A0_2)
+      L27_1("PFS", getgenv().PlayerMoveCfg.FlySpeed)
+    end,
+    onInputComplete = function(A0_2)
+      L107_1("Player", "Fly Speed: " .. A0_2)
+    end
+  })
+  local L151_1 = L150_1:Section({Side = "Right", Name = "Other"})
+  L151_1:Header({Text = "Other", AutoLocalize = false})
+  L151_1:Toggle({
+    Name = "Noclip",
+    Default = L28_1("PNC", false),
+    Callback = function(A0_2)
+      L27_1("PNC", A0_2)
+      local L1_2 = _G.YBAItemFarm
+      if A0_2 then
+        if L1_2 and L1_2.enableNoclip then
+          L1_2.enableNoclip("main")
+        elseif enableNoclip then
+          enableNoclip("main")
+        end
+      elseif L1_2 and L1_2.disableNoclip then
+        L1_2.disableNoclip("main")
+      elseif disableNoclip then
+        disableNoclip("main")
+      end
+    end
+  })
+  local L152_1
+  local L153_1 = false
+  
+  local function L154_1(A0_2)
+    L153_1 = A0_2
+    if A0_2 then
+      do
+        local L1_2 = game:GetService("Players").LocalPlayer
+        
+        local function L2_2()
+          local L0_3 = L1_2.Character
+          if L0_3 and L0_3:FindFirstChild("HumanoidRootPart") then
+            return L0_3.HumanoidRootPart
+          end
+          return nil
+        end
+        
+        local function L3_2(A0_3, A1_3)
+          task.spawn(function()
+            if A1_3 and 0 < A1_3 then
+              task.wait(A1_3)
+            end
+            while L153_1 and A0_3.Parent == workspace do
+              local L0_4 = L2_2()
+              if L0_4 then
+                A0_3.CFrame = L0_4.CFrame
+              end
+              task.wait()
+            end
+          end)
+        end
+        
+        local L4_2 = L2_2()
+        if L4_2 then
+          for L8_2, L9_2 in pairs(workspace:GetChildren()) do
+            if L9_2:IsA("MeshPart") and L9_2.Name == "Money" then
+              L3_2(L9_2, 0.1)
+            end
+          end
+        end
+        if not L152_1 then
+          L152_1 = workspace.ChildAdded:Connect(function(A0_3)
+            if A0_3.Name == "Money" then
+              L3_2(A0_3, 0.55)
+            end
+          end)
+        end
+      end
+    elseif L152_1 then
+      L152_1:Disconnect()
+      L152_1 = nil
+    end
+  end
+  
+  L151_1:Toggle({
+    Name = "Steal Dropped Money",
+    Default = L28_1("PStealMoney", false),
+    Callback = function(A0_2)
+      L27_1("PStealMoney", A0_2)
+      L154_1(A0_2)
+    end
+  })
+  if L28_1("PStealMoney", false) and not L92_1 then
+    task.delay(1.5, function()
+      L154_1(true)
+    end)
+  end
+  getgenv().PlayerSprintCfg = getgenv().PlayerSprintCfg or {
+    AutoSprint = L28_1("PAS", false),
+    _lastToggle = 0
+  }
+  local L155_1
+  
+  local function L156_1()
+    local L0_2 = getgenv().PlayerSprintCfg
+    if L155_1 then
+      pcall(function()
+        L155_1:Disconnect()
+      end)
+      L155_1 = nil
+    end
+    if L0_2.AutoSprint then
+      L155_1 = L6_1.Heartbeat:Connect(function()
+        local L0_3 = L2_1 and L2_1.Character
+        if not L0_3 or not L0_3.Parent then
+          return
+        end
+        if L0_3:GetAttribute("Sprinting") then
+          return
+        end
+        local L1_3 = tick()
+        if L1_3 - (L0_2._lastToggle or 0) < 0.25 then
+          return
+        end
+        local L2_3 = L0_3:FindFirstChild("RemoteFunction")
+        if L2_3 and L2_3:IsA("RemoteFunction") then
+          L0_2._lastToggle = L1_3
+          pcall(function()
+            L2_3:InvokeServer("ToggleSprinting")
+          end)
+        end
+      end)
+    end
+  end
+  
+  L156_1()
+  if not getgenv()._YBA_AutoSprintCharConn then
+    getgenv()._YBA_AutoSprintCharConn = true
+    pcall(function()
+      L2_1.CharacterAdded:Connect(function()
+        task.wait(1)
+        L156_1()
+      end)
+    end)
+  end
+  L151_1:Toggle({
+    Name = "Auto Sprint",
+    Default = L28_1("PAS", false),
+    Callback = function(A0_2)
+      getgenv().PlayerSprintCfg.AutoSprint = A0_2
+      L27_1("PAS", A0_2)
+      L156_1()
+      L107_1("Player", A0_2 and "Auto Sprint: ON" or "Auto Sprint: OFF")
+    end
+  })
+  local L157_1, L158_1
+  local L159_1 = false
+  
+  local function L160_1(A0_2)
+    if L157_1 then
+      L157_1:Disconnect()
+      L157_1 = nil
+    end
+    if L158_1 then
+      L158_1:Disconnect()
+      L158_1 = nil
+    end
+    if not A0_2 then
+      return
+    end
+    local L1_2 = A0_2:WaitForChild("Humanoid", 5)
+    local L2_2 = A0_2:WaitForChild("HumanoidRootPart", 5)
+    if not L1_2 or not L2_2 then
+      return
+    end
+    L158_1 = L1_2.StateChanged:Connect(function(A0_3, A1_3)
+      if A1_3 == Enum.HumanoidStateType.Landed or A1_3 == Enum.HumanoidStateType.Running or A1_3 == Enum.HumanoidStateType.RunningNoPhysics or A1_3 == Enum.HumanoidStateType.Seated then
+        L159_1 = false
+      end
+    end)
+    L157_1 = L1_2:GetPropertyChangedSignal("Jump"):Connect(function()
+      local L0_3 = getgenv().PlayerMoveCfg
+      if L0_3 and L0_3.JumpPowerEnabled and L1_2.Jump and not L159_1 then
+        local L1_3 = L1_2:GetState()
+        if L1_2.FloorMaterial ~= Enum.Material.Air or L1_3 == Enum.HumanoidStateType.Running or L1_3 == Enum.HumanoidStateType.RunningNoPhysics or L1_3 == Enum.HumanoidStateType.Landed or L1_3 == Enum.HumanoidStateType.Jumping then
+          L159_1 = true
+          local L2_3 = tonumber(L0_3.JumpPower) or 50
+          task.defer(function()
+            if L2_2 and L2_2.Parent and L1_2 and L1_2.Parent then
+              L2_2.AssemblyLinearVelocity = Vector3.new(L2_2.AssemblyLinearVelocity.X, L2_3, L2_2.AssemblyLinearVelocity.Z)
+            end
+          end)
+          task.delay(0.25, function()
+            if L1_2 and L1_2.Parent and L1_2.FloorMaterial ~= Enum.Material.Air then
+              L159_1 = false
+            end
+          end)
+        end
+      end
+    end)
+  end
+  
+  L2_1.CharacterAdded:Connect(L160_1)
+  if L2_1.Character then
+    L160_1(L2_1.Character)
+  end
+  if L28_1("PNC", false) then
+    task.delay(1, function()
+      local L0_2 = _G.YBAItemFarm
+      if L0_2 and L0_2.enableNoclip then
+        L0_2.enableNoclip("main")
+      elseif enableNoclip then
+        enableNoclip("main")
+      end
+    end)
+  end
+end
+local L150_1 = {}
+blockBotSec:Header({Text = "Block Bot", AutoLocalize = false})
+L150_1.blockbot = L28_1("BB", false)
+L150_1.reblocking = L28_1("BB_RB", true)
+L150_1.keepblock = L28_1("BB_KB", true)
+L150_1.projectiles_priority = L28_1("BB_PP", false)
+L150_1.unblocking = L28_1("BB_UB", true)
+L150_1.coliseumenabled = L28_1("BB_COL", false)
+_G.rodblocking = L28_1("BB_ROD", false)
+L150_1.lboverriding = true
+L150_1.blockprocsuntil = 0
+L150_1.lastblock = 0
+L150_1.blockactions = false
+L150_1.blocked = false
+L150_1.lastboi = nil
+L150_1.lastbad = ""
+L150_1.lastbb = tick()
+do
+  local L151_1 = {
+    {
+      "rbxassetid://7217913060",
+      {def = 0.2}
+    },
+    "rbxassetid://4725629903",
+    "rbxassetid://6032844827",
+    "rbxassetid://163619849",
+    {
+      "rbxassetid://7217914447",
+      {
+        def = 0,
+        chckfunc = function(A0_2)
+          local L1_2 = A0_2.Parent:FindFirstChild("StandMorph")
+          if L1_2 then
+            local L2_2 = L1_2:FindFirstChild("Stand Name")
+            return L2_2 and L2_2.Value == "Star Platinum"
+          end
+          return false
+        end
+      }
+    },
+    {
+      "rbxassetid://7217914447",
+      {
+        def = 0,
+        chckfunc = function(A0_2)
+          local L1_2 = A0_2.Parent:FindFirstChild("StandMorph")
+          if L1_2 then
+            local L2_2 = L1_2:FindFirstChild("Stand Name")
+            return L2_2 and L2_2.Value ~= "Star Platinum"
+          end
+          return false
+        end
+      }
+    }
+  }
+  blocks_base = {
+    {
+      "rbxassetid://6032836072",
+      {def = 0.3}
+    },
+    "rbxassetid://6034138660",
+    {
+      "rbxassetid://10459370874",
+      {
+        def = 0.35,
+        addw = -0.35,
+        dist = 15
+      }
+    },
+    {
+      "rbxassetid://12440326715",
+      {addw = -0.1, dist = 15}
+    },
+    {
+      "rbxassetid://74034132845527",
+      {def = 0.4}
+    }
+  }
+  blocks_UNBLOCK = {
+    "rbxassetid://11876873350"
+  }
+  blocksanim_perfect = {
+    {
+      "rbxassetid://6048575522",
+      {
+        def = 0,
+        chckfunc = function(A0_2, A1_2)
+          local L2_2 = A1_2.Parent:FindFirstChild("StandMorph")
+          if L2_2 then
+            local L3_2 = L2_2:FindFirstChild("Stand Name")
+            return L3_2 and L3_2.Value == "Star Platinum"
+          end
+          return false
+        end
+      }
+    },
+    {
+      "rbxassetid://6048575522",
+      {
+        def = 0,
+        chckfunc = function(A0_2, A1_2)
+          local L2_2 = A1_2.Parent:FindFirstChild("StandMorph")
+          if L2_2 then
+            local L3_2 = L2_2:FindFirstChild("Stand Name")
+            return L3_2 and L3_2.Value ~= "Star Platinum"
+          end
+          return false
+        end
+      }
+    },
+    {
+      "rbxassetid://4211804997",
+      {
+        def = 0.3,
+        chckfunc = function(A0_2, A1_2)
+          local L2_2 = A1_2.Parent:FindFirstChild("StandMorph")
+          if L2_2 then
+            local L3_2 = L2_2:FindFirstChild("Stand Name")
+            return L3_2 and L3_2.Value ~= "Tusk ACT 4"
+          end
+          return false
+        end
+      }
+    },
+    {
+      "rbxassetid://13899360363",
+      {def = 0.4}
+    },
+    {
+      "rbxassetid://7189005773",
+      {def = 0.3}
+    },
+    {
+      "rbxassetid://6835249882",
+      {def = 0.4}
+    },
+    {
+      "rbxassetid://11886825775",
+      {def = 0.3}
+    },
+    {
+      "rbxassetid://4879759800",
+      {def = 0.4}
+    },
+    {
+      "rbxassetid://4825999731",
+      {
+        def = 0.5,
+        dist = 160,
+        chckfunc = function()
+          return coliseumenabled
+        end
+      }
+    },
+    "rbxassetid://6704817082",
+    "rbxassetid://6049426097",
+    {
+      "rbxassetid://6105486059",
+      {}
+    },
+    {
+      "rbxassetid://5303743107",
+      {}
+    },
+    {
+      "rbxassetid://7250792726",
+      {def = 0.4}
+    },
+    "rbxassetid://4812642386",
+    {
+      "rbxassetid://6216052429",
+      {
+        def = 0.3,
+        chckfunc = function(A0_2)
+          task.wait()
+          return A0_2.Speed > 1.39
+        end
+      }
+    },
+    {
+      "rbxassetid://6216052429",
+      {}
+    },
+    {
+      "rbxassetid://4096014941",
+      {
+        def = 0.4,
+        chckfunc = function(A0_2)
+          task.wait()
+          return A0_2.Speed > 1.049 and A0_2.Speed < 1.051
+        end
+      }
+    },
+    {
+      "rbxassetid://4096014941",
+      {
+        def = 0.4,
+        chckfunc = function(A0_2)
+          return A0_2.Speed > 1.074 and A0_2.Speed < 1.076
+        end
+      }
+    },
+    {
+      "rbxassetid://4096014941",
+      {
+        def = 0.4,
+        chckfunc = function(A0_2, A1_2)
+          local L2_2 = A1_2.Parent:FindFirstChild("StandMorph")
+          if L2_2 then
+            local L3_2 = L2_2:FindFirstChild("Stand Name")
+            if L3_2 and L3_2.Value == "Magician's Red" then
+              return A0_2.Speed == 1
+            end
+          end
+          return false
+        end
+      }
+    },
+    {
+      "rbxassetid://4096014941",
+      {
+        def = 0.4,
+        chckfunc = function(A0_2, A1_2)
+          local L2_2 = A1_2.Parent:FindFirstChild("StandMorph")
+          if L2_2 then
+            local L3_2 = L2_2:FindFirstChild("Stand Name")
+            return L3_2 and L3_2.Value == "Gold Experience"
+          end
+          return false
+        end
+      }
+    },
+    {
+      "rbxassetid://4096014941",
+      {
+        def = 0.3,
+        dist = 75,
+        chckfunc = function(A0_2, A1_2)
+          local L2_2 = A1_2.Parent:FindFirstChild("StandMorph")
+          if not L2_2 then
+            return false
+          end
+          local L3_2 = L2_2:FindFirstChild("Stand Name")
+          if not L3_2 or L3_2.Value ~= "The Hand" then
+            return false
+          end
+          task.wait()
+          for L7_2, L8_2 in ipairs(L2_2:GetChildren()) do
+            if L8_2:IsA("Sound") and L8_2.SoundId == "rbxassetid://7217913060" then
+              return false
+            end
+          end
+          return true
+        end
+      }
+    },
+    {
+      "rbxassetid://4096014941",
+      {
+        def = 0.4,
+        chckfunc = function(A0_2)
+          return A0_2.Speed > 1.09 and A0_2.Speed < 1.11
+        end
+      }
+    },
+    {
+      "rbxassetid://4096014941",
+      {
+        def = 0.4,
+        chckfunc = function(A0_2)
+          return A0_2.Speed > 0.84 and A0_2.Speed < 0.86
+        end
+      }
+    }
+  }
+  blocksanim_base = {
+    {
+      "rbxassetid://12733018380",
+      {
+        def = 0.35,
+        dist = 15,
+        addw = 1.1
+      }
+    },
+    {
+      "rbxassetid://12733022476",
+      {
+        coliseum = true,
+        dist = 1000,
+        addw = 0.3
+      }
+    },
+    {
+      "rbxassetid://4608512208",
+      {addw = 0.25}
+    },
+    {
+      "rbxassetid://5303988283",
+      {def = 0.2}
+    },
+    {
+      "rbxassetid://6780938176",
+      {def = 0.2, addw = 0.3}
+    },
+    "rbxassetid://12292886724",
+    {
+      "rbxassetid://6277192242",
+      {
+        def = 0.2,
+        dist = 50,
+        addw = 1
+      }
+    },
+    {
+      "rbxassetid://6651725175",
+      {addw = -0.1, dist = 40}
+    },
+    {
+      "rbxassetid://6216058630",
+      {
+        def = 0,
+        coliseum = true,
+        dist = 60,
+        addw = -0.1
+      }
+    },
+    {
+      "rbxassetid://10726619714",
+      {def = 0.2, addw = 0.55}
+    },
+    {
+      "rbxassetid://12293320463",
+      {def = 0.3}
+    },
+    {
+      "rbxassetid://6869896659",
+      {def = 0.2, addw = 0.75}
+    },
+    {
+      "rbxassetid://14174878575",
+      {
+        def = 0.3,
+        addw = -0.1,
+        dist = 70,
+        coliseum = true
+      }
+    },
+    {
+      "rbxassetid://7189003645",
+      {def = 0.3, addw = 0.2}
+    },
+    "rbxassetid://5793968491",
+    {
+      "rbxassetid://4595562165",
+      {def = 0, addw = 0.3}
+    },
+    "rbxassetid://5227558947",
+    {
+      "rbxassetid://4133363765",
+      {def = 0.6}
+    },
+    {
+      "rbxassetid://4691787301",
+      {
+        def = 0.25,
+        addw = 0.75,
+        dist = 100,
+        chckfunc = function(A0_2, A1_2)
+          task.wait()
+          local L2_2 = A1_2.Parent.RightHand:FindFirstChild("Grapple")
+          if L2_2 then
+            return L2_2.Attachment1 == game.Players.LocalPlayer.Character.HumanoidRootPart.RootRigAttachment
+          end
+          return false
+        end
+      }
+    },
+    {
+      "rbxassetid://12733016318",
+      {
+        def = 0.325,
+        addw = -0.1,
+        dist = 15,
+        chckfunc = function(A0_2)
+          return A0_2.Speed < 0.75
+        end
+      }
+    }
+  }
+  blocksanim_UNBLOCK = {
+    "rbxassetid://12293318922",
+    "rbxassetid://13819646949",
+    "rbxassetid://6780937804",
+    "rbxassetid://6780982308",
+    {
+      "rbxassetid://10443019808",
+      {dist = 10}
+    }
+  }
+  block_projectiles = {
+    {
+      "VisionPlunderBubble",
+      "Core",
+      15,
+      nil
+    },
+    {
+      " SP Bullet",
+      nil,
+      20,
+      function(A0_2)
+        return A0_2:FindFirstChild("Victim")
+      end,
+      false,
+      true
+    },
+    {
+      "Last Shot",
+      nil,
+      20,
+      nil,
+      false,
+      true
+    },
+    {
+      "Main",
+      nil,
+      25,
+      function(A0_2)
+        return A0_2:FindFirstChild("BloodTrail")
+      end,
+      true
+    },
+    {
+      "HomingShard",
+      nil,
+      20
+    },
+    {
+      "Bullet",
+      nil,
+      20,
+      function(A0_2)
+        if A0_2.Name:find("SP Bullet") or A0_2.Name:find("SPBullet") then
+          return false
+        else
+          return not A0_2:FindFirstChild("Victim")
+        end
+      end
+    },
+    {
+      "CrossFirePiece",
+      nil,
+      40,
+      function(A0_2)
+        local L1_2 = A0_2:FindFirstChild("OnFireSparks")
+        return L1_2 and L1_2.Enabled
+      end,
+      true,
+      true
+    },
+    {
+      "Baseball3",
+      nil,
+      20
+    }
+  }
+  block_objects = {
+    {
+      "Wormhole",
+      workspace,
+      7,
+      function()
+        return 0, 0, -(game.Players.LocalPlayer:GetNetworkPing() / 2), false
+      end
+    }
+  }
+  block_SPECIAL = {
+    {
+      "GroundIndicator",
+      function(A0_2)
+        local L1_2 = {}
+        L1_2.def = 0
+        L1_2.wt = 0
+        L1_2.addw = -0.1
+        local L2_2 = A0_2:Clone()
+        local L3_2 = 10
+        L2_2.Size = Vector3.new(15 + L3_2, 5, 40 + L3_2)
+        L2_2.CFrame = L2_2.CFrame * CFrame.new(0, 0, -12.5)
+        task.wait(0.15)
+        local L4_2 = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if L4_2 then
+          local L5_2 = L4_2.Position
+          local L6_2 = L2_2.Position - L2_2.Size / 2
+          local L7_2 = L2_2.Position + L2_2.Size / 2
+          if L5_2.X >= L6_2.X and L5_2.X <= L7_2.X and L5_2.Y >= L6_2.Y and L5_2.Y <= L7_2.Y and L5_2.Z >= L6_2.Z and L5_2.Z <= L7_2.Z then
+            reqblock(L1_2.def, L1_2.wt, L1_2.addw, false)
+          end
+        end
+        L2_2:Destroy()
+        return true
+      end
+    },
+    {
+      "FloorDash",
+      function(A0_2)
+        local L1_2 = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if not L1_2 then
+          return false
+        end
+        if (L1_2.Position - A0_2.Position).Magnitude > 40 then
+          return false
+        end
+        local L2_2 = {}
+        L2_2.def = 0
+        L2_2.wt = 0
+        L2_2.addw = 0.25
+        task.wait(0.2)
+        reqblock(L2_2.def, L2_2.wt, L2_2.addw, false)
+        return true
+      end
+    }
+  }
+  overriders = {
+    ["rbxassetid://7217913060"] = {
+      "rbxassetid://4096014941"
+    }
+  }
+  L150_1.blocks_perfect = L151_1
+  L150_1.blocks_base = blocks_base
+  L150_1.blocks_UNBLOCK = blocks_UNBLOCK
+  L150_1.blocksanim_perfect = blocksanim_perfect
+  L150_1.blocksanim_base = blocksanim_base
+  L150_1.blocksanim_UNBLOCK = blocksanim_UNBLOCK
+  L150_1.block_objects = block_objects
+  L150_1.block_SPECIAL = block_SPECIAL
+  L150_1.overriders = overriders
+  L151_1 = "blockbot"
+  L151_1 = L150_1[L151_1]
+  local L152_1 = L150_1.reblocking
+  local L153_1 = L150_1.keepblock
+  local L154_1 = L150_1.unblocking
+  local L155_1 = L150_1.coliseumenabled
+  local L156_1 = L150_1.lboverriding
+  local L157_1 = L150_1.blockprocsuntil
+  local L158_1 = L150_1.lastblock
+  local L159_1 = L150_1.blockactions
+  local L160_1 = L150_1.blocked
+  local L161_1 = L150_1.lastboi
+  local L162_1 = L150_1.lastbad
+  local L163_1 = L150_1.lastbb
+  local L164_1 = L150_1.blocks_perfect
+  local L165_1 = L150_1.blocks_base
+  local L166_1 = L150_1.blocks_UNBLOCK
+  local L167_1 = L150_1.blocksanim_perfect
+  local L168_1 = L150_1.blocksanim_base
+  local L169_1 = L150_1.blocksanim_UNBLOCK
+  local L170_1 = L150_1.block_objects
+  local L171_1 = L150_1.block_SPECIAL
+  local L172_1 = L150_1.overriders
+  
+  local function L173_1(A0_2)
+    return A0_2 and A0_2:FindFirstChild("StandMorph")
+  end
+  
+  local function L174_1()
+    return game.Lighting:FindFirstChild("TimeStop") and true or false
+  end
+  
+  local function L175_1(A0_2)
+    if A0_2 then
+      return A0_2:FindFirstChild("RagdollParts") and true or false
+    end
+    return false
+  end
+  
+  local function L176_1()
+    return game.Players.LocalPlayer:GetNetworkPing()
+  end
+  
+  local function L177_1()
+    local L0_2 = game.Players.LocalPlayer.Character
+    if not L0_2 then
+      return
+    end
+    if L160_1 then
+      return
+    end
+    local L1_2 = L0_2:FindFirstChild("Blocking_Capacity")
+    if L1_2 and L1_2.Value > 0 then
+      L160_1 = true
+      return
+    end
+    L160_1 = true
+    local L2_2 = L0_2:FindFirstChild("RemoteEvent")
+    if L2_2 then
+      L2_2:FireServer("StartBlocking", "pass")
+      task.wait()
+      L2_2:FireServer("StartBlocking", "pass")
+    end
+  end
+  
+  local function L178_1(A0_2)
+    local L1_2 = game.Players.LocalPlayer.Character
+    if not L1_2 then
+      return
+    end
+    if not A0_2 and L153_1 and not L175_1(L1_2) then
+      return
+    end
+    if not L160_1 then
+      L159_1 = false
+      return
+    end
+    local L2_2 = L1_2:FindFirstChild("RemoteEvent")
+    if L2_2 then
+      L2_2:FireServer("StopBlocking", "pass")
+      task.wait()
+      L2_2:FireServer("StopBlocking", "pass")
+    end
+    L160_1 = false
+    L159_1 = false
+  end
+  
+  function reqblock(A0_2, A1_2, A2_2, A3_2, A4_2)
+    if not L151_1 then
+      return
+    end
+    local L5_2 = A4_2 or 0
+    if L159_1 then
+      local L6_2 = tonumber(L159_1)
+      if L6_2 then
+        if L5_2 <= L6_2 then
+          return
+        end
+      elseif L5_2 == 0 then
+        return
+      end
+    end
+    L159_1 = L5_2
+    local L6_2 = game.Players.LocalPlayer.Character
+    local L7_2 = L6_2 and L6_2:FindFirstChild("RemoteEvent")
+    if not L7_2 then
+      L159_1 = false
+      return
+    end
+    L7_2:FireServer("HoldAttack", {Bool = false, Type = "m1"})
+    L163_1 = tick()
+    local L8_2 = L10_1:FindFirstChild("Living") and L10_1.Living:FindFirstChild(game.Players.LocalPlayer.Name)
+    local L9_2 = L8_2 and L8_2:FindFirstChild("Blocking_Capacity")
+    if L9_2 and 0 < L9_2.Value and A3_2 then
+      if A0_2 < 0.2 or not L152_1 then
+        L159_1 = false
+        return
+      end
+      L178_1(true)
+    end
+    L158_1 = L158_1 + 1
+    local L10_2 = L158_1
+    if 0 < A1_2 then
+      task.wait(A1_2)
+    end
+    if L156_1 and L158_1 ~= L10_2 or L174_1() then
+      L159_1 = false
+      return
+    end
+    L177_1()
+    local L11_2 = 0.4 + math.max(0.05, L176_1()) + (A2_2 or 0)
+    task.wait(L11_2)
+    if not L156_1 or L158_1 == L10_2 then
+      L159_1 = false
+      L178_1(false)
+    end
+  end
+  
+  function frek()
+    if L151_1 and L154_1 then
+      L157_1 = tick() + 0.75
+      L158_1 = L158_1 + 1
+      local L0_2 = L158_1
+      L159_1 = true
+      L178_1(false, true)
+      task.wait(0.05)
+      L178_1(false, true)
+      task.wait(0.7)
+      if L156_1 and L158_1 ~= L0_2 then
+      else
+        L159_1 = false
+      end
+    end
+  end
+  
+  local function L179_1(A0_2, A1_2, A2_2)
+    local L3_2 = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not L3_2 then
+      return 0
+    end
+    if A0_2 < (L3_2.Position - A1_2.Position).Magnitude then
+      if A2_2 then
+        if A0_2 < (L3_2.Position - A2_2.Position).Magnitude then
+          return 0
+        end
+      else
+        return 0
+      end
+    end
+    return 1
+  end
+  
+  local function L180_1(A0_2)
+    if L159_1 and L172_1 and L172_1[L162_1] then
+      for L4_2, L5_2 in ipairs(L172_1[L162_1]) do
+        if L5_2 == A0_2 then
+          return false
+        end
+      end
+    end
+    return true
+  end
+  
+  local L181_1 = 12
+  local L182_1 = 7
+  
+  local function L183_1(A0_2, A1_2, A2_2, A3_2)
+    local L4_2 = false
+    for L8_2 = 1, #A3_2 do
+      local L9_2 = A3_2[L8_2]
+      if L9_2 and type(L9_2) == "table" then
+        for L13_2, L14_2 in ipairs(L9_2) do
+          if not (type(L14_2) == "table" and L14_2[2].coliseum) or L155_1 then
+            local L15_2 = type(L14_2) ~= "table" and L14_2 or L14_2[1]
+            if L180_1(L15_2) then
+              local L16_2 = L8_2 == 1 and L181_1 or L182_1
+              local L17_2 = L16_2
+              local L18_2 = false
+              if type(L14_2) == "table" then
+                if L8_2 == 1 then
+                  L4_2 = true
+                elseif L8_2 == 2 then
+                  L4_2 = false
+                end
+                L17_2 = L14_2[2] and L14_2[2].dist or L16_2
+                if L14_2[2].chckfunc and not L14_2[2].chckfunc(A1_2) then
+                  L18_2 = true
+                end
+              end
+              if not L18_2 and A0_2.SoundId == L15_2 and L179_1(L17_2, A1_2, A2_2) == 1 then
+                if L8_2 == 3 then
+                  return frek(), nil, nil
+                end
+                local L19_2 = false
+                for L23_2, L24_2 in ipairs(A0_2.Parent:GetChildren()) do
+                  if string.find(string.lower(L24_2.Name), "barrage") then
+                    L19_2 = true
+                    break
+                  end
+                end
+                if not L19_2 then
+                  _G._blockEntry = L14_2
+                  return true, L4_2, L14_2
+                end
+              end
+            end
+          end
+        end
+      end
+    end
+    return false, L4_2, nil
+  end
+  
+  local function L184_1(A0_2, A1_2, A2_2, A3_2)
+    local L4_2 = false
+    local L5_2 = A0_2.Animation.AnimationId
+    for L9_2 = 1, #A3_2 do
+      local L10_2 = A3_2[L9_2]
+      if L10_2 and type(L10_2) == "table" then
+        for L14_2, L15_2 in ipairs(L10_2) do
+          if not (type(L15_2) == "table" and L15_2[2].coliseum) or L155_1 then
+            local L16_2 = type(L15_2) ~= "table" and L15_2 or L15_2[1]
+            if L180_1(L16_2) then
+              local L17_2 = L9_2 == 1 and L181_1 or L182_1
+              local L18_2 = L17_2
+              local L19_2 = false
+              if type(L15_2) == "table" then
+                if L9_2 == 1 then
+                  L4_2 = true
+                elseif L9_2 == 2 then
+                  L4_2 = false
+                end
+                L18_2 = L15_2[2].dist or L17_2
+                if L15_2[2].chckfunc and not L15_2[2].chckfunc(A0_2, A1_2) then
+                  L19_2 = true
+                end
+              end
+              if not L19_2 and L16_2 == L5_2 and L179_1(L18_2, A1_2, A2_2) == 1 then
+                if L9_2 == 3 then
+                  return frek(), nil, nil
+                end
+                _G._blockEntry = L15_2
+                return true, L4_2, L15_2
+              end
+            end
+          end
+        end
+      end
+    end
+    return false, L4_2, nil
+  end
+  
+  function proroc(A0_2, A1_2, A2_2)
+    if L174_1() then
+      return
+    end
+    if L175_1(game.Players.LocalPlayer.Character) then
+      return
+    end
+    if not L151_1 then
+      return
+    end
+    if L157_1 > tick() then
+      return
+    end
+    local L3_2 = A1_2.Parent
+    local L4_2 = false
+    local L5_2 = false
+    local L6_2
+    if A0_2:IsA("Sound") then
+      L5_2, L4_2, L6_2 = L183_1(A0_2, A1_2, A2_2, {
+        L164_1,
+        L165_1,
+        L166_1
+      })
+    elseif A0_2:IsA("AnimationTrack") then
+      L5_2, L4_2, L6_2 = L184_1(A0_2, A1_2, A2_2, {
+        L167_1,
+        L168_1,
+        L169_1
+      })
+    end
+    if L5_2 then
+      L161_1 = L3_2
+      local L7_2 = 0
+      local L8_2, L9_2
+      if type(L6_2) ~= "table" then
+        L8_2 = 0.4
+        L9_2 = 0
+      else
+        local L10_2 = L6_2[2]
+        L8_2 = L10_2.def or 0.4
+        L7_2 = L7_2 + (L10_2.addw or 0)
+        L9_2 = L10_2.prio or 0
+      end
+      L162_1 = L6_2
+      local L10_2 = math.max(0, L8_2 - L176_1())
+      reqblock(L8_2, L10_2, L7_2, L4_2, L9_2)
+    end
+  end
+  
+  function handleproj(A0_2)
+    if L151_1 and typeof(A0_2) == "Instance" and A0_2.Parent and block_projectiles and type(block_projectiles) == "table" then
+      for L4_2, L5_2 in ipairs(block_projectiles) do
+        if A0_2.Name and A0_2.Name:find(L5_2[1]) then
+          local L6_2 = L5_2[2] == nil and A0_2 or A0_2[L5_2[2]]
+          local L7_2 = L5_2[4] or function()
+            return true
+          end
+          if not (L6_2 and L6_2.Parent) or not L6_2:IsA("BasePart") then
+            return
+          end
+          local L8_2 = L2_1.Character and L2_1.Character:FindFirstChild("HumanoidRootPart")
+          if not L8_2 then
+            return
+          end
+          while A0_2.Parent and A0_2:IsDescendantOf(workspace) and L6_2.Parent and L7_2(A0_2) do
+            local L9_2 = L6_2.AssemblyLinearVelocity
+            local L10_2 = L6_2.Position
+            local L11_2 = L9_2.Magnitude > 0.01 and ((L8_2.Position - L10_2).Magnitude < L5_2[3] or (L8_2.Position - (L10_2 + L9_2.Unit * 10)).Magnitude < L5_2[3]) or (L8_2.Position - L10_2).Magnitude < L5_2[3]
+            if L11_2 and (not L159_1 or projectiles_priority) then
+              if L159_1 then
+                return
+              end
+              L158_1 = L158_1 + 1
+              local L12_2 = L158_1
+              L159_1 = projectiles_priority and 42000 or true
+              L177_1()
+              local L13_2 = tick()
+              while A0_2.Parent and A0_2:IsDescendantOf(workspace) and L6_2.Parent and tick() - L13_2 < 0.75 and L7_2(A0_2) do
+                local L14_2 = L6_2.Position
+                local L15_2 = L6_2.AssemblyLinearVelocity
+                local L16_2 = L15_2.Magnitude > 0.01 and ((L8_2.Position - L14_2).Magnitude < L5_2[3] or (L8_2.Position - (L14_2 + L15_2.Unit * 10)).Magnitude < L5_2[3]) or (L8_2.Position - L14_2).Magnitude < L5_2[3]
+                if not L16_2 then
+                  break
+                end
+                task.wait()
+              end
+              local L14_2 = tick() - L13_2
+              if L14_2 < 0.4321 then
+                task.wait(0.4321 - L14_2)
+              end
+              if not L174_1() and (not L156_1 or L158_1 == L12_2) then
+                L178_1(false)
+                L159_1 = false
+              end
+            end
+            task.wait()
+          end
+        end
+      end
+    end
+  end
+  
+  function checkSpecial(A0_2)
+    if L151_1 and typeof(A0_2) == "Instance" and A0_2.Parent and L171_1 and type(L171_1) == "table" then
+      for L4_2, L5_2 in ipairs(L171_1) do
+        if A0_2.Name and A0_2.Name:find(L5_2[1]) and L5_2[2](A0_2) then
+          return
+        end
+      end
+    end
+  end
+  
+  function handleChildAdded(A0_2)
+    if not L151_1 or typeof(A0_2) ~= "Instance" or not A0_2.Parent then
+      return
+    end
+    if L157_1 > tick() then
+      return
+    end
+    if block_projectiles and type(block_projectiles) == "table" then
+      for L4_2, L5_2 in ipairs(block_projectiles) do
+        if A0_2.Parent and A0_2.Name and A0_2.Name:find(L5_2[1]) then
+          return handleproj(A0_2)
+        end
+      end
+    end
+    if L171_1 and type(L171_1) == "table" then
+      for L4_2, L5_2 in ipairs(L171_1) do
+        if A0_2.Parent and A0_2.Name and A0_2.Name:find(L5_2[1]) then
+          return checkSpecial(A0_2)
+        end
+      end
+    end
+  end
+  
+  workspace.DescendantAdded:Connect(function(A0_2)
+    if typeof(A0_2) ~= "Instance" or not A0_2.Parent then
+      return
+    end
+    if L170_1 and type(L170_1) == "table" then
+      for L4_2, L5_2 in ipairs(L170_1) do
+        local L6_2 = game.Players.LocalPlayer.Character
+        local L7_2 = L6_2 and (L6_2.PrimaryPart or L6_2:FindFirstChild("HumanoidRootPart"))
+        if L7_2 and A0_2:IsA("BasePart") and L5_2[1] == A0_2.Name and (L5_2[2] == "any" or L5_2[2] == A0_2.Parent) and (L7_2.Position - A0_2.Position).Magnitude < L5_2[3] then
+          reqblock(L5_2[4]())
+        end
+      end
+    end
+  end)
+  workspace.ChildAdded:Connect(handleChildAdded)
+  pcall(function()
+    workspace.IgnoreInstances.ChildAdded:Connect(handleChildAdded)
+  end)
+  
+  local function L185_1(A0_2)
+    if A0_2.Name == "RagdollParts" then
+      L158_1 = L158_1 + 1
+      L157_1 = tick() + 0.2
+      L159_1 = false
+      L160_1 = false
+      L178_1(false)
+    end
+  end
+  
+  local L186_1 = game.Players.LocalPlayer.Character
+  if L186_1 then
+    L186_1.ChildAdded:Connect(L185_1)
+  end
+  game.Players.LocalPlayer.CharacterAdded:Connect(function(A0_2)
+    A0_2.ChildAdded:Connect(L185_1)
+  end)
+  L150_1.proroc = proroc
+  
+  function L150_1.setBlockbot(A0_2)
+    L151_1 = A0_2
+  end
+  
+  function L150_1.setReblocking(A0_2)
+    L152_1 = A0_2
+  end
+  
+  function L150_1.setKeepblock(A0_2)
+    L153_1 = A0_2
+  end
+  
+  function L150_1.setUnblocking(A0_2)
+    L154_1 = A0_2
+  end
+  
+  function L150_1.setProjectiles(A0_2)
+    projectiles_priority = A0_2
+  end
+  
+  function L150_1.setColiseum(A0_2)
+    L155_1 = A0_2
+  end
+end
+do
+  local function L151_1(...)
+    return L150_1.proroc and L150_1.proroc(...)
+  end
+  
+  local function L152_1(A0_2, A1_2)
+    local L2_2 = A0_2.PrimaryPart or A0_2:FindFirstChild("HumanoidRootPart") or A0_2:FindFirstChild("UpperTorso") or A0_2:FindFirstChild("Torso")
+    if L2_2 and L151_1 then
+      L151_1(A1_2, L2_2, nil)
+    end
+  end
+  
+  local function L153_1(A0_2, A1_2)
+    task.wait(0.1)
+    A1_2.AnimationPlayed:Connect(function(A0_3)
+      local L1_3 = A0_2.PrimaryPart or A0_2:FindFirstChild("HumanoidRootPart") or A0_2:FindFirstChild("UpperTorso") or A0_2:FindFirstChild("Torso")
+      if L1_3 and L151_1 then
+        L151_1(A0_3, L1_3, nil)
+      end
+    end)
+  end
+  
+  local function L154_1(A0_2)
+    if not A0_2 then
+      return
+    end
+    A0_2.DescendantAdded:Connect(function(A0_3)
+      if A0_3:IsA("Sound") then
+        L152_1(A0_2, A0_3)
+      elseif A0_3:IsA("Model") and A0_3.Name == "StandMorph" then
+        task.wait(0.15)
+        A0_3.DescendantAdded:Connect(function(A0_4)
+          if A0_4:IsA("Sound") then
+            L152_1(A0_2, A0_4)
+          elseif A0_4:IsA("Animator") then
+            L153_1(A0_2, A0_4)
+          end
+        end)
+      elseif A0_3:IsA("Animator") then
+        L153_1(A0_2, A0_3)
+      end
+    end)
+    local L1_2 = A0_2:FindFirstChildOfClass("Humanoid")
+    if L1_2 then
+      local L2_2 = L1_2:FindFirstChild("Animator")
+      if L2_2 then
+        L2_2.AnimationPlayed:Connect(function(A0_3)
+          local L1_3 = A0_2.PrimaryPart or A0_2:FindFirstChild("HumanoidRootPart") or A0_2:FindFirstChild("UpperTorso") or A0_2:FindFirstChild("Torso")
+          if L1_3 and L151_1 then
+            L151_1(A0_3, L1_3, nil)
+          end
+        end)
+      end
+    end
+    local L2_2 = A0_2:FindFirstChild("StandMorph")
+    if L2_2 then
+      task.wait(0.15)
+      L2_2.DescendantAdded:Connect(function(A0_3)
+        if A0_3:IsA("Sound") then
+          L152_1(A0_2, A0_3)
+        elseif A0_3:IsA("Animator") then
+          L153_1(A0_2, A0_3)
+        end
+      end)
+    end
+  end
+  
+  local L155_1 = {}
+  
+  local function L156_1(A0_2)
+    if A0_2 == game.Players.LocalPlayer then
+      return
+    end
+    if L155_1[A0_2] then
+      return
+    end
+    L155_1[A0_2] = true
+    if A0_2.Character then
+      L154_1(A0_2.Character)
+    end
+    A0_2.CharacterAdded:Connect(L154_1)
+    A0_2.AncestryChanged:Connect(function()
+      if not A0_2:IsDescendantOf(game) then
+        L155_1[A0_2] = nil
+      end
+    end)
+  end
+  
+  for L160_1, L161_1 in ipairs(game.Players:GetPlayers()) do
+    L156_1(L161_1)
+  end
+  game.Players.PlayerAdded:Connect(L156_1)
+  blockBotSec:Toggle({
+    Name = "Enable BlockBot",
+    Default = L28_1("BB", false),
+    Callback = function(A0_2)
+      L27_1("BB", A0_2)
+      if L150_1.setBlockbot then
+        L150_1.setBlockbot(A0_2)
+      end
+      L107_1("BlockBot", A0_2 and "Enabled!" or "Disabled!")
+    end
+  })
+  blockBotSec:Toggle({
+    Name = "Allow re-blocking",
+    Default = L28_1("BB_RB", true),
+    Callback = function(A0_2)
+      L27_1("BB_RB", A0_2)
+      if L150_1.setReblocking then
+        L150_1.setReblocking(A0_2)
+      end
+    end
+  })
+  blockBotSec:Toggle({
+    Name = "Keep block while holding F",
+    Default = L28_1("BB_KB", true),
+    Callback = function(A0_2)
+      L27_1("BB_KB", A0_2)
+      if L150_1.setKeepblock then
+        L150_1.setKeepblock(A0_2)
+      end
+    end
+  })
+  blockBotSec:Toggle({
+    Name = "Unblocking",
+    Default = L28_1("BB_UB", true),
+    Callback = function(A0_2)
+      L27_1("BB_UB", A0_2)
+      if L150_1.setUnblocking then
+        L150_1.setUnblocking(A0_2)
+      end
+    end
+  })
+  blockBotSec:Toggle({
+    Name = "Projectiles priority",
+    Default = L28_1("BB_PP", false),
+    Callback = function(A0_2)
+      L27_1("BB_PP", A0_2)
+      if L150_1.setProjectiles then
+        L150_1.setProjectiles(A0_2)
+      end
+    end
+  })
+  blockBotSec:Toggle({
+    Name = "Coliseum (1v1/2v2) mode",
+    Default = L28_1("BB_COL", false),
+    Callback = function(A0_2)
+      L27_1("BB_COL", A0_2)
+      if L150_1.setColiseum then
+        L150_1.setColiseum(A0_2)
+      end
+    end
+  })
+  blockBotSec:Toggle({
+    Name = "Block Beach Boy E and Y",
+    Default = L28_1("BB_ROD", false),
+    Callback = function(A0_2)
+      L27_1("BB_ROD", A0_2)
+      _G.rodblocking = A0_2
+    end
+  })
+  blockBotSec:Button({
+    Name = "Re-hook Players",
+    Callback = function()
+      L155_1 = {}
+      for L3_2, L4_2 in pairs(workspace.Living:GetChildren()) do
+        local L5_2 = game.Players:FindFirstChild(L4_2.Name)
+        if L5_2 then
+          task.spawn(function()
+            if L5_2 ~= game.Players.LocalPlayer then
+              L156_1(L5_2)
+            end
+          end)
+        end
+      end
+      L107_1("BlockBot", "Re-hooked all players!")
+    end
+  })
+end
+do
+  local L151_1 = false
+  local L152_1 = 0
+  local L153_1 = {}
+  L153_1.enabled = false
+  L153_1.startTime = nil
+  L153_1.startLevel = nil
+  L153_1.startPrestige = nil
+  L153_1.startDate = nil
+  
+  local function L154_1(A0_2, A1_2)
+    return string.format("%0" .. A1_2 .. "i", A0_2)
+  end
+  
+  local function L155_1()
+    local L0_2 = os.date("!*t")
+    local L1_2 = L0_2.year
+    local L2_2 = L0_2.month
+    local L3_2 = L0_2.day
+    local L4_2 = L0_2.hour
+    local L5_2 = L0_2.min
+    local L6_2 = L0_2.sec
+    return L1_2 .. "-" .. L154_1(L2_2, 2) .. "-" .. L154_1(L3_2, 2) .. "T" .. L154_1(L4_2, 2) .. ":" .. L154_1(L5_2, 2) .. ":" .. L154_1(L6_2, 2) .. "Z"
+  end
+  
+  local function L156_1(A0_2)
+    local L1_2 = math.floor(A0_2 / 3600)
+    local L2_2 = math.floor(A0_2 % 3600 / 60)
+    local L3_2 = math.floor(A0_2 % 60)
+    return string.format("%02d:%02d:%02d", L1_2, L2_2, L3_2)
+  end
+  
+  local function L157_1(A0_2)
+    local L1_2 = getgenv().webhook
+    if not L1_2 or L1_2 == "" then
+      return
+    end
+    local L2_2 = L5_1:JSONEncode(A0_2)
+    pcall(function()
+      local L0_3 = syn and syn.request or http_request or request or http.request
+      if L0_3 then
+        L0_3({
+          Url = L1_2,
+          Method = "POST",
+          Headers = {
+            ["Content-Type"] = "application/json"
+          },
+          Body = L2_2
+        })
+      end
+    end)
+  end
+  
+  local function L158_1(A0_2, A1_2)
+    pcall(function()
+      local L0_3 = L45_1 and L45_1() or L3_1 or game:GetService("Players").LocalPlayer
+      if not L0_3 then
+        return
+      end
+      local L1_3 = L0_3:FindFirstChild("PlayerStats")
+      local L2_3 = L1_3 and L1_3:FindFirstChild("Level") and L1_3.Level.Value or 1
+      local L3_3 = L1_3 and L1_3:FindFirstChild("Prestige") and L1_3.Prestige.Value or 0
+      local L4_3 = L155_1()
+      local L5_3 = L110_1 and L110_1() or false
+      local L6_3 = {}
+      L6_3.title = "[RAIL Hub] Auto Prestige"
+      L6_3.color = A0_2 == "started" and 3447003 or A0_2 == "completed" and 15844367 or A0_2 == "stopped" and 15158332 or 7506394
+      L6_3.timestamp = L4_3
+      L6_3.footer = {
+        text = "RAIL Hub | Your Bizarre Adventure"
+      }
+      if A0_2 == "started" then
+        L6_3.fields = {
+          {
+            name = L5_3 and "\208\152\208\179\209\128\208\190\208\186" or "Player",
+            value = L117_1 and L117_1() or L0_3.Name,
+            inline = true
+          },
+          {
+            name = L5_3 and "\208\161\209\130\208\176\209\130\209\131\209\129" or "Status",
+            value = L5_3 and "\208\151\208\176\208\191\209\131\209\137\208\181\208\189 Auto Prestige" or "Started Auto Prestige",
+            inline = true
+          },
+          {
+            name = L5_3 and "\208\163\209\128\208\190\208\178\208\181\208\189\209\140" or "Level",
+            value = "Level " .. tostring(L2_3),
+            inline = true
+          },
+          {
+            name = L5_3 and "\208\159\209\128\208\181\209\129\209\130\208\184\208\182" or "Prestige",
+            value = "Prestige " .. tostring(L3_3),
+            inline = true
+          },
+          {
+            name = L5_3 and "\208\145\208\176\208\187\208\176\208\189\209\129" or "Balance",
+            value = ("$%s"):format(L118_1(L119_1())),
+            inline = true
+          },
+          {
+            name = L5_3 and "\208\161\208\181\209\128\208\178\208\181\209\128" or "Server",
+            value = game.JobId ~= "" and game.JobId or "Unknown",
+            inline = false
+          }
+        }
+      elseif A0_2 == "stopped" then
+        local L7_3 = L153_1.startLevel or "?"
+        local L8_3 = L153_1.startPrestige or "?"
+        local L9_3 = L153_1.startTime
+        local L10_3 = L9_3 and L156_1(tick() - L9_3) or "Unknown"
+        L6_3.fields = {
+          {
+            name = L5_3 and "\208\152\208\179\209\128\208\190\208\186" or "Player",
+            value = L117_1 and L117_1() or L0_3.Name,
+            inline = true
+          },
+          {
+            name = L5_3 and "\208\161\209\130\208\176\209\130\209\131\209\129" or "Status",
+            value = L5_3 and "\208\158\209\129\209\130\208\176\208\189\208\190\208\178\208\187\208\181\208\189" or "Stopped",
+            inline = true
+          },
+          {
+            name = L5_3 and "\208\148\208\187\208\184\209\130\208\181\208\187\209\140\208\189\208\190\209\129\209\130\209\140" or "Duration",
+            value = L10_3,
+            inline = true
+          },
+          {
+            name = L5_3 and "\208\159\209\128\208\190\208\179\209\128\208\181\209\129\209\129" or "Progress",
+            value = "P" .. L8_3 .. " L" .. L7_3 .. " -> P" .. L3_3 .. " L" .. L2_3,
+            inline = true
+          },
+          {
+            name = L5_3 and "\208\145\208\176\208\187\208\176\208\189\209\129" or "Balance",
+            value = ("$%s"):format(L118_1(L119_1())),
+            inline = true
+          },
+          {
+            name = L5_3 and "\208\161\208\181\209\128\208\178\208\181\209\128" or "Server",
+            value = game.JobId ~= "" and game.JobId or "Unknown",
+            inline = false
+          }
+        }
+      elseif A0_2 == "completed" then
+        local L7_3 = L153_1.startTime
+        local L8_3 = L7_3 and L156_1(tick() - L7_3) or "Unknown"
+        if L135_1 then
+          L135_1(3, 50, true, L8_3)
+          return
+        end
+        L6_3.title = L5_3 and "[RAIL Hub] Auto Prestige \208\151\208\176\208\178\208\181\209\128\209\136\208\181\208\189" or "[RAIL Hub] Auto Prestige Completed"
+        L6_3.color = 15844367
+        L6_3.fields = {
+          {
+            name = L5_3 and "\208\161\209\130\208\176\209\130\209\131\209\129" or "Status",
+            value = L5_3 and "\208\156\208\176\208\186\209\129\208\184\208\188\208\176\208\187\209\140\208\189\209\139\208\185 \209\131\209\128\208\190\208\178\208\181\208\189\209\140 50 / \208\159\209\128\208\181\209\129\209\130\208\184\208\182 3 (50/3)" or "Max Level 50 / Prestige 3 (50/3)",
+            inline = true
+          },
+          {
+            name = L5_3 and "\208\145\208\176\208\187\208\176\208\189\209\129" or "Balance",
+            value = ("$%s"):format(L118_1(L119_1())),
+            inline = true
+          },
+          {
+            name = L5_3 and "\208\146\209\128\208\181\208\188\209\143" or "Time Taken",
+            value = L8_3,
+            inline = true
+          },
+          {
+            name = L5_3 and "\208\152\208\179\209\128\208\190\208\186" or "Player",
+            value = L117_1 and L117_1() or L0_3.Name,
+            inline = true
+          },
+          {
+            name = L5_3 and "\208\161\208\181\209\128\208\178\208\181\209\128" or "Server",
+            value = game.JobId ~= "" and game.JobId or "Unknown",
+            inline = false
+          }
+        }
+      end
+      L157_1({
+        embeds = {L6_3}
+      })
+    end)
+  end
+  
+  local function L159_1(A0_2)
+  end
+  
+  local function L160_1()
+    local L0_2 = L152_1
+    
+    local function L1_2()
+      return L151_1 and L152_1 == L0_2
+    end
+    
+    local L2_2 = L68_1
+    local L3_2 = L69_1
+    getgenv().waitUntilCollect = 0.5
+    getgenv().sortOrder = "Asc"
+    getgenv().lessPing = false
+    getgenv().autoRequiem = true
+    getgenv().NPCTimeOut = 15
+    getgenv().HamonCharge = 90
+    local L4_2 = tick()
+    repeat
+      task.wait()
+      if not L1_2() then
+        return
+      end
+    until game:IsLoaded() and game.Players.LocalPlayer and game.Players.LocalPlayer.Character or tick() - L4_2 > 30
+    if not game.Players.LocalPlayer or not game.Players.LocalPlayer.Character then
+      return
+    end
+    local L5_2 = game.Players.LocalPlayer
+    local L6_2 = L5_2.Character
+    local L7_2 = tick()
+    repeat
+      task.wait()
+      if not L1_2() then
+        return
+      end
+      if not L6_2 or not L6_2.Parent then
+        L6_2 = L5_2.Character
+      end
+    until L6_2 and L6_2.Parent and L6_2:FindFirstChild("RemoteEvent") and L6_2:FindFirstChild("RemoteFunction") or tick() - L7_2 > 30
+    if not (L6_2 and L6_2.Parent) or not L6_2:FindFirstChild("RemoteEvent") then
+      return
+    end
+    
+    local function L8_2()
+      local L0_3 = L5_2.Character or L6_2
+      local L1_3 = L0_3 and (L0_3:FindFirstChild("RemoteFunction") or L0_3:FindFirstChildOfClass("RemoteFunction"))
+      if not L1_3 then
+        local L2_3 = L5_2:FindFirstChild("Backpack")
+        L1_3 = L2_3 and (L2_3:FindFirstChild("RemoteFunction") or L2_3:FindFirstChildOfClass("RemoteFunction"))
+      end
+      return L1_3
+    end
+    
+    local function L9_2()
+      local L0_3 = L5_2.Character or L6_2
+      local L1_3 = L0_3 and (L0_3:FindFirstChild("RemoteEvent") or L0_3:FindFirstChildOfClass("RemoteEvent"))
+      if not L1_3 then
+        local L2_3 = L5_2:FindFirstChild("Backpack")
+        L1_3 = L2_3 and (L2_3:FindFirstChild("RemoteEvent") or L2_3:FindFirstChildOfClass("RemoteEvent"))
+      end
+      return L1_3
+    end
+    
+    local L10_2 = L8_2()
+    local L11_2 = L9_2()
+    local L12_2 = L6_2 and (L6_2:FindFirstChild("HumanoidRootPart") or L6_2.PrimaryPart)
+    local L13_2 = true
+    
+    local function L14_2(...)
+      local L1_3 = L8_2() or L10_2
+      if L1_3 and L1_3:IsA("RemoteFunction") then
+        local L2_3, L3_3 = pcall(function(...)
+          return L1_3:InvokeServer(...)
+        end, ...)
+        if L2_3 then
+          return L3_3
+        end
+      end
+      return nil
+    end
+    
+    local function L15_2(...)
+      local L1_3 = L9_2() or L11_2
+      if L1_3 and L1_3:IsA("RemoteEvent") then
+        pcall(function(...)
+          L1_3:FireServer(...)
+        end, ...)
+      end
+    end
+    
+    if L5_2.PlayerStats.Level.Value == 50 and L5_2.PlayerStats.Prestige.Value >= 3 then
+      L107_1("Auto Prestige", "Already max prestige and level!")
+      L151_1 = false
+      autoPrestigeRunning = false
+      L27_1("AP", false)
+      if type(prevAutoPrestigeEnv) == "table" then
+        for L19_2, L20_2 in pairs(prevAutoPrestigeEnv) do
+          getgenv()[L19_2] = L20_2
+        end
+      end
+      getgenv().AutoPrestigeEnvBackup = nil
+      if L127_1 and L127_1() then
+        return
+      end
+      return
+    end
+    pcall(function()
+      local L0_3 = game.Lighting:FindFirstChild("DepthOfField")
+      if L0_3 then
+        L0_3.Enabled = false
+      end
+    end)
+    pcall(function()
+      workspace.Map.IMPORTANT.OceanFloor.OceanFloor_Sand_6.Size = Vector3.new(2048, 89, 2048)
+      workspace.Map.IMPORTANT.OceanFloor.OceanFloor_Sand_4.Size = Vector3.new(2048, 89, 2048)
+    end)
+    local L16_2 = {}
+    if not pcall(function()
+      L16_2 = game:GetService("HttpService"):JSONDecode(readfile("AutoPres3_" .. L5_2.Name .. ".txt"))
+    end) then
+      L16_2 = {
+        Time = tick(),
+        Prestige = L5_2.PlayerStats.Prestige.Value,
+        Level = L5_2.PlayerStats.Level.Value
+      }
+      pcall(function()
+        writefile("AutoPres3_" .. L5_2.Name .. ".txt", game:GetService("HttpService"):JSONEncode(L16_2))
+      end)
+    end
+    local L17_2 = tick()
+    local L18_2 = tick()
+    
+    local function L19_2(A0_3)
+      local L1_3 = {}
+      L1_3.Position = {}
+      L1_3.ProximityPrompt = {}
+      L1_3.Items = {}
+      local L2_3 = game:GetService("Workspace"):FindFirstChild("Item_Spawns") and game:GetService("Workspace").Item_Spawns:FindFirstChild("Items")
+      if not L2_3 then
+        return L1_3
+      end
+      for L6_3, L7_3 in pairs(L2_3:GetChildren()) do
+        local L8_3 = L7_3:FindFirstChild("ProximityPrompt")
+        local L9_3 = L7_3:FindFirstChild("MeshPart") or L7_3:FindFirstChildOfClass("BasePart")
+        if L9_3 and L8_3 and L8_3.ObjectText == A0_3 then
+          table.insert(L1_3.Items, L8_3.ObjectText)
+          table.insert(L1_3.ProximityPrompt, L8_3)
+          table.insert(L1_3.Position, L9_3.CFrame)
+        end
+      end
+      return L1_3
+    end
+    
+    local function L20_2(A0_3)
+      return sfCountItem(A0_3)
+    end
+    
+    local function L21_2(A0_3, A1_3)
+      local L2_3 = L5_2.Backpack:WaitForChild(A0_3, 5) or L5_2.Character and L5_2.Character:FindFirstChild(A0_3)
+      if not L2_3 then
+        return false
+      end
+      local L3_3 = L5_2.Character and L5_2.Character:FindFirstChildOfClass("Humanoid")
+      if L3_3 then
+        L3_3:EquipTool(L2_3)
+      end
+      if A1_3 then
+        local L4_3 = L5_2.Character and L5_2.Character:FindFirstChild("RemoteFunction")
+        if L4_3 then
+          local L5_3 = tonumber(A1_3) or 2
+          for L9_3 = 1, L5_3 do
+            pcall(function()
+              L4_3:InvokeServer("LearnSkill", {Skill = "Worthiness", SkillTreeType = "Character"})
+            end)
+            task.wait(0.08)
+          end
+          pcall(function()
+            L4_3:InvokeServer("LearnSkill", {Skill = "Worthiness", SkillTreeType = "Character"})
+          end)
+          task.wait(0.05)
+        end
+      end
+      local L4_3 = tick()
+      repeat
+        pcall(function()
+          L2_3:Activate()
+        end)
+        task.wait(0.05)
+      until L5_2.PlayerGui:FindFirstChild("DialogueGui") or tick() - L4_3 > 3
+      local L5_3 = L5_2.PlayerGui:FindFirstChild("DialogueGui")
+      if L5_3 then
+        local L6_3 = tick()
+        while L5_3 and L5_3.Parent and 5 > tick() - L6_3 do
+          clickDialogueFrame(L5_3, "Option1")
+          task.wait(0.1)
+          L5_3 = L5_2.PlayerGui:FindFirstChild("DialogueGui")
+        end
+      end
+      return true
+    end
+    
+    local L22_2
+    local L23_2 = {}
+    L23_2.Anubis = true
+    L23_2.Aerosmith = true
+    L23_2["White Album"] = true
+    L23_2["Six Pistols"] = true
+    L23_2["Beach Boy"] = true
+    L23_2["Mr. President"] = true
+    L23_2["Tusk (Act 1)"] = true
+    L23_2["Scary Monsters"] = true
+    L23_2["Hermit Purple"] = true
+    local L24_2 = 0
+    
+    local function L25_2()
+      if not getgenv()._YBA_directTP then
+        return
+      end
+      local L0_3 = tick()
+      if L0_3 - L24_2 < 0.4 then
+        task.wait(0.4 - (L0_3 - L24_2))
+      end
+    end
+    
+    local function L26_2()
+      L24_2 = tick()
+    end
+    
+    local function L27_2(A0_3, A1_3)
+      if not A0_3 or not A1_3 then
+        return
+      end
+      if getgenv()._YBA_directTP then
+        L25_2()
+        A0_3.CFrame = A1_3
+        A0_3.AssemblyLinearVelocity = Vector3.zero
+        A0_3.AssemblyAngularVelocity = Vector3.zero
+        L26_2()
+      else
+        local L2_3 = (A0_3.Position - A1_3.Position).Magnitude
+        if L2_3 < 1 then
+          return
+        end
+        local L3_3 = math.clamp(L2_3 / 425, 0.05, 3)
+        local L4_3 = L8_1:Create(A0_3, TweenInfo.new(L3_3, Enum.EasingStyle.Linear), {CFrame = A1_3})
+        L4_3:Play()
+        local L5_3 = tick()
+        while true do
+          if not (L4_3.PlaybackState ~= Enum.PlaybackState.Completed and tick() - L5_3 < L3_3 + 3 and L1_2() and A0_3) or not A0_3.Parent then
+            break
+          end
+          task.wait(0.1)
+        end
+        pcall(function()
+          L4_3:Cancel()
+        end)
+        L4_3:Destroy()
+        A0_3.AssemblyLinearVelocity = Vector3.zero
+        A0_3.AssemblyAngularVelocity = Vector3.zero
+      end
+    end
+    
+    local function L28_2()
+      local L0_3 = L5_2.Backpack:FindFirstChild("Rokakaka") or L6_2 and L6_2:FindFirstChild("Rokakaka")
+      if not L0_3 then
+        if L5_2.PlayerStats.Money.Value >= 2500 then
+          pcall(function()
+            L15_2("PurchaseShopItem", {
+              ItemName = "1x Rokakaka"
+            }, 1, 2)
+          end)
+          task.wait(0.3)
+          L0_3 = L5_2.Backpack:FindFirstChild("Rokakaka") or L6_2 and L6_2:FindFirstChild("Rokakaka")
+        end
+        if not L0_3 then
+          L22_2("Rokakaka", 1)
+          task.wait(0.5)
+          L0_3 = L5_2.Backpack:FindFirstChild("Rokakaka") or L6_2 and L6_2:FindFirstChild("Rokakaka")
+        end
+        if not L0_3 then
+          return false
+        end
+      end
+      local L1_3 = L5_2.PlayerStats.Stand.Value
+      useItemDirect("Rokakaka", "Rokakaka")
+      local L2_3 = L6_2
+      local L3_3 = tick()
+      while tick() - L3_3 < 4 and L5_2.Character == L2_3 and L1_2() do
+        task.wait(0.05)
+      end
+      if L5_2.Character and L5_2.Character ~= L2_3 then
+        L6_2 = L5_2.Character
+        L10_2 = L8_2()
+        L11_2 = L9_2()
+        L12_2 = L6_2.PrimaryPart
+      end
+      L3_3 = tick()
+      while tick() - L3_3 < 3 and L1_2() do
+        if L5_2.PlayerStats.Stand.Value == "None" then
+          return true
+        end
+        task.wait(0.1)
+      end
+      return L5_2.PlayerStats.Stand.Value == "None"
+    end
+    
+    local function L29_2(A0_3)
+      A0_3 = A0_3 or 5
+      local L1_3 = 0
+      while A0_3 > L1_3 and L1_2() do
+        local L2_3 = L5_2.PlayerStats.Stand.Value
+        local L3_3 = L5_2.Backpack:FindFirstChild("Mysterious Arrow") or L6_2 and L6_2:FindFirstChild("Mysterious Arrow")
+        if not L3_3 then
+          if L5_2.PlayerStats.Money.Value >= 750 then
+            pcall(function()
+              L15_2("PurchaseShopItem", {
+                ItemName = "1x Mysterious Arrow"
+              }, 1, 2)
+            end)
+            task.wait(0.3)
+            L3_3 = L5_2.Backpack:FindFirstChild("Mysterious Arrow") or L6_2 and L6_2:FindFirstChild("Mysterious Arrow")
+          end
+          if not L3_3 then
+            L22_2("Mysterious Arrow", 1)
+            task.wait(0.5)
+            L3_3 = L5_2.Backpack:FindFirstChild("Mysterious Arrow") or L6_2 and L6_2:FindFirstChild("Mysterious Arrow")
+          end
+          if not L3_3 then
+            return false
+          end
+        end
+        useItemDirect("Mysterious Arrow", "Mysterious Arrow")
+        local L4_3 = L6_2
+        local L5_3 = tick()
+        while tick() - L5_3 < 4 and L5_2.Character == L4_3 and L1_2() do
+          task.wait(0.05)
+        end
+        if L5_2.Character and L5_2.Character ~= L4_3 then
+          L6_2 = L5_2.Character
+          L10_2 = L6_2:FindFirstChild("RemoteFunction")
+          L11_2 = L6_2:FindFirstChild("RemoteEvent")
+          L12_2 = L6_2.PrimaryPart
+        end
+        local L6_3 = L5_2.PlayerStats.Stand.Value
+        if L6_3 ~= "None" and L6_3 ~= L2_3 then
+          return true
+        end
+        L1_3 = L1_3 + 1
+        task.wait(0.3)
+      end
+      return false
+    end
+    
+    local function L30_2()
+      if L5_2.PlayerStats.Level.Value < 2 then
+        return false
+      end
+      if L5_2.PlayerStats.Stand.Value == "None" then
+        L27_2(L5_2.Character.HumanoidRootPart, standFarmPosition)
+        if not L5_2.Character:GetAttribute("WorthinessLearned") then
+          sfLearnWorthiness()
+          pcall(function()
+            L5_2.Character:SetAttribute("WorthinessLearned", true)
+          end)
+        end
+        pcall(function()
+          L14_2("LearnSkill", {
+            Skill = "Stand Summon",
+            SkillTreeType = "Stand"
+          })
+        end)
+        local L0_3 = 0
+        while L5_2.PlayerStats.Stand.Value == "None" and L0_3 < 20 and L1_2() do
+          if L0_3 % 3 == 0 then
+            pcall(function()
+              sfLearnWorthiness(true)
+            end)
+            task.wait(0.3)
+          end
+          L29_2(3)
+          L0_3 = L0_3 + 1
+          if L5_2.PlayerStats.Stand.Value ~= "None" then
+            do
+              local L1_3 = L5_2.PlayerStats.Stand.Value
+              if L23_2[L1_3] then
+                L107_1("Auto Prestige", "Blacklisted: " .. L1_3 .. " \226\128\148 rerolling...")
+                L28_2()
+                task.wait(1)
+              else
+                L107_1("Auto Prestige", "Got stand: " .. L1_3 .. "! Resetting...")
+                task.spawn(function()
+                  L14_2("LearnSkill", {
+                    Skill = "Stand Summon",
+                    SkillTreeType = "Stand"
+                  })
+                  local L0_4 = {
+                    "Destructive Power I",
+                    "Destructive Power II",
+                    "Destructive Power III",
+                    "Destructive Power IV",
+                    "Destructive Power V",
+                    "Stand Barrage",
+                    "Stand Barrage Finisher"
+                  }
+                  for L4_4, L5_4 in pairs(L0_4) do
+                    L14_2("LearnSkill", {Skill = L5_4, SkillTreeType = "Stand"})
+                  end
+                end)
+                task.wait(0.3)
+                local L2_3 = L5_2.Character and L5_2.Character:FindFirstChildOfClass("Humanoid")
+                if L2_3 then
+                  local L3_3 = L5_2.Character
+                  L2_3.Health = 0
+                  local L4_3
+                  local L5_3 = tick()
+                  while tick() - L5_3 < 15 and L1_2() do
+                    local L6_3 = L5_2.Character
+                    if L6_3 and L6_3 ~= L3_3 and L6_3.Parent then
+                      do
+                        local L7_3 = L6_3:FindFirstChildOfClass("Humanoid")
+                        if L7_3 and 0 < L7_3.Health then
+                          L4_3 = L6_3
+                          break
+                        end
+                      end
+                    end
+                    task.wait(0.25)
+                  end
+                  if not L1_2() then
+                    return
+                  end
+                  task.wait(1)
+                  if L4_3 then
+                    L6_2 = L4_3
+                    L10_2 = L8_2()
+                    L11_2 = L9_2()
+                    L12_2 = L6_2:WaitForChild("HumanoidRootPart", 5) or L6_2:FindFirstChild("HumanoidRootPart")
+                  end
+                end
+                break
+              end
+            end
+          end
+        end
+      end
+      L13_2 = true
+    end
+    
+    local function L31_2(A0_3, A1_3)
+      local L2_3 = false
+      local L3_3 = getgenv().waitUntilCollect + 5
+      if L6_2:FindFirstChild("SummonedStand") and L6_2.SummonedStand.Value then
+        L14_2("ToggleStand", "Toggle")
+      end
+      local L4_3
+      L4_3 = L5_2.Backpack.ChildAdded:Connect(function()
+        L2_3 = true
+        if L4_3 then
+          L4_3:Disconnect()
+        end
+      end)
+      task.spawn(function()
+        while not L2_3 do
+          task.wait()
+          pcall(function()
+            if A0_3.Position[A1_3] then
+              game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = A0_3.Position[A1_3] - Vector3.new(0, 10, 0)
+            end
+          end)
+        end
+      end)
+      task.wait(getgenv().waitUntilCollect)
+      task.spawn(function()
+        if A0_3.ProximityPrompt[A1_3] then
+          fireproximityprompt(A0_3.ProximityPrompt[A1_3])
+        end
+        local L0_4 = L5_2 and L5_2.PlayerGui and (L5_2.PlayerGui:FindFirstChild("ScreenGui") or L5_2.PlayerGui:WaitForChild("ScreenGui", 3))
+        if L0_4 then
+          local L1_4 = L0_4:FindFirstChild("Part") or L0_4:WaitForChild("Part", 2)
+          if L1_4 then
+            for L5_4, L6_4 in pairs(L1_4:GetDescendants()) do
+              if L6_4:FindFirstChild("Part") and L6_4:IsA("ImageButton") then
+                local L7_4 = L6_4:FindFirstChild("Part") or L6_4:WaitForChild("Part", 2)
+                if L7_4 and L7_4.TextColor3 == Color3.new(0, 1, 0) then
+                  local L8_4 = tick()
+                  repeat
+                    if not L1_2() then
+                      break
+                    end
+                    if type(firesignal) == "function" then
+                      pcall(function()
+                        firesignal(L6_4.MouseEnter)
+                        firesignal(L6_4.MouseButton1Up)
+                        firesignal(L6_4.MouseButton1Click)
+                        firesignal(L6_4.Activated)
+                      end)
+                    else
+                      pcall(function()
+                        L54_1(L6_4)
+                      end)
+                    end
+                    task.wait(0.1)
+                  until not L5_2.PlayerGui:FindFirstChild("ScreenGui") or tick() - L8_4 > 10
+                end
+              end
+            end
+          end
+        end
+      end)
+      task.spawn(function()
+        for L3_4 = L3_3, 1, -1 do
+          task.wait(1)
+        end
+        if not L2_3 then
+          L2_3 = true
+        end
+      end)
+      while not L2_3 do
+        task.wait()
+      end
+    end
+    
+    function L22_2(A0_3, A1_3)
+      local L2_3 = (getgenv()._YBA_Exports or {}).farmItemByName
+      if not L2_3 then
+        warn("[Auto Prestige] farmItemByName not found in _YBA_Exports")
+        return false
+      end
+      enableNoclipState("stand")
+      L2_3(A0_3, A1_3, L1_2)
+      disableNoclipState("stand")
+      return true
+    end
+    
+    local function L32_2(A0_3)
+      if not A0_3 then
+        return
+      end
+      L54_1(A0_3)
+    end
+    
+    local function L33_2()
+      local L0_3 = L5_2.Character
+      if not L0_3 then
+        return false
+      end
+      if L0_3:FindFirstChild("InCombat") or L0_3:FindFirstChild("Combat") or L0_3:FindFirstChild("CombatTag") then
+        return true
+      end
+      local L1_3 = L5_2:FindFirstChild("PlayerStats")
+      if L1_3 and (L1_3:FindFirstChild("InCombat") or L1_3:FindFirstChild("Combat")) then
+        return true
+      end
+      local L2_3 = game:GetService("CollectionService")
+      if L2_3:HasTag(L0_3, "InCombat") or L2_3:HasTag(L0_3, "Combat") then
+        return true
+      end
+      return false
+    end
+    
+    local function L34_2(A0_3)
+      A0_3 = A0_3 or 18
+      if L33_2() then
+        L159_1("In combat! Waiting for combat tag to clear...")
+        local L1_3 = tick()
+        while L33_2() and A0_3 > tick() - L1_3 and L1_2() do
+          task.wait(0.5)
+        end
+        task.wait(0.5)
+      end
+    end
+    
+    local L35_2 = {}
+    
+    local function L36_2(A0_3, A1_3, A2_3)
+      A1_3 = A1_3 or 1
+      local L3_3 = A0_3:lower():find("mista") ~= nil
+      L34_2()
+      local L4_3 = L5_2.PlayerGui:FindFirstChild("DialogueGui")
+      if L4_3 and L4_3.Parent and L4_3.Enabled and L4_3:FindFirstChild("Frame") and L4_3.Frame.Visible then
+        local L5_3 = L4_3.Frame:FindFirstChild("ClickContinue")
+        if L5_3 then
+          L54_1(L5_3)
+          task.wait(0.15)
+        end
+      end
+      
+      local function L5_3(A0_4, A1_4)
+        if not A0_4 or not A1_4 then
+          return false
+        end
+        local L2_4 = tostring(A0_4):lower():gsub("[%p%s]+", " "):gsub("^%s+", ""):gsub("%s+$", "")
+        local L3_4 = tostring(A1_4):lower():gsub("[%p%s]+", " "):gsub("^%s+", ""):gsub("%s+$", "")
+        if L2_4 == L3_4 then
+          return true
+        end
+        local L4_4 = A0_4:match("[Ss]toryline%s*#?(%d+)") or A0_4:match("#(%d+)")
+        local L5_4 = A1_4:match("[Ss]toryline%s*#?(%d+)") or A1_4:match("#(%d+)")
+        if L4_4 and L5_4 then
+          return L4_4 == L5_4
+        end
+        if L5_4 and not L4_4 then
+          local L6_4 = A1_4:match("%((.-)%)")
+          if L6_4 and L6_4 ~= "" then
+            local L7_4 = L6_4:lower():gsub("[%p%s]+", "")
+            local L8_4 = A0_4:lower():gsub("[%p%s]+", "")
+            if L8_4:find(L7_4, 1, true) or L7_4:find(L8_4, 1, true) then
+              return true
+            end
+          end
+          return false
+        end
+        if L4_4 and not L5_4 then
+          return false
+        end
+        if L2_4:find(L3_4, 1, true) or L3_4:find(L2_4, 1, true) then
+          return true
+        end
+        local L6_4 = A1_4:match("%((.-)%)")
+        if L6_4 and L6_4 ~= "" then
+          local L7_4 = L6_4:lower():gsub("[%p%s]+", "")
+          local L8_4 = A0_4:lower():gsub("[%p%s]+", "")
+          if L8_4:find(L7_4, 1, true) or L7_4:find(L8_4, 1, true) then
+            return true
+          end
+        end
+        return false
+      end
+      
+      local L6_3
+      local L7_3 = L35_2[tostring(A0_3)]
+      local L8_3 = workspace:FindFirstChild("Living")
+      if L7_3 and L7_3.Parent and L7_3:IsDescendantOf(workspace) and (not L8_3 or not L7_3:IsDescendantOf(L8_3)) then
+        L6_3 = L7_3
+      end
+      if not L6_3 and workspace:FindFirstChild("Dialogues") then
+        L6_3 = workspace.Dialogues:FindFirstChild(A0_3)
+        if not L6_3 then
+          for L12_3, L13_3 in ipairs(workspace.Dialogues:GetChildren()) do
+            if L5_3(L13_3.Name, A0_3) then
+              L6_3 = L13_3
+              break
+            end
+          end
+        end
+      end
+      if not L6_3 then
+        local L9_3 = workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("NPCs")
+        local L10_3 = {
+          workspace:FindFirstChild("NPCs"),
+          L9_3,
+          workspace:FindFirstChild("Map")
+        }
+        for L14_3, L15_3 in ipairs(L10_3) do
+          if L15_3 and not L6_3 then
+            for L19_3, L20_3 in ipairs(L15_3:GetChildren()) do
+              if L20_3:IsA("Model") and not L0_1:GetPlayerFromCharacter(L20_3) and L5_3(L20_3.Name, A0_3) then
+                L6_3 = L20_3
+                break
+              end
+            end
+          end
+        end
+      end
+      if not L6_3 then
+        warn("[Auto Prestige] NPC not found: " .. tostring(A0_3))
+        return false
+      end
+      L35_2[tostring(A0_3)] = L6_3
+      local L9_3 = L6_3:FindFirstChild("HumanoidRootPart") or L6_3.PrimaryPart or L6_3:FindFirstChild("Torso") or L6_3:FindFirstChild("UpperTorso") or L6_3:FindFirstChild("Head") or L6_3:FindFirstChildOfClass("BasePart")
+      if not L9_3 then
+        return false
+      end
+      local L10_3 = L5_2.Character
+      local L11_3 = L10_3 and L10_3:FindFirstChild("HumanoidRootPart")
+      local L12_3 = L10_3 and L10_3:FindFirstChildOfClass("Humanoid")
+      if not L11_3 then
+        return false
+      end
+      local L13_3 = L9_3.CFrame.LookVector
+      local L14_3 = L9_3.Position + L13_3 * 3
+      local L15_3 = CFrame.new(L14_3, L9_3.Position)
+      if L9_3.Name == "Head" then
+        L15_3 = L15_3 - Vector3.new(0, 1.5, 0)
+      end
+      L27_2(L11_3, L15_3)
+      L11_3.AssemblyLinearVelocity = Vector3.zero
+      L11_3.AssemblyAngularVelocity = Vector3.zero
+      if L12_3 then
+        L12_3.Jump = false
+        pcall(function()
+          L12_3:ChangeState(Enum.HumanoidStateType.Running)
+        end)
+      end
+      
+      local function L16_3()
+        L57_1(L11_3, L12_3)
+      end
+      
+      local L17_3 = L6_3:FindFirstChildWhichIsA("ProximityPrompt", true)
+      
+      local function L18_3()
+        L58_1(L17_3, L2_1)
+      end
+      
+      task.wait(0.12)
+      L18_3()
+      
+      local function L19_3(A0_4)
+        local L1_4 = {}
+        for L5_4, L6_4 in ipairs(A0_4:GetChildren()) do
+          if L6_4:IsA("GuiObject") and L6_4.Visible and L6_4.Name ~= "UIListLayout" and L6_4.Name ~= "UIPadding" and L6_4.Name ~= "UIGridLayout" then
+            local L7_4 = L6_4:FindFirstChildWhichIsA("TextButton", true) or L6_4:FindFirstChildWhichIsA("GuiButton", true) or L6_4:IsA("GuiButton") and L6_4
+            local L8_4 = ""
+            if L7_4 and L7_4:IsA("TextButton") and L7_4.Text and L7_4.Text ~= "" then
+              L8_4 = L7_4.Text
+            end
+            if L8_4 == "" then
+              for L12_4, L13_4 in ipairs(L6_4:GetDescendants()) do
+                if (L13_4:IsA("TextLabel") or L13_4:IsA("TextButton")) and L13_4.Text and L13_4.Text ~= "" then
+                  L8_4 = L13_4.Text
+                  break
+                end
+              end
+            end
+            if L8_4 == "" and L6_4:IsA("TextLabel") and L6_4.Text ~= "" then
+              L8_4 = L6_4.Text
+            end
+            table.insert(L1_4, {
+              name = L6_4.Name,
+              btn = L7_4 or L6_4,
+              opt = L6_4,
+              text = tostring(L8_4 or ""):lower():gsub("^%s+", ""):gsub("%s+$", ""),
+              rawText = L8_4,
+              y = L6_4.AbsolutePosition and L6_4.AbsolutePosition.Y or 9999
+            })
+          end
+        end
+        if #L1_4 == 0 then
+          return nil
+        end
+        if A2_3 and A2_3 ~= "" then
+          local L2_4 = A2_3:lower()
+          for L6_4, L7_4 in ipairs(L1_4) do
+            if L7_4.text:find(L2_4, 1, true) and (not L3_3 or not L7_4.text:find("four") and not L7_4.text:find("4")) then
+              return L7_4.btn
+            end
+          end
+        end
+        if L3_3 then
+          local L2_4 = {}
+          for L6_4, L7_4 in ipairs(L1_4) do
+            if not L7_4.text:find("four") and not L7_4.text:find("4") then
+              table.insert(L2_4, L7_4)
+            end
+          end
+          if 0 < #L2_4 then
+            for L6_4, L7_4 in ipairs(L2_4) do
+              if L7_4.text:find("recruit") or L7_4.text:find("on it") or L7_4.text:find("i'm on it") then
+                return L7_4.btn
+              end
+            end
+            for L6_4, L7_4 in ipairs(L2_4) do
+              if L7_4.text:find("know") or L7_4.text:find("idea") or L7_4.text:find("five") or L7_4.text:find("\208\189\208\181 \208\183\208\189\208\176\209\142") or L7_4.text:find("21") then
+                return L7_4.btn
+              end
+            end
+            for L6_4, L7_4 in ipairs(L2_4) do
+              if L7_4.text ~= "..." and L7_4.text ~= "" then
+                return L7_4.btn
+              end
+            end
+            return L2_4[1].btn
+          end
+        end
+        local L2_4 = {
+          "see ya later",
+          "see you later",
+          "see ya",
+          "see you",
+          "okay, see ya",
+          "see ya later!",
+          "can i help out again",
+          "help out again",
+          "help out",
+          "again",
+          "help",
+          "recruit",
+          "got this",
+          "what now",
+          "here it is",
+          "knock some sense",
+          "understood",
+          "wow, thanks",
+          "relax",
+          "nice to meet",
+          "yep",
+          "yeah",
+          "agreed",
+          "yes",
+          "sure",
+          "take care",
+          "dream",
+          "let him know",
+          "accept",
+          "continue",
+          "okay",
+          "fine",
+          "on it",
+          "i'm on it",
+          "where",
+          "safe",
+          "sooner",
+          "ready",
+          "i will",
+          "deal",
+          "let's go",
+          "lets go",
+          "alright",
+          "all right",
+          "sounds good",
+          "prestige"
+        }
+        for L6_4, L7_4 in ipairs(L2_4) do
+          for L11_4, L12_4 in ipairs(L1_4) do
+            if L12_4.text:find(L7_4, 1, true) then
+              return L12_4.btn
+            end
+          end
+        end
+        local L3_4 = {
+          "nevermind",
+          "never mind",
+          "no thanks",
+          "no thank you",
+          "maybe later",
+          "not right now",
+          "not now",
+          "i'm busy",
+          "im busy",
+          "decline",
+          "cancel",
+          "i'll pass",
+          "ill pass",
+          "don't want to",
+          "dont want to",
+          "no,",
+          "no."
+        }
+        local L4_4 = {}
+        for L8_4, L9_4 in ipairs(L1_4) do
+          local L10_4 = false
+          if L9_4.text == "no" then
+            L10_4 = true
+          else
+            for L14_4, L15_4 in ipairs(L3_4) do
+              if L9_4.text:find(L15_4, 1, true) then
+                L10_4 = true
+                break
+              end
+            end
+          end
+          if not L10_4 then
+            table.insert(L4_4, L9_4)
+          end
+        end
+        local L5_4 = 0 < #L4_4 and L4_4 or L1_4
+        for L9_4, L10_4 in ipairs(L5_4) do
+          if L10_4.text ~= "..." and L10_4.text ~= "" then
+            return L10_4.btn
+          end
+        end
+        for L9_4, L10_4 in ipairs(L5_4) do
+          if L10_4.name == "Option" .. tostring(A1_3) or L10_4.name == "Option1" then
+            return L10_4.btn
+          end
+        end
+        return L5_4[1].btn
+      end
+      
+      local L20_3 = tick()
+      local L21_3 = false
+      local L22_3 = tick()
+      local L23_3 = tick()
+      local L24_3 = false
+      local L25_3 = tostring(L5_2.PlayerStats.Quest.Value or "")
+      pcall(function()
+        while tick() - L20_3 < 6 and L1_2() do
+          if L12_3 then
+            L12_3.Jump = false
+          end
+          local L0_4 = tostring(L5_2.PlayerStats.Quest.Value or "")
+          if L25_3 ~= "" and L0_4 ~= "" and L0_4 ~= L25_3 then
+            L21_3 = true
+            break
+          end
+          local L1_4 = L5_2.PlayerGui:FindFirstChild("DialogueGui") or L5_2.PlayerGui:FindFirstChild("Dialogue")
+          local L2_4 = L1_4 and L1_4.Parent and L1_4.Enabled and L1_4:FindFirstChild("Frame") and L1_4.Frame.Visible
+          if L2_4 then
+            L21_3 = true
+            L22_3 = tick()
+            local L3_4 = L1_4.Frame
+            local L4_4 = L3_4:FindFirstChild("DialogueFrame")
+            local L5_4 = ""
+            if L4_4 then
+              for L9_4, L10_4 in ipairs(L4_4:GetDescendants()) do
+                if L10_4:IsA("TextLabel") and L10_4.Text ~= "" then
+                  L5_4 = L5_4 .. " " .. L10_4.Text
+                end
+              end
+            end
+            local L6_4 = L5_4:lower()
+            if L6_4:find("combat") or L6_4:find("\208\178 \208\177\208\190\209\142") then
+              L159_1("NPC dialogue blocked by combat! Waiting for tag to expire...")
+              L24_3 = true
+              do
+                local L7_4 = L3_4:FindFirstChild("ClickContinue")
+                if L7_4 then
+                  L54_1(L7_4)
+                end
+              end
+              break
+            end
+            if L5_4:find("COMPLETE STORYLINE QUESTS IN ORDER") or L5_4:find("Level 25+") or L5_4:find("You need to be") then
+              do
+                local L7_4 = L3_4:FindFirstChild("ClickContinue")
+                if L7_4 then
+                  L54_1(L7_4)
+                end
+              end
+              break
+            end
+            local L7_4 = L3_4:FindFirstChild("Options")
+            local L8_4 = L7_4 and L7_4.Visible and L19_3(L7_4)
+            if L8_4 then
+              L54_1(L8_4)
+              task.wait(0.08)
+            else
+              local L9_4 = L3_4:FindFirstChild("ClickContinue")
+              if L9_4 and L9_4.Visible then
+                L54_1(L9_4)
+                task.wait(0.05)
+              elseif L4_4 and L4_4.Visible then
+                L54_1(L4_4)
+                task.wait(0.05)
+              elseif L9_4 then
+                L54_1(L9_4)
+                task.wait(0.05)
+              else
+                L54_1(L3_4)
+                task.wait(0.05)
+              end
+            end
+          elseif L21_3 then
+            if tick() - L22_3 > 0.5 then
+              break
+            end
+          else
+            if tick() - L20_3 > 3.5 then
+              break
+            end
+            if tick() - L23_3 > 0.4 then
+              L23_3 = tick()
+              L18_3()
+            end
+          end
+          task.wait(0.02)
+        end
+      end)
+      L16_3()
+      pcall(function()
+        local L0_4 = L5_2.PlayerGui:FindFirstChild("DialogueGui")
+        if L0_4 and L0_4.Parent and L0_4.Enabled and L0_4:FindFirstChild("Frame") and L0_4.Frame.Visible then
+          local L1_4 = L0_4.Frame:FindFirstChild("ClickContinue")
+          if L1_4 then
+            L54_1(L1_4)
+            task.wait(0.03)
+          end
+        end
+      end)
+      local L26_3 = tostring(L5_2.PlayerStats.Quest.Value or "")
+      local L27_3 = L25_3 ~= "" and L26_3 ~= "" and L26_3 ~= L25_3
+      if not L27_3 and not L24_3 then
+        pcall(function()
+          local L0_4 = L5_2.Character
+          local L1_4 = L0_4 and (L0_4:FindFirstChild("RemoteEvent") or L11_2)
+          local L2_4 = A0_3:match("[Ss]toryline%s*#?(%d+)") or A0_3:match("#(%d+)")
+          if L1_4 and L2_4 then
+            local L3_4 = tonumber(L2_4)
+            local L4_4 = {}
+            L4_4[1] = {"Dialogue2", "Dialogue6"}
+            L4_4[2] = {"Dialogue3"}
+            L4_4[3] = {"Dialogue3", "Dialogue6"}
+            L4_4[4] = {"Dialogue3"}
+            L4_4[5] = {"Dialogue5"}
+            L4_4[6] = {"Dialogue5"}
+            L4_4[7] = {"Dialogue5"}
+            L4_4[8] = {"Dialogue4"}
+            L4_4[9] = {"Dialogue7"}
+            L4_4[10] = {"Dialogue6"}
+            L4_4[11] = {"Dialogue8", "Dialogue11"}
+            L4_4[12] = {"Dialogue3"}
+            L4_4[13] = {"Dialogue3"}
+            L4_4[14] = {"Dialogue2", "Dialogue7"}
+            local L5_4 = L4_4[L3_4]
+            if L5_4 then
+              for L9_4, L10_4 in ipairs(L5_4) do
+                L1_4:FireServer("EndDialogue", {
+                  NPC = "Storyline #" .. tostring(L3_4),
+                  Dialogue = L10_4,
+                  Option = "Option1"
+                })
+                task.wait(0.04)
+              end
+            end
+          end
+        end)
+      end
+      task.wait(0.03)
+      if L24_3 then
+        return false
+      end
+      return L21_3 or L27_3
+    end
+    
+    local function L37_2(A0_3, A1_3, A2_3, A3_3)
+      A3_3 = A3_3 or 2
+      local L4_3 = tostring(L5_2.PlayerStats.Quest.Value or "")
+      for L8_3 = 1, A3_3 do
+        if not L1_2() then
+          break
+        end
+        local L9_3 = L36_2(A0_3, A1_3, A2_3)
+        local L10_3 = tostring(L5_2.PlayerStats.Quest.Value or "")
+        if L9_3 or L4_3 ~= "" and L10_3 ~= "" and L10_3 ~= L4_3 then
+          return true
+        end
+        if L8_3 < A3_3 and L1_2() then
+          L159_1("Retrying dialogue with " .. tostring(A0_3) .. " (" .. L8_3 .. "/" .. A3_3 .. ")...")
+          L34_2(3)
+          task.wait(0.2)
+        end
+      end
+      return false
+    end
+    
+    local function L38_2(A0_3)
+      if not A0_3 then
+        return false
+      end
+      local L1_3 = typeof(A0_3) == "Instance" and A0_3.Name or tostring(A0_3)
+      local L2_3 = _G.YBAItemFarm
+      if L2_3 and L2_3.isCandyItem then
+        local L3_3, L4_3 = pcall(function()
+          return L2_3.isCandyItem(A0_3) or L2_3.isCandyItem(L1_3)
+        end)
+        if L3_3 and L4_3 then
+          return false
+        end
+      end
+      local L3_3 = getgenv()._YBA_Exports
+      if L3_3 and L3_3.isCandyItem then
+        local L4_3, L5_3 = pcall(function()
+          return L3_3.isCandyItem(A0_3) or L3_3.isCandyItem(L1_3)
+        end)
+        if L4_3 and L5_3 then
+          return false
+        end
+      end
+      local L4_3 = L1_3:lower()
+      if L4_3:find("candy") or L4_3:find("\208\186\208\190\208\189\209\132\208\181\209\130") or L4_3:find("\208\187\208\181\208\180\208\181\208\189") then
+        return false
+      end
+      if L2_3 and L2_3.isSellableItem then
+        local L5_3, L6_3 = pcall(function()
+          return L2_3.isSellableItem(L1_3)
+        end)
+        if L5_3 and L6_3 ~= nil then
+          return L6_3
+        end
+      end
+      if L3_3 and L3_3.isSellableItem then
+        local L5_3, L6_3 = pcall(function()
+          return L3_3.isSellableItem(L1_3)
+        end)
+        if L5_3 and L6_3 ~= nil then
+          return L6_3
+        end
+      end
+      local L5_3 = {}
+      L5_3["mysterious arrow"] = true
+      L5_3.rokakaka = true
+      L5_3["pure rokakaka"] = true
+      L5_3["gold coin"] = true
+      L5_3.diamond = true
+      L5_3["steel ball"] = true
+      L5_3["quinton's glove"] = true
+      L5_3["rib cage of the saint's corpse"] = true
+      L5_3["ancient scroll"] = true
+      L5_3.clackers = true
+      L5_3["caesar's headband"] = true
+      L5_3["stone mask"] = true
+      L5_3["zeppeli's hat"] = true
+      L5_3["zepellin's headband"] = true
+      L5_3["dio's diary"] = true
+      return L5_3[L1_3:lower()] == true
+    end
+    
+    local function L39_2(A0_3)
+      if not A0_3 then
+        return false
+      end
+      local L1_3 = typeof(A0_3) == "Instance" and A0_3.Name or tostring(A0_3)
+      local L2_3 = L1_3:lower()
+      if L2_3:find("candy") or L2_3:find("\208\186\208\190\208\189\209\132\208\181\209\130") or L2_3:find("\208\187\208\181\208\180\208\181\208\189") then
+        return false
+      end
+      local L3_3 = _G.YBAItemFarm
+      if L3_3 and L3_3.isCandyItem then
+        local L4_3, L5_3 = pcall(function()
+          return L3_3.isCandyItem(A0_3) or L3_3.isCandyItem(L1_3)
+        end)
+        if L4_3 and L5_3 then
+          return false
+        end
+      end
+      local L4_3 = getgenv()._YBA_Exports
+      if L4_3 and L4_3.isCandyItem then
+        local L5_3, L6_3 = pcall(function()
+          return L4_3.isCandyItem(A0_3) or L4_3.isCandyItem(L1_3)
+        end)
+        if L5_3 and L6_3 then
+          return false
+        end
+      end
+      if L3_3 and L3_3.sellItem then
+        local L5_3, L6_3 = pcall(function()
+          return L3_3.sellItem(A0_3, true)
+        end)
+        if L5_3 and L6_3 then
+          return true
+        end
+      end
+      local L5_3 = getgenv()._YBA_Exports
+      if L5_3 and L5_3.sellItem then
+        local L6_3, L7_3 = pcall(function()
+          return L5_3.sellItem(A0_3, true)
+        end)
+        if L6_3 and L7_3 then
+          return true
+        end
+      end
+      if type(sellItem) == "function" then
+        local L6_3, L7_3 = pcall(function()
+          return sellItem(A0_3, true)
+        end)
+        if L6_3 and L7_3 then
+          return true
+        end
+      end
+      return false
+    end
+    
+    local function L40_2()
+      local L0_3 = _G.YBAItemFarm
+      if L0_3 and L0_3.sellInventory then
+        pcall(function()
+          L0_3.sellInventory()
+        end)
+        task.wait(0.3)
+      end
+      local L1_3 = L5_2:FindFirstChild("Backpack")
+      local L2_3 = L5_2.Character
+      local L3_3 = false
+      
+      local function L4_3(A0_4)
+        if A0_4 and A0_4:IsA("Tool") and L38_2(A0_4) then
+          local L1_4 = L39_2(A0_4)
+          if L1_4 then
+            L3_3 = true
+            task.wait(0.2)
+          end
+        end
+      end
+      
+      if L1_3 then
+        for L8_3, L9_3 in ipairs(L1_3:GetChildren()) do
+          L4_3(L9_3)
+        end
+      end
+      if L2_3 then
+        for L8_3, L9_3 in ipairs(L2_3:GetChildren()) do
+          L4_3(L9_3)
+        end
+      end
+      return L3_3
+    end
+    
+    local function L41_2(A0_3)
+      A0_3 = tonumber(A0_3) or 5000
+      local L1_3 = L5_2.PlayerStats and L5_2.PlayerStats:FindFirstChild("Money") and L5_2.PlayerStats.Money.Value or 0
+      if A0_3 <= L1_3 then
+        return true
+      end
+      L159_1("Checking inventory to sell items for $" .. tostring(A0_3) .. " (Have: $" .. L1_3 .. ")...")
+      L40_2()
+      L1_3 = L5_2.PlayerStats and L5_2.PlayerStats:FindFirstChild("Money") and L5_2.PlayerStats.Money.Value or 0
+      if A0_3 <= L1_3 then
+        return true
+      end
+      local L2_3 = _G.YBAItemFarm
+      local L3_3 = getgenv()._YBA_Exports or {}
+      local L4_3 = L3_3.collectSingleItemNormal or L2_3 and L2_3.collectSingleItemNormal
+      local L5_3 = L3_3.findNearestItem or L2_3 and L2_3.findNearestItem
+      local L6_3 = {
+        "Mysterious Arrow",
+        "Rokakaka",
+        "Gold Coin",
+        "Diamond",
+        "Steel Ball",
+        "Quinton's Glove",
+        "Pure Rokakaka",
+        "Rib Cage of The Saint's Corpse",
+        "Ancient Scroll",
+        "Clackers",
+        "Caesar's Headband",
+        "Stone Mask",
+        "Zeppeli's Hat"
+      }
+      local L7_3 = 40
+      local L8_3 = 0
+      local L9_3 = tick() + 240
+      enableNoclipState("stand")
+      while L1_2() and L7_3 > L8_3 and L9_3 > tick() do
+        L1_3 = L5_2.PlayerStats and L5_2.PlayerStats:FindFirstChild("Money") and L5_2.PlayerStats.Money.Value or 0
+        if A0_3 <= L1_3 then
+          break
+        end
+        L8_3 = L8_3 + 1
+        do
+          local L10_3
+          if L5_3 then
+            pcall(function()
+              L10_3 = L5_3()
+            end)
+          end
+          if not L10_3 then
+            pcall(function()
+              local L0_4 = workspace:FindFirstChild("Item_Spawns") and workspace.Item_Spawns:FindFirstChild("Items")
+              if L0_4 then
+                for L4_4, L5_4 in ipairs(L0_4:GetChildren()) do
+                  if L5_4:IsA("Model") and (L5_4.PrimaryPart or L5_4:FindFirstChildWhichIsA("BasePart")) then
+                    L10_3 = L5_4
+                    break
+                  end
+                end
+              end
+            end)
+          end
+          if L10_3 and L4_3 then
+            local L11_3 = L10_3.Name
+            L159_1("Farming " .. tostring(L11_3) .. " for $" .. tostring(A0_3) .. " (Have: $" .. L1_3 .. ")...")
+            pcall(function()
+              L4_3(L10_3)
+            end)
+            task.wait(0.3)
+          else
+            local L11_3 = L6_3[(L8_3 - 1) % #L6_3 + 1]
+            L159_1("Farming " .. L11_3 .. " for $" .. tostring(A0_3) .. " (Have: $" .. L1_3 .. ")...")
+            pcall(function()
+              L22_2(L11_3, 1)
+            end)
+            task.wait(0.3)
+          end
+          if L8_3 % 2 == 0 or L8_3 == 1 then
+            L40_2()
+            L1_3 = L5_2.PlayerStats and L5_2.PlayerStats:FindFirstChild("Money") and L5_2.PlayerStats.Money.Value or 0
+          end
+          task.wait(0.2)
+        end
+      end
+      disableNoclipState("stand")
+      L40_2()
+      L1_3 = L5_2.PlayerStats and L5_2.PlayerStats:FindFirstChild("Money") and L5_2.PlayerStats.Money.Value or 0
+      L159_1("Finished farming for $" .. tostring(A0_3) .. ". Current money: $" .. L1_3)
+      return A0_3 <= L1_3
+    end
+    
+    local L42_2 = {}
+    
+    local function L43_2(A0_3, A1_3, A2_3, A3_3)
+      local function L4_3(A0_4)
+        if not (A0_4 and A0_4.Parent) or not A0_4:FindFirstChild("HumanoidRootPart") then
+          return false
+        end
+        local L1_4 = A0_4:FindFirstChildOfClass("Humanoid")
+        if not L1_4 or L1_4.Health <= 0 then
+          return false
+        end
+        local L2_4 = A0_4:FindFirstChild("Health")
+        if L2_4 and L2_4:IsA("ValueBase") and 0 >= L2_4.Value and L1_4.Health <= 0.1 then
+          return false
+        end
+        return true
+      end
+      
+      local function L5_3()
+        local L0_4 = tick() + (getgenv().NPCTimeOut or 15)
+        repeat
+          L18_2 = tick()
+          local L1_4
+          local L2_4 = math.huge
+          local L3_4 = L5_2.Character and L5_2.Character:FindFirstChild("HumanoidRootPart")
+          if L3_4 then
+            for L7_4, L8_4 in pairs(workspace.Living:GetChildren()) do
+              local L9_4 = L42_2[L8_4] and tick() < L42_2[L8_4]
+              if not L9_4 and L8_4.Name == A0_3 and L8_4:FindFirstChild("HumanoidRootPart") and L4_3(L8_4) then
+                local L10_4 = (L3_4.Position - L8_4.HumanoidRootPart.Position).Magnitude
+                if L2_4 > L10_4 then
+                  L2_4 = L10_4
+                  L1_4 = L8_4
+                end
+              end
+            end
+          end
+          if L1_4 then
+            return L1_4
+          end
+          task.wait(0.2)
+        until L0_4 < tick() or not L1_2()
+        return nil
+      end
+      
+      local L6_3 = 0
+      local L7_3 = 0
+      local L8_3 = {}
+      L8_3["Star Platinum"] = {
+        "Stand Barrage",
+        "Ora Kicks"
+      }
+      L8_3["Star Platinum: The World"] = {
+        "Stand Barrage",
+        "Ora Kicks",
+        "Skull Crusher"
+      }
+      L8_3["The World"] = {
+        "Stand Barrage",
+        "Knives",
+        "Kick Barrage"
+      }
+      L8_3["The World: Alternate Universe"] = {
+        "Stand Barrage",
+        "Knives",
+        "Gun",
+        "Chop"
+      }
+      L8_3["King Crimson"] = {
+        "Stand Barrage",
+        "Chop"
+      }
+      L8_3["King Crimson Requiem"] = {
+        "Stand Barrage",
+        "Chop"
+      }
+      L8_3["Gold Experience"] = {
+        "Stand Barrage",
+        "Create Life"
+      }
+      L8_3["Gold Experience Requiem"] = {
+        "Stand Barrage",
+        "Scorpion Beam"
+      }
+      L8_3["Silver Chariot"] = {
+        "Stand Barrage",
+        "Million Pricks",
+        "Last Shot"
+      }
+      L8_3["Chariot Requiem"] = {
+        "Stand Barrage"
+      }
+      L8_3["Crazy Diamond"] = {
+        "Stand Barrage",
+        "Bearing Shot",
+        "Blood Slash"
+      }
+      L8_3["Crazy Diamond Requiem"] = {
+        "Stand Barrage"
+      }
+      L8_3["Diver Down"] = {
+        "Stand Barrage"
+      }
+      L8_3["Killer Queen"] = {
+        "Stand Barrage"
+      }
+      L8_3["Killer Queen: Bites the Dust"] = {
+        "Stand Barrage"
+      }
+      L8_3.Whitesnake = {
+        "Stand Barrage",
+        "Acid Spit"
+      }
+      L8_3["C-Moon"] = {
+        "Stand Barrage",
+        "Surface Inversion Punch"
+      }
+      L8_3["Made in Heaven"] = {
+        "Stand Barrage",
+        "Speed Slice"
+      }
+      L8_3.D4C = {
+        "Stand Barrage"
+      }
+      L8_3["D4C: Love Train"] = {
+        "Stand Barrage"
+      }
+      L8_3["Tusk Act 1"] = {"Nail Shots"}
+      L8_3["Tusk Act 2"] = {
+        "Nail Shots",
+        "Golden Rectangle Nail"
+      }
+      L8_3["Tusk Act 3"] = {
+        "Nail Shots",
+        "Golden Rectangle Nail"
+      }
+      L8_3["Tusk Act 4"] = {
+        "Stand Barrage",
+        "Golden Rectangle Nail"
+      }
+      L8_3["Hermit Purple"] = {"Vine Slap", "Vine Trap"}
+      L8_3["Magician's Red"] = {
+        "Stand Barrage",
+        "Crossfire Hurricane"
+      }
+      L8_3["Purple Haze"] = {
+        "Stand Barrage",
+        "Bulb Throw"
+      }
+      L8_3["Sticky Fingers"] = {
+        "Stand Barrage",
+        "Extend Arm"
+      }
+      L8_3["The Hand"] = {
+        "Stand Barrage",
+        "Erasure",
+        "Erasure Pull"
+      }
+      L8_3["Sex Pistols"] = {
+        "Multi Shot",
+        "Auto Reload"
+      }
+      L8_3.Aerosmith = {
+        "Stand Barrage",
+        "Vola Barrage"
+      }
+      L8_3["Beach Boy"] = {"Hook Slash", "Auto Rod"}
+      L8_3["Mr. President"] = {}
+      L8_3.Anubis = {
+        "Stand Barrage",
+        "Cursed Blade"
+      }
+      L8_3["Red Hot Chili Pepper"] = {
+        "Stand Barrage",
+        "Lightning Jab"
+      }
+      L8_3["Soft & Wet"] = {
+        "Stand Barrage",
+        "Friction Plunder"
+      }
+      L8_3["Soft & Wet: Go Beyond"] = {
+        "Stand Barrage",
+        "Go Beyond Bubble",
+        "Explosive Spin"
+      }
+      
+      local function L9_3(A0_4)
+        if not L4_3(A0_4) then
+          return
+        end
+        pcall(function()
+          local L0_5 = L5_2.PlayerGui:FindFirstChild("DialogueGui")
+          if L0_5 and L0_5.Enabled and L0_5:FindFirstChild("Frame") and L0_5.Frame.Visible then
+            local L1_5 = L0_5.Frame:FindFirstChild("ClickContinue")
+            if L1_5 then
+              L54_1(L1_5)
+            else
+              L0_5.Enabled = false
+            end
+          end
+        end)
+        local L1_4 = L5_2.Character
+        if not L1_4 then
+          return
+        end
+        local L2_4 = L1_4:FindFirstChild("RemoteFunction") or L10_2
+        local L3_4 = L1_4:FindFirstChild("RemoteEvent") or L11_2
+        if not L2_4 then
+          return
+        end
+        
+        local function L4_4(A0_5, A1_5)
+          if not L1_2() or not L4_3(A0_4) then
+            return
+          end
+          task.spawn(function()
+            pcall(function()
+              L2_4:InvokeServer(A0_5, A1_5)
+            end)
+          end)
+        end
+        
+        local L5_4 = game:GetService("CollectionService")
+        if L5_4:HasTag(A0_4, "Blocking") then
+          if L3_4 then
+            L3_4:FireServer("InputBegan", {
+              Input = Enum.KeyCode.R
+            })
+          end
+          L4_4("Attack", "m2")
+        else
+          local L6_4 = tick()
+          if 0.12 < L6_4 - L6_3 and getgenv().autoSkills ~= false and L5_2.PlayerStats.Stand.Value ~= "None" then
+            L6_3 = L6_4
+            local L7_4 = L8_3
+            local L8_4 = L7_4[L5_2.PlayerStats.Stand.Value]
+            if L8_4 then
+              for L12_4, L13_4 in ipairs(L8_4) do
+                L4_4("SpecialMove", {Skill = L13_4})
+              end
+            end
+          end
+          for L10_4 = 1, 5 do
+            L4_4("Attack", "m1")
+          end
+        end
+        local L6_4 = tick()
+        if 1 <= L6_4 - L7_3 then
+          local L7_4 = L5_2.PlayerStats.Spec.Value:lower():find("hamon") ~= nil or L1_4:FindFirstChild("Hamon") ~= nil
+          if L7_4 then
+            if L1_4:FindFirstChild("Hamon") then
+              local L8_4 = L1_4.Hamon.Value
+              local L9_4 = getgenv().HamonCharge and getgenv().HamonCharge * 10 or 90
+              if L8_4 < L9_4 then
+                L7_3 = L6_4
+                L2_4:InvokeServer("ChargeHamon")
+              end
+            else
+              L7_3 = L6_4
+              L2_4:InvokeServer("ChargeHamon")
+            end
+          end
+        end
+      end
+      
+      local L10_3 = L5_3()
+      if not L10_3 then
+        L159_1("No " .. A0_3 .. " found nearby, waiting...")
+        task.wait(1)
+        return
+      end
+      local L11_3 = game:GetService("RunService")
+      local L12_3, L13_3
+      local L14_3 = L10_3:FindFirstChild("HumanoidRootPart")
+      local L15_3 = L5_2.Character
+      local L16_3 = L15_3 and L15_3:FindFirstChild("HumanoidRootPart")
+      if not L14_3 or not L16_3 then
+        task.wait(0.5)
+        return
+      end
+      local L17_3 = A0_3 == "Diavolo" or L10_3 and L10_3.Name == "Diavolo"
+      local L18_3 = L14_3.Position
+      local L19_3 = {}
+      L19_3.None = true
+      L19_3["Beach Boy"] = true
+      L19_3["Sex Pistols"] = true
+      L19_3["Six Pistols"] = true
+      L19_3.Anubis = true
+      L19_3["Hermit Purple"] = true
+      L19_3["Mr. President"] = true
+      L19_3["White Album"] = true
+      L19_3["Scary Monsters"] = true
+      local L20_3 = L5_2.PlayerStats.Stand.Value
+      local L21_3 = L20_3 ~= "None" and not L19_3[L20_3]
+      local L22_3 = L91_1(L20_3)
+      local L23_3 = L21_3 and 11.5 or L22_3
+      L16_3.CFrame = CFrame.new(L18_3 - Vector3.new(0, L23_3, 0)) * CFrame.Angles(math.rad(90), 0, 0)
+      L16_3.AssemblyLinearVelocity = Vector3.new(0, 0.05, 0)
+      L16_3.AssemblyAngularVelocity = Vector3.zero
+      L11_3.Heartbeat:Wait()
+      task.wait(0.06)
+      if L21_3 and L5_2.Character and L5_2.Character:FindFirstChild("SummonedStand") and not L5_2.Character.SummonedStand.Value then
+        pcall(function()
+          local L0_4 = L5_2.Character:FindFirstChild("RemoteFunction") or L10_2
+          if L0_4 then
+            L0_4:InvokeServer("ToggleStand", "Toggle")
+          end
+        end)
+        task.wait(0.3)
+      end
+      if L21_3 then
+        L122_1(false)
+      end
+      local L24_3 = {}
+      pcall(function()
+        if L5_2.Character then
+          for L3_4, L4_4 in ipairs(L5_2.Character:GetDescendants()) do
+            if L4_4:IsA("BasePart") then
+              L24_3[#L24_3 + 1] = L4_4
+            end
+          end
+        end
+      end)
+      local L25_3
+      pcall(function()
+        if L5_2.Character then
+          L25_3 = L5_2.Character.DescendantAdded:Connect(function(A0_5)
+            if A0_5:IsA("BasePart") then
+              L24_3[#L24_3 + 1] = A0_5
+            end
+          end)
+        end
+      end)
+      L13_3 = L11_3.Stepped:Connect(function()
+        if L5_2.Character then
+          if L25_3 == nil or L25_3.Connected == false then
+            if table.clear then
+              table.clear(L24_3)
+            else
+              for L3_4 in pairs(L24_3) do
+                L24_3[L3_4] = nil
+              end
+            end
+            pcall(function()
+              for L3_5, L4_5 in ipairs(L5_2.Character:GetDescendants()) do
+                if L4_5:IsA("BasePart") then
+                  L24_3[#L24_3 + 1] = L4_5
+                end
+              end
+            end)
+          end
+          for L3_4 = 1, #L24_3 do
+            local L4_4 = L24_3[L3_4]
+            if L4_4 and L4_4.Parent and L4_4.CanCollide then
+              L4_4.CanCollide = false
+            end
+          end
+        end
+      end)
+      L12_3 = L11_3.Heartbeat:Connect(function()
+        local L0_4 = L5_2.Character
+        local L1_4 = L0_4 and L0_4:FindFirstChild("HumanoidRootPart")
+        local L2_4 = L10_3 and L10_3:FindFirstChild("HumanoidRootPart")
+        if L1_4 and L2_4 and L2_4.Parent and L4_3(L10_3) then
+          if A3_3 then
+            A3_3(L10_3)
+          else
+            local L3_4 = L0_4:FindFirstChild("StandMorph")
+            local L4_4 = L2_4.Position
+            if L21_3 then
+              local L5_4 = L0_4:FindFirstChild("SummonedStand")
+              if L5_4 and not L5_4.Value then
+                pcall(function()
+                  local L0_5 = L0_4:FindFirstChild("RemoteFunction") or L10_2
+                  if L0_5 then
+                    L0_5:InvokeServer("ToggleStand", "Toggle")
+                  end
+                end)
+              end
+              if L3_4 and L3_4.PrimaryPart then
+                L122_1(false)
+                local L6_4 = L2_4.CFrame.LookVector
+                local L7_4 = Vector3.new(L6_4.X, 0, L6_4.Z)
+                if L7_4.Magnitude > 0.01 then
+                  L7_4 = L7_4.Unit
+                else
+                  L7_4 = Vector3.new(0, 0, -1)
+                end
+                local L8_4 = L4_4 - L7_4 * 1.2 + Vector3.new(0, 0.5, 0)
+                L3_4.PrimaryPart.CFrame = CFrame.lookAt(L8_4, L4_4)
+                L3_4.PrimaryPart.AssemblyLinearVelocity = Vector3.zero
+                L3_4.PrimaryPart.AssemblyAngularVelocity = Vector3.zero
+                L2_2(L0_4, L3_4.PrimaryPart)
+              end
+              local L6_4 = (Vector2.new(L18_3.X, L18_3.Z) - Vector2.new(L4_4.X, L4_4.Z)).Magnitude
+              if 14 < L6_4 then
+                L18_3 = L4_4
+              end
+              L1_4.CFrame = CFrame.new(L18_3 - Vector3.new(0, 11.5, 0)) * CFrame.Angles(math.rad(90), 0, 0)
+              L1_4.AssemblyLinearVelocity = Vector3.zero
+              L1_4.AssemblyAngularVelocity = Vector3.zero
+            else
+              local L5_4 = L2_4.Position
+              local L6_4 = (Vector2.new(L18_3.X, L18_3.Z) - Vector2.new(L5_4.X, L5_4.Z)).Magnitude
+              if 14 < L6_4 then
+                L18_3 = L5_4
+              end
+              L1_4.CFrame = CFrame.new(L2_4.Position - Vector3.new(0, L22_3, 0)) * CFrame.Angles(math.rad(90), 0, 0)
+              L1_4.AssemblyLinearVelocity = Vector3.zero
+              L1_4.AssemblyAngularVelocity = Vector3.zero
+              L2_2(L0_4, L2_4)
+            end
+          end
+        end
+      end)
+      local L26_3 = false
+      local L27_3 = 0
+      local L28_3
+      local L29_3 = L5_2.PlayerStats.Quest.Value
+      local L30_3 = L5_2.PlayerStats.QuestProgress.Value
+      pcall(function()
+        local L0_4 = L5_2.PlayerGui.HUD.Main.DropMoney.Money
+        L28_3 = L0_4.ChildAdded:Connect(function(A0_5)
+          if tonumber(string.match(A0_5.Name, "%d+")) then
+            L26_3 = true
+          end
+        end)
+      end)
+      local L31_3 = tick() + 35
+      local L32_3 = tick()
+      local L33_3 = tick()
+      local L34_3 = L10_3:FindFirstChildOfClass("Humanoid")
+      local L35_3 = L10_3:FindFirstChild("Health")
+      local L36_3 = L34_3 and L34_3.Health or L35_3 and L35_3:IsA("ValueBase") and L35_3.Value or 9999
+      while L1_2() and L31_3 > tick() do
+        L18_2 = tick()
+        if tick() - L33_3 >= 4 then
+          L33_3 = tick()
+          local L37_3 = L10_3 and L10_3:FindFirstChild("HumanoidRootPart")
+          local L38_3 = L5_2.Character
+          local L39_3 = L38_3 and L38_3:FindFirstChild("HumanoidRootPart")
+          if L37_3 and L39_3 then
+            local L40_3 = (Vector2.new(L39_3.Position.X, L39_3.Position.Z) - Vector2.new(L37_3.Position.X, L37_3.Position.Z)).Magnitude
+            if 14 < L40_3 then
+              L18_3 = L37_3.Position
+              local L41_3 = L21_3 and 11.5 or L22_3
+              L39_3.CFrame = CFrame.new(L37_3.Position - Vector3.new(0, L41_3, 0)) * CFrame.Angles(math.rad(90), 0, 0)
+              L39_3.AssemblyLinearVelocity = Vector3.zero
+              L39_3.AssemblyAngularVelocity = Vector3.zero
+            end
+          end
+        end
+        local L37_3 = L5_2.Character and L5_2.Character:FindFirstChild("Humanoid")
+        if not L37_3 or 0 >= L37_3.Health then
+          break
+        end
+        if not (L10_3 and L10_3.Parent) or not L10_3:FindFirstChild("HumanoidRootPart") then
+          L26_3 = true
+          break
+        end
+        if L26_3 then
+          break
+        end
+        if L5_2.PlayerStats.Quest.Value == L29_3 and L30_3 < L5_2.PlayerStats.QuestProgress.Value then
+          L26_3 = true
+          break
+        end
+        local L38_3 = L10_3:FindFirstChildOfClass("Humanoid")
+        local L39_3 = L10_3:FindFirstChild("Health")
+        local L40_3 = L38_3 and L38_3.Health or L39_3 and L39_3:IsA("ValueBase") and L39_3.Value or 0
+        if L36_3 > L40_3 then
+          L36_3 = L40_3
+          L32_3 = tick()
+          L31_3 = tick() + 25
+        end
+        if tick() - L32_3 > 12 then
+          break
+        end
+        if L38_3 and 0 >= L38_3.Health or L39_3 and L39_3:IsA("ValueBase") and 0 >= L39_3.Value and L38_3 and L38_3.Health <= 0.1 then
+          L27_3 = L27_3 + 1
+          if 4 < L27_3 then
+            L26_3 = true
+            break
+          end
+        else
+          L27_3 = 0
+        end
+        L9_3(L10_3)
+        task.wait()
+      end
+      if not L26_3 and L10_3 then
+        L42_2[L10_3] = tick() + 20
+      end
+      if L28_3 then
+        L28_3:Disconnect()
+      end
+      if L12_3 then
+        L12_3:Disconnect()
+      end
+      if L13_3 then
+        L13_3:Disconnect()
+        L13_3 = nil
+      end
+      if L25_3 then
+        pcall(function()
+          L25_3:Disconnect()
+        end)
+        L25_3 = nil
+      end
+      if _G.YBAItemFarm and _G.YBAItemFarm.restoreCollisions then
+        _G.YBAItemFarm.restoreCollisions()
+      end
+      if L26_3 then
+        pcall(function()
+          if L10_3 and L10_3.Parent then
+            L10_3:Destroy()
+          end
+        end)
+      end
+      L3_2(L5_2.Character)
+      if L21_3 then
+        L122_1(true)
+      end
+      pcall(function()
+        local L0_4 = L5_2.Character
+        local L1_4 = L0_4 and L0_4:FindFirstChild("HumanoidRootPart")
+        if L1_4 then
+          local L2_4 = L10_3 and (L10_3:FindFirstChild("HumanoidRootPart") or L10_3.PrimaryPart or L10_3:FindFirstChild("Torso") or L10_3:FindFirstChild("Head"))
+          local L3_4 = L17_3 and L18_3 or L2_4 and L2_4.Position
+          if L3_4 then
+            L1_4.CFrame = CFrame.new(L3_4 + Vector3.new(0, 3.5, 0))
+          else
+            L1_4.CFrame = L1_4.CFrame + Vector3.new(0, 25, 0)
+          end
+          L1_4.AssemblyLinearVelocity = Vector3.zero
+          L1_4.AssemblyAngularVelocity = Vector3.zero
+        end
+      end)
+    end
+    
+    local function L44_2()
+      pcall(function()
+        local L0_4 = {
+          "I",
+          "II",
+          "III",
+          "IV",
+          "V"
+        }
+        if L5_2.PlayerStats.Stand.Value ~= "None" then
+          L14_2("LearnSkill", {
+            Skill = "Stand Summon",
+            SkillTreeType = "Stand"
+          })
+          for L4_4, L5_4 in ipairs(L0_4) do
+            L14_2("LearnSkill", {
+              Skill = "Destructive Power " .. L5_4,
+              SkillTreeType = "Stand"
+            })
+          end
+          L14_2("LearnSkill", {
+            Skill = "Stand Barrage",
+            SkillTreeType = "Stand"
+          })
+          L14_2("LearnSkill", {
+            Skill = "Stand Barrage Finisher",
+            SkillTreeType = "Stand"
+          })
+        end
+        for L4_4, L5_4 in ipairs(L0_4) do
+          L14_2("LearnSkill", {
+            Skill = "Agility " .. L5_4,
+            SkillTreeType = "Character"
+          })
+          L14_2("LearnSkill", {
+            Skill = "Vitality " .. L5_4,
+            SkillTreeType = "Character"
+          })
+          L14_2("LearnSkill", {
+            Skill = "Sturdiness " .. L5_4,
+            SkillTreeType = "Character"
+          })
+        end
+        L14_2("LearnSkill", {Skill = "Worthiness", SkillTreeType = "Character"})
+        local L1_4 = false
+        pcall(function()
+          local L0_5 = tostring(L5_2.PlayerStats.Spec.Value or ""):lower()
+          L1_4 = L0_5:find("hamon") ~= nil or L5_2.Character and L5_2.Character:FindFirstChild("Hamon") ~= nil
+        end)
+        if L1_4 then
+          for L5_4, L6_4 in ipairs(L0_4) do
+            L14_2("LearnSkill", {
+              Skill = "Hamon Punch " .. L6_4,
+              SkillTreeType = "Spec"
+            })
+            L14_2("LearnSkill", {
+              Skill = "Lung Capacity " .. L6_4,
+              SkillTreeType = "Spec"
+            })
+            L14_2("LearnSkill", {
+              Skill = "Breathing Technique " .. L6_4,
+              SkillTreeType = "Spec"
+            })
+            L14_2("LearnSkill", {
+              Skill = "Hamon Charge " .. L6_4,
+              SkillTreeType = "Spec"
+            })
+          end
+          L14_2("LearnSkill", {
+            Skill = "Hamon Punch V",
+            SkillTreeType = "Spec"
+          })
+          L14_2("LearnSkill", {
+            Skill = "Lung Capacity V",
+            SkillTreeType = "Spec"
+          })
+          L14_2("LearnSkill", {
+            Skill = "Breathing Technique V",
+            SkillTreeType = "Spec"
+          })
+          L14_2("LearnSkill", {Skill = "Zoom Punch", SkillTreeType = "Spec"})
+          L14_2("LearnSkill", {
+            Skill = "Scarlet Overdrive",
+            SkillTreeType = "Spec"
+          })
+          L14_2("LearnSkill", {
+            Skill = "Sunlight Yellow Overdrive",
+            SkillTreeType = "Spec"
+          })
+          L14_2("LearnSkill", {
+            Skill = "Hamon Defense",
+            SkillTreeType = "Spec"
+          })
+        end
+      end)
+    end
+    
+    local L45_2 = false
+    
+    local function L46_2()
+      local L0_3 = L5_2.PlayerStats
+      if L0_3.Quest.Value == "Take down 3 vampires" and L0_3.QuestProgress.Value < 3 then
+        return true
+      end
+      if L0_3.Quest.Value == "Take down 3 vampires" and L0_3.QuestProgress.Value >= 3 then
+        L159_1("Handing in completed Vampire quest...")
+        L37_2("William Zeppeli [Lvl. 25+]", 1)
+        local L1_3 = tick()
+        while true do
+          if not (3 > tick() - L1_3 and L1_2()) or L0_3.Quest.Value ~= "Take down 3 vampires" or L0_3.QuestProgress.Value < 3 then
+            break
+          end
+          task.wait(0.2)
+        end
+        task.wait(0.3)
+      end
+      if L0_3.Quest.Value ~= "Take down 3 vampires" or L0_3.QuestProgress.Value >= 3 then
+        L159_1("Taking Vampire quest from Zeppeli...")
+        L37_2("William Zeppeli [Lvl. 25+]", 1, "help out")
+        local L1_3 = tick()
+        while 3 > tick() - L1_3 and L1_2() do
+          if L0_3.Quest.Value == "Take down 3 vampires" and L0_3.QuestProgress.Value < 3 then
+            L159_1("Vampire quest ready (0/3)!")
+            return true
+          end
+          task.wait(0.2)
+        end
+      end
+      return L0_3.Quest.Value == "Take down 3 vampires" and L0_3.QuestProgress.Value < 3
+    end
+    
+    local function L47_2()
+      L159_1("Farming vampires until max level...")
+      L107_1("Auto Prestige", "Farming vampires until max level...")
+      while L1_2() and L5_2.PlayerStats.Level.Value < 50 do
+        local L0_3 = L5_2.PlayerStats.Level.Value
+        local L1_3 = L5_2.PlayerStats.Prestige.Value
+        local L2_3 = 35
+        if L1_3 == 1 then
+          L2_3 = 40
+        elseif L1_3 == 2 then
+          L2_3 = 45
+        elseif 3 <= L1_3 then
+          L2_3 = 50
+        end
+        if L0_3 >= L2_3 then
+          if 3 <= L1_3 and 50 <= L0_3 and L127_1 and L127_1() then
+            break
+          end
+          if L5_2.PlayerStats.Money.Value < 10000 then
+            L159_1("Max level reached. Collecting $10,000 for prestige...")
+            L41_2(10000)
+          end
+          if L5_2.PlayerStats.Money.Value >= 10000 then
+            L159_1("Reached max level and $10,000 for P" .. L1_3)
+            break
+          else
+            L159_1("Farming vampires for $10,000... ($" .. L5_2.PlayerStats.Money.Value .. ")")
+          end
+        end
+        L46_2()
+        getgenv().HamonCharge = 10
+        L43_2("Vampire", 15)
+        task.wait(0.05)
+        if 3 <= L5_2.PlayerStats.QuestProgress.Value or L5_2.PlayerStats.Quest.Value ~= "Take down 3 vampires" then
+          L46_2()
+        end
+      end
+      L159_1("Vampire farming complete! Level: " .. L5_2.PlayerStats.Level.Value)
+      return true
+    end
+    
+    local function L48_2()
+      local L0_3 = L5_2.PlayerStats.Prestige.Value
+      local L1_3 = L5_2.PlayerStats.Level.Value
+      local L2_3 = false
+      if L0_3 == 0 and 35 <= L1_3 then
+        L2_3 = true
+      elseif L0_3 == 1 and 40 <= L1_3 then
+        L2_3 = true
+      elseif L0_3 == 2 and 45 <= L1_3 then
+        L2_3 = true
+      end
+      if not L2_3 then
+        return false
+      end
+      if L5_2.PlayerStats.Money.Value < 10000 then
+        L159_1("Collecting $10,000 for Prestige...")
+        L41_2(10000)
+      end
+      L159_1("Prestiging! P" .. L0_3 .. " -> P" .. L0_3 + 1)
+      L107_1("Auto Prestige", "Prestiging to P" .. L0_3 + 1 .. "...")
+      local L3_3 = L37_2("Prestige Master Will", 1, "prestige")
+      if not L3_3 then
+        L37_2("Prestige Master", 1, "prestige")
+      end
+      local L4_3 = tick()
+      while tick() - L4_3 < 10 and L1_2() do
+        L18_2 = tick()
+        if L0_3 < L5_2.PlayerStats.Prestige.Value then
+          local L5_3 = L5_2.PlayerStats.Prestige.Value
+          local L6_3 = L5_2.PlayerStats.Level.Value
+          L159_1("Prestiged successfully!")
+          L107_1("Auto Prestige", "Prestiged to Prestige " .. L5_3 .. "!")
+          if L135_1 then
+            L135_1(L5_3, L6_3, false)
+          end
+          L45_2 = false
+          return true
+        end
+        task.wait(0.2)
+      end
+      local L5_3 = L0_3 < L5_2.PlayerStats.Prestige.Value
+      if L5_3 then
+        local L6_3 = L5_2.PlayerStats.Prestige.Value
+        local L7_3 = L5_2.PlayerStats.Level.Value
+        if L135_1 then
+          L135_1(L6_3, L7_3, false)
+        end
+        L45_2 = false
+      end
+      return L5_3
+    end
+    
+    local function L49_2(A0_3)
+      if not A0_3 then
+        return
+      end
+      for L4_3, L5_3 in pairs(A0_3:GetDescendants()) do
+        if L5_3:IsA("BasePart") and L5_3.CanCollide == true then
+          L5_3.CanCollide = false
+        end
+      end
+    end
+    
+    local function L50_2()
+      L159_1("Resetting character...")
+      L107_1("Auto Prestige", "Resetting character...")
+      local L0_3 = L5_2.Character and L5_2.Character:FindFirstChildWhichIsA("Humanoid")
+      if L0_3 then
+        L0_3.Health = 0
+      end
+      L5_2.CharacterAdded:Wait()
+      task.wait(3)
+      L6_2 = L5_2.Character
+      if L6_2 then
+        L10_2 = L6_2:WaitForChild("RemoteFunction", 5)
+        L11_2 = L6_2:WaitForChild("RemoteEvent", 5)
+        L12_2 = L6_2:WaitForChild("PrimaryPart", 5)
+      end
+      L49_2(L6_2)
+      if not L5_2.PlayerGui:FindFirstChild("HUD") then
+        L5_2.PlayerGui:WaitForChild("HUD", 3)
+      end
+      return true
+    end
+    
+    local function L51_2(A0_3)
+      if A0_3 <= L5_2.PlayerStats.Level.Value then
+        return
+      end
+      L159_1("Current Level " .. L5_2.PlayerStats.Level.Value .. " < required Level " .. A0_3 .. " \226\128\148 leveling up...")
+      L107_1("Auto Prestige", "Leveling up to Level " .. A0_3 .. "...")
+      while L1_2() and A0_3 > L5_2.PlayerStats.Level.Value do
+        local L1_3 = L5_2.PlayerStats.Level.Value
+        local L2_3 = "Vampire"
+        if L1_3 < 5 then
+          L2_3 = "Security Guard"
+        elseif L1_3 < 10 then
+          L2_3 = "Thug"
+        elseif L1_3 < 20 then
+          L2_3 = "Corrupt Police"
+        elseif L1_3 < 25 then
+          L2_3 = "Zombie Henchman"
+        else
+          L2_3 = "Vampire"
+          L46_2()
+        end
+        L43_2(L2_3, 15)
+        task.wait(0.05)
+        if L2_3 == "Vampire" and (L5_2.PlayerStats.QuestProgress.Value >= 3 or L5_2.PlayerStats.Quest.Value ~= "Take down 3 vampires") then
+          L46_2()
+        end
+      end
+    end
+    
+    local function L52_2(A0_3)
+      if L158_1 then
+        pcall(L158_1, "completed")
+      end
+      L159_1(A0_3 or "MAXED! P3 L50")
+      L107_1("Auto Prestige", "MAX PRESTIGE 3 LEVEL 50!")
+      L151_1 = false
+      pcall(function()
+        delfile("AutoPres3_" .. L5_2.Name .. ".txt")
+      end)
+      if L127_1 and L127_1() then
+        return false
+      end
+      return false
+    end
+    
+    local function L53_2()
+      if L5_2.PlayerStats.Level.Value == 50 and L5_2.PlayerStats.Prestige.Value >= 3 then
+        return L52_2("MAXED! P3 L50")
+      end
+      if L5_2.PlayerStats.Stand.Value == "None" and L5_2.PlayerStats.Level.Value >= 2 then
+        L30_2()
+        task.wait(1)
+      end
+      if L5_2.PlayerStats.Stand.Value ~= "None" and (not (L6_2 and L6_2:FindFirstChild("SummonedStand")) or not L6_2.SummonedStand.Value) then
+        L14_2("ToggleStand", "Toggle")
+        task.wait(0.5)
+      end
+      L44_2()
+      if getgenv().autoRequiem and L5_2.PlayerStats.Level.Value >= 25 and L5_2.PlayerStats.Prestige.Value >= 1 and L5_2.Backpack:FindFirstChild("Requiem Arrow") and (L5_2.PlayerStats.Stand.Value == "King Crimson" or L5_2.PlayerStats.Stand.Value == "Star Platinum") then
+        local L0_3 = sfCheckShiny and sfCheckShiny() or "None"
+        if L0_3 == "None" or L0_3 == "" then
+          L27_2(L5_2.Character.HumanoidRootPart, standFarmPosition)
+          local L1_3 = L5_2.PlayerStats.Stand.Value
+          L21_2("Requiem Arrow", "V")
+          repeat
+            task.wait()
+          until L5_2.PlayerStats.Stand.Value ~= L1_3 or not L1_2()
+          task.wait(1)
+        end
+      end
+      local L0_3 = false
+      pcall(function()
+        local L0_4 = L5_2.PlayerStats and L5_2.PlayerStats:FindFirstChild("Spec") and L5_2.PlayerStats.Spec.Value
+        local L1_4 = L5_2.Character and L5_2.Character:FindFirstChild("Hamon") ~= nil
+        if L0_4 and L0_4 ~= "None" and L0_4 ~= "" or L1_4 then
+          L0_3 = true
+        end
+      end)
+      if not L0_3 and getgenv().autoHamon and L5_2.PlayerStats.Level.Value >= 25 then
+        if L5_2.PlayerStats.Money.Value < 10000 then
+          L159_1("Collecting money for Hamon...")
+          L41_2(10000)
+        end
+        if L5_2.PlayerStats.Money.Value >= 10000 then
+          if not L5_2.Backpack:FindFirstChild("Zeppeli's Hat") then
+            L22_2("Zeppeli's Hat", 1)
+          end
+          if L5_2.Backpack:FindFirstChild("Zeppeli's Hat") then
+            L159_1("Buying Hamon...")
+            L5_2.Character.Humanoid:EquipTool(L5_2.Backpack:FindFirstChild("Zeppeli's Hat"))
+            L37_2("Lisa Lisa", 1)
+            task.wait(1)
+          end
+        end
+      end
+      
+      local function L1_3(A0_4, A1_4, A2_4, A3_4, A4_4)
+        if L78_1 then
+          pcall(L78_1)
+        end
+        pcall(function()
+          local L0_5 = L5_2.PlayerGui:FindFirstChild("DialogueGui")
+          if L0_5 then
+            L0_5.Enabled = false
+            local L1_5 = L0_5:FindFirstChild("Frame")
+            if L1_5 then
+              L1_5.Visible = false
+            end
+          end
+        end)
+        L159_1(A4_4 or "Killing " .. tostring(A1_4) .. "...")
+        local L5_4 = A2_4 or 1
+        while L1_2() and L5_2.PlayerStats.Quest.Value == A0_4 do
+          pcall(function()
+            local L0_5 = L5_2.PlayerGui:FindFirstChild("DialogueGui")
+            if L0_5 and L0_5.Enabled and L0_5:FindFirstChild("Frame") and L0_5.Frame.Visible then
+              local L1_5 = L0_5.Frame:FindFirstChild("ClickContinue")
+              if L1_5 then
+                L54_1(L1_5)
+              else
+                L0_5.Enabled = false
+              end
+            end
+          end)
+          L43_2(A1_4, A3_4 or 15)
+          task.wait(0.2)
+          if L5_4 <= L5_2.PlayerStats.QuestProgress.Value then
+            break
+          end
+        end
+        task.wait(0.3)
+      end
+      
+      local L2_3 = L5_2.PlayerStats.Quest.Value
+      
+      local function L3_3()
+        if L5_2.PlayerStats.Money.Value < 5000 then
+          L159_1("Collecting $5,000 for Trish...")
+          L41_2(5000)
+        end
+        L159_1("Speaking to Trish with $5,000 to advance quest...")
+        L34_2(15)
+        local L0_4 = tick() + 30
+        while L1_2() and L0_4 > tick() do
+          L37_2("Storyline #11 (Trish)", 1)
+          pcall(function()
+            local L0_5 = L5_2.Character
+            local L1_5 = L0_5 and (L0_5:FindFirstChild("RemoteEvent") or L11_2)
+            if L1_5 then
+              L1_5:FireServer("EndDialogue", {
+                NPC = "Storyline #11",
+                Dialogue = "Dialogue8",
+                Option = "Option1"
+              })
+              L1_5:FireServer("EndDialogue", {
+                NPC = "Storyline #11",
+                Dialogue = "Dialogue11",
+                Option = "Option1"
+              })
+            end
+          end)
+          task.wait(1)
+          local L1_4 = tostring(L5_2.PlayerStats.Quest.Value or "")
+          if not L1_4:find("5000") and not L1_4:find("5,000") and not L1_4:lower():find("fortune") and not L1_4:lower():find("popo") and not L1_4:lower():find("polpo") then
+            L159_1("Trish accepted $5,000! Next quest: " .. tostring(L1_4))
+            break
+          end
+        end
+        return true
+      end
+      
+      local L4_3 = {}
+      L4_3["Help Giorno by Defeating Security Guards"] = function()
+        L1_3("Help Giorno by Defeating Security Guards", "Security Guard", 5)
+        L37_2("Storyline #1 (Giorno)", 1)
+        return true
+      end
+      L4_3["Return Koichi's Suitcase"] = function()
+        L159_1("Returning Koichi's Suitcase...")
+        L37_2("Storyline #2 (Koichi)", 1)
+        task.wait(0.3)
+        L37_2("Storyline #3 (Giorno)", 1)
+        return true
+      end
+      L4_3["Defeat Leaky Eye Luca"] = function()
+        L1_3("Defeat Leaky Eye Luca", "Leaky Eye Luca", 1)
+        L37_2("Storyline #3 (Giorno)", 1)
+        return true
+      end
+      L4_3["Defeat Bucciarati"] = function()
+        L1_3("Defeat Bucciarati", "Bucciarati", 1)
+        L159_1("Bucciarati defeated! Clearing combat and handing in quest to Bucciarati...")
+        L34_2(20)
+        local L0_4 = tick() + 30
+        while L1_2() and L5_2.PlayerStats.Quest.Value == "Defeat Bucciarati" and L0_4 > tick() do
+          L37_2("Storyline #4 (Bucciarati)", 1)
+          pcall(function()
+            local L0_5 = L5_2.Character
+            local L1_5 = L0_5 and (L0_5:FindFirstChild("RemoteEvent") or L11_2)
+            if L1_5 then
+              L1_5:FireServer("EndDialogue", {
+                NPC = "Storyline #4",
+                Dialogue = "Dialogue3",
+                Option = "Option1"
+              })
+            end
+          end)
+          if L5_2.PlayerStats.Quest.Value ~= "Defeat Bucciarati" then
+            break
+          end
+          task.wait(1)
+        end
+        if L5_2.PlayerStats.Quest.Value ~= "Defeat Bucciarati" then
+          L159_1("Bucciarati quest turned in! Advancing to Giorno...")
+          task.wait(0.3)
+          L37_2("Storyline #5 (Giorno)", 1)
+        else
+          L159_1("Waiting to complete Bucciarati turn-in, will retry...")
+        end
+        return true
+      end
+      L4_3["Give Giorno The Lighter"] = function()
+        L159_1("Giving Giorno the Lighter...")
+        L37_2("Storyline #5 (Giorno)", 1)
+        return true
+      end
+      L4_3["Meet Fugo"] = function()
+        L159_1("Meeting Fugo...")
+        L37_2("Storyline #6 (Fugo)", 1)
+        return true
+      end
+      L4_3["Meet Mista"] = function()
+        L159_1("Meeting Mista...")
+        L37_2("Storyline #7 (Mista)", 1)
+        return true
+      end
+      L4_3["Meet Narancia"] = function()
+        L159_1("Meeting Narancia...")
+        L37_2("Storyline #8 (Narancia)", 1)
+        return true
+      end
+      L4_3["Meet Abbacchio"] = function()
+        L159_1("Meeting Abbacchio...")
+        L37_2("Storyline #9 (Abbacchio)", 1)
+        task.wait(0.5)
+        L159_1("Advancing from Abbacchio to Bucciarati (Storyline #10)...")
+        L37_2("Storyline #10 (Bucciarati)", 1)
+        task.wait(0.5)
+        if L5_2.PlayerStats.Money.Value < 5000 then
+          L159_1("Collecting $5,000 for Trish...")
+          L41_2(5000)
+        end
+        if L3_3 then
+          L3_3()
+        else
+          L37_2("Storyline #11 (Trish)", 1)
+        end
+        return true
+      end
+      L4_3["Meet Bucciarati"] = function()
+        L159_1("Meeting Bucciarati...")
+        L37_2("Storyline #10 (Bucciarati)", 1)
+        task.wait(0.3)
+        if L5_2.PlayerStats.Money.Value < 5000 then
+          L159_1("Collecting $5,000 for Trish...")
+          L41_2(5000)
+        end
+        if L3_3 then
+          L3_3()
+        else
+          L37_2("Storyline #11 (Trish)", 1)
+        end
+        return true
+      end
+      L4_3["Collect $5,000 To Cover For Popo's Real Fortune"] = function()
+        if L3_3 then
+          return L3_3()
+        end
+        if L5_2.PlayerStats.Money.Value < 5000 then
+          L41_2(5000)
+        end
+        L37_2("Storyline #11 (Trish)", 1)
+        return true
+      end
+      L4_3["Collect $5,000 To Cover For Polpo's Real Fortune"] = function()
+        if L3_3 then
+          return L3_3()
+        end
+        if L5_2.PlayerStats.Money.Value < 5000 then
+          L41_2(5000)
+        end
+        L37_2("Storyline #11 (Trish)", 1)
+        return true
+      end
+      L4_3["Collect $5,000 to cover for Polpo's real fortune"] = function()
+        if L3_3 then
+          return L3_3()
+        end
+        if L5_2.PlayerStats.Money.Value < 5000 then
+          L41_2(5000)
+        end
+        L37_2("Storyline #11 (Trish)", 1)
+        return true
+      end
+      L4_3["Collect $5,000 to cover for Popo's real fortune"] = function()
+        if L3_3 then
+          return L3_3()
+        end
+        if L5_2.PlayerStats.Money.Value < 5000 then
+          L41_2(5000)
+        end
+        L37_2("Storyline #11 (Trish)", 1)
+        return true
+      end
+      L4_3["Collect $5000 to cover for Popo's real fortune"] = function()
+        if L3_3 then
+          return L3_3()
+        end
+        if L5_2.PlayerStats.Money.Value < 5000 then
+          L41_2(5000)
+        end
+        L37_2("Storyline #11 (Trish)", 1)
+        return true
+      end
+      L4_3["Collect $5000 To Cover For Popo's Real Fortune"] = function()
+        if L3_3 then
+          return L3_3()
+        end
+        if L5_2.PlayerStats.Money.Value < 5000 then
+          L41_2(5000)
+        end
+        L37_2("Storyline #11 (Trish)", 1)
+        return true
+      end
+      L4_3["Collect $5000 To Cover For Polpo's Real Fortune"] = function()
+        if L3_3 then
+          return L3_3()
+        end
+        if L5_2.PlayerStats.Money.Value < 5000 then
+          L41_2(5000)
+        end
+        L37_2("Storyline #11 (Trish)", 1)
+        return true
+      end
+      L4_3["Talk to Trish after obtaining $5,000"] = function()
+        if L3_3 then
+          return L3_3()
+        end
+        if L5_2.PlayerStats.Money.Value < 5000 then
+          L41_2(5000)
+        end
+        L37_2("Storyline #11 (Trish)", 1)
+        return true
+      end
+      L4_3["Talk to Trish after obtaining $5000"] = function()
+        if L3_3 then
+          return L3_3()
+        end
+        if L5_2.PlayerStats.Money.Value < 5000 then
+          L41_2(5000)
+        end
+        L37_2("Storyline #11 (Trish)", 1)
+        return true
+      end
+      L4_3["Talk to Trish"] = function()
+        if L3_3 then
+          return L3_3()
+        end
+        if L5_2.PlayerStats.Money.Value < 5000 then
+          L41_2(5000)
+        end
+        L37_2("Storyline #11 (Trish)", 1)
+        return true
+      end
+      L4_3["Meet Trish"] = function()
+        if L3_3 then
+          return L3_3()
+        end
+        if L5_2.PlayerStats.Money.Value < 5000 then
+          L41_2(5000)
+        end
+        L37_2("Storyline #11 (Trish)", 1)
+        return true
+      end
+      L4_3["Protect Trish"] = function()
+        if L3_3 then
+          return L3_3()
+        end
+        if L5_2.PlayerStats.Money.Value < 5000 then
+          L41_2(5000)
+        end
+        L37_2("Storyline #11 (Trish)", 1)
+        return true
+      end
+      L4_3["Defeat Fugo And His Purple Haze"] = function()
+        if L5_2.PlayerStats.Money.Value < 5000 then
+          L159_1("Collecting $5,000 for Trish before engaging Fugo...")
+          L41_2(5000)
+        end
+        if L5_2.PlayerStats.QuestProgress.Value == 0 then
+          L159_1("Ensuring Trish received $5,000 before engaging Fugo...")
+          L37_2("Storyline #11 (Trish)", 1)
+          pcall(function()
+            local L0_5 = L5_2.Character
+            local L1_5 = L0_5 and (L0_5:FindFirstChild("RemoteEvent") or L11_2)
+            if L1_5 then
+              L1_5:FireServer("EndDialogue", {
+                NPC = "Storyline #11",
+                Dialogue = "Dialogue8",
+                Option = "Option1"
+              })
+              L1_5:FireServer("EndDialogue", {
+                NPC = "Storyline #11",
+                Dialogue = "Dialogue11",
+                Option = "Option1"
+              })
+            end
+          end)
+          task.wait(0.5)
+        end
+        L1_3("Defeat Fugo And His Purple Haze", "Fugo", 1)
+        L159_1("Fugo defeated! Reporting back to Trish...")
+        L34_2(20)
+        local L0_4 = tick() + 30
+        while L1_2() and L5_2.PlayerStats.Quest.Value == "Defeat Fugo And His Purple Haze" and L0_4 > tick() do
+          L37_2("Storyline #11 (Trish)", 1)
+          pcall(function()
+            local L0_5 = L5_2.Character
+            local L1_5 = L0_5 and (L0_5:FindFirstChild("RemoteEvent") or L11_2)
+            if L1_5 then
+              L1_5:FireServer("EndDialogue", {
+                NPC = "Storyline #11",
+                Dialogue = "Dialogue8",
+                Option = "Option1"
+              })
+              L1_5:FireServer("EndDialogue", {
+                NPC = "Storyline #11",
+                Dialogue = "Dialogue11",
+                Option = "Option1"
+              })
+            end
+          end)
+          task.wait(1)
+        end
+        return true
+      end
+      L4_3["Defeat Pesci"] = function()
+        L1_3("Defeat Pesci", "Pesci", 1)
+        L37_2("Storyline #12 (Mista)", 1, "on it")
+        task.wait(0.5)
+        return true
+      end
+      L4_3["Defeat Ghiaccio"] = function()
+        L1_3("Defeat Ghiaccio", "Ghiaccio", 1)
+        L37_2("Storyline #12 (Mista)", 1)
+        task.wait(0.3)
+        L37_2("Storyline #13 (Bucciarati)", 1)
+        task.wait(0.3)
+        L37_2("Storyline #14 (Giorno)", 1)
+        task.wait(0.3)
+        return true
+      end
+      L4_3["Defeat Diavolo"] = function()
+        L1_3("Defeat Diavolo", "Diavolo", 1, 15, "Killing Diavolo (Final Boss)...")
+        L37_2("Storyline #14 (Giorno)", 1)
+        task.wait(2)
+        L45_2 = true
+        return true
+      end
+      local L5_3 = L2_3 ~= "" and (L2_3:find("5000", 1, true) ~= nil or L2_3:find("5,000", 1, true) ~= nil or L2_3:lower():find("fortune", 1, true) ~= nil or L2_3:lower():find("popo") ~= nil or L2_3:lower():find("polpo") ~= nil or L2_3:lower():find("trish", 1, true) ~= nil and not L2_3:lower():find("pesci"))
+      if L5_3 then
+        L3_3()
+        task.wait(0.5)
+        return L53_2()
+      end
+      if L2_3 ~= "" and L4_3[L2_3] then
+        local L6_3 = L4_3[L2_3]()
+        if L2_3 == "Defeat Diavolo" and L45_2 then
+          L159_1("Diavolo defeated! Storyline complete.")
+          L107_1("Auto Prestige", "Storyline complete! Farming vampires...")
+          L47_2()
+          if L48_2() then
+            task.wait(3)
+            L13_2 = false
+            L17_2 = tick()
+            L159_1("Restarting storyline loop...")
+            L107_1("Auto Prestige", "Restarting storyline for next prestige!")
+            return L53_2()
+          elseif L5_2.PlayerStats.Level.Value == 50 and L5_2.PlayerStats.Prestige.Value >= 3 then
+            return L52_2("MAXED! P" .. L5_2.PlayerStats.Prestige.Value .. " L" .. L5_2.PlayerStats.Level.Value)
+          end
+          return true
+        end
+        task.wait(0.5)
+        return L53_2()
+      end
+      local L6_3 = L5_2.PlayerStats.Level.Value
+      if not L45_2 and L6_3 < 25 then
+        L159_1("Advancing storyline sequentially (Lvl " .. L6_3 .. ", Quest: " .. tostring(L2_3) .. ")...")
+        local L7_3 = {
+          "Storyline #1 (Giorno)",
+          "Storyline #2 (Koichi)",
+          "Storyline #3 (Giorno)",
+          "Storyline #4 (Bucciarati)",
+          "Storyline #5 (Giorno)",
+          "Storyline #6 (Fugo)",
+          "Storyline #7 (Mista)",
+          "Storyline #8 (Narancia)",
+          "Storyline #9 (Abbacchio)",
+          "Storyline #10 (Bucciarati)",
+          "Storyline #11 (Trish)",
+          "Storyline #12 (Mista)",
+          "Storyline #13 (Bucciarati)",
+          "Storyline #14 (Giorno)"
+        }
+        for L11_3, L12_3 in ipairs(L7_3) do
+          if not L1_2() then
+            break
+          end
+          if L12_3 == "Storyline #11 (Trish)" and L5_2.PlayerStats.Money.Value < 5000 then
+            L159_1("At Storyline #11 (Trish): Collecting $5,000 before talking to Trish...")
+            L41_2(5000)
+          end
+          L37_2(L12_3, 1)
+          task.wait(0.3)
+          if L5_2.PlayerStats.Quest.Value ~= "" and L4_3[L5_2.PlayerStats.Quest.Value] then
+            return L53_2()
+          end
+        end
+      end
+      L45_2 = 25 <= L6_3
+      L47_2()
+      if L48_2() then
+        task.wait(3)
+        L13_2 = false
+        L17_2 = tick()
+        return L53_2()
+      end
+      if L5_2.PlayerStats.Level.Value == 50 then
+        if L5_2.PlayerStats.Prestige.Value >= 3 then
+          return L52_2("MAXED! P3 L50")
+        elseif L48_2() then
+          task.wait(3)
+          L13_2 = false
+          L17_2 = tick()
+          return L53_2()
+        end
+      end
+      task.wait(1)
+      return L53_2()
+    end
+    
+    local function L54_2()
+      L18_2 = tick()
+      L30_2()
+      task.wait(1)
+      local L0_3 = L5_2.PlayerStats.Prestige.Value
+      local L1_3 = L5_2.PlayerStats.Level.Value
+      local L2_3 = L0_3 == 0 and 35 or L0_3 == 1 and 40 or L0_3 == 2 and 45 or 50
+      if L1_3 >= L2_3 then
+        L47_2()
+        if L48_2() then
+          task.wait(3)
+          return L53_2()
+        end
+      end
+      L159_1("Starting storyline loop...")
+      L107_1("Auto Prestige", "Starting storyline loop...")
+      return L53_2()
+    end
+    
+    local L55_2
+    L55_2 = game.Workspace.Living.ChildAdded:Connect(function(A0_3)
+      if A0_3.Name == L5_2.Name then
+        if not L1_2() then
+          if L55_2 then
+            L55_2:Disconnect()
+          end
+          return
+        end
+        if L5_2.PlayerStats.Level.Value ~= 50 then
+          task.wait(2)
+          L6_2 = L5_2.Character
+          if L6_2 then
+            L10_2 = L6_2:FindFirstChild("RemoteFunction")
+            L11_2 = L6_2:FindFirstChild("RemoteEvent")
+            L12_2 = L6_2.PrimaryPart
+          end
+          L49_2(L6_2)
+          if L13_2 and L1_2() then
+            if tick() - L18_2 > 30 then
+              L54_2()
+            end
+          elseif L1_2() then
+            L30_2()
+          end
+        end
+      end
+    end)
+    local L56_2
+    L56_2 = L5_2.PlayerStats.Level:GetPropertyChangedSignal("Value"):Connect(function()
+      if not L1_2() then
+        if L56_2 then
+          L56_2:Disconnect()
+        end
+        return
+      end
+      L159_1("Level up! P" .. L5_2.PlayerStats.Prestige.Value .. " L" .. L5_2.PlayerStats.Level.Value)
+      if L5_2.PlayerStats.Level.Value >= 3 and L5_2.PlayerStats.Stand.Value == "None" then
+        task.spawn(function()
+          task.wait(0.5)
+          L30_2()
+        end)
+      end
+    end)
+    local L57_2
+    L57_2 = L5_2.CharacterAdded:Connect(function(A0_3)
+      if not L1_2() then
+        if L57_2 then
+          L57_2:Disconnect()
+        end
+        return
+      end
+      L6_2 = A0_3
+      L10_2 = A0_3:WaitForChild("RemoteFunction", 5) or A0_3:FindFirstChild("RemoteFunction")
+      L11_2 = A0_3:WaitForChild("RemoteEvent", 5) or A0_3:FindFirstChild("RemoteEvent")
+      L12_2 = A0_3:WaitForChild("PrimaryPart", 5) or A0_3.PrimaryPart
+      task.wait(1)
+      for L4_3, L5_3 in pairs(A0_3:GetDescendants()) do
+        if L5_3:IsA("BasePart") and L5_3.CanCollide == true then
+          L5_3.CanCollide = false
+        end
+      end
+    end)
+    local L58_2
+    
+    local function L59_2()
+      if L58_2 then
+        L58_2:Disconnect()
+      end
+      local L0_3 = L5_2.Character
+      if not L0_3 then
+        return
+      end
+      local L1_3 = L0_3:FindFirstChildOfClass("Humanoid")
+      if not L1_3 then
+        return
+      end
+      L58_2 = L1_3.AnimationPlayed:Connect(function(A0_4)
+        if not L1_2() then
+          return
+        end
+        local L1_4 = A0_4.Animation and A0_4.Animation.AnimationId
+        if not L1_4 then
+          return
+        end
+        if L1_4 == "rbxassetid://5157052272" or L1_4:find("5157052272") then
+          L159_1("Storyline completed animation detected - resetting to skip")
+          L107_1("Auto Prestige", "Skipping storyline animation...")
+          task.wait(0.1)
+          L50_2()
+          task.wait(1)
+          L59_2()
+        end
+      end)
+    end
+    
+    L59_2()
+    L5_2.CharacterAdded:Connect(function(A0_3)
+      if not L1_2() then
+        return
+      end
+      task.wait(1)
+      L59_2()
+    end)
+    L49_2(L6_2)
+    L54_2()
+  end
+  
+  function toggleAutoPrestige(A0_2)
+    if A0_2 then
+      if not L75_1("_YBA_prestigeWaiting", "Auto Prestige", function()
+        toggleAutoPrestige(true)
+      end) then
+        return
+      end
+      getgenv()._YBA_prestigeWaiting = false
+      L152_1 = L152_1 + 1
+      L27_1("AP", true)
+      L151_1 = true
+      local L1_2 = L45_1 and L45_1() or L3_1 or game:GetService("Players").LocalPlayer
+      local L2_2 = L1_2 and L1_2:FindFirstChild("PlayerStats")
+      local L3_2 = L2_2 and L2_2:FindFirstChild("Level") and L2_2.Level.Value or 1
+      local L4_2 = L2_2 and L2_2:FindFirstChild("Prestige") and L2_2.Prestige.Value or 0
+      L153_1 = {
+        enabled = true,
+        startTime = tick(),
+        startLevel = L3_2,
+        startPrestige = L4_2,
+        startDate = os.date("%Y-%m-%d %H:%M:%S")
+      }
+      pcall(function()
+        L158_1("started")
+      end)
+      L107_1("Auto Prestige", "Auto Storyline & Prestige Started!")
+      task.spawn(function()
+        local L0_3, L1_3 = xpcall(function()
+          L160_1()
+        end, function(A0_4)
+          return tostring(A0_4) .. "\n" .. debug.traceback()
+        end)
+        if not L0_3 then
+          warn("[Auto Prestige Error Traceback]:\n" .. tostring(L1_3))
+          local L2_3 = tostring(L1_3):split("\n")[1] or tostring(L1_3)
+          L107_1("Auto Prestige", "Error: " .. tostring(L2_3))
+          L151_1 = false
+          L27_1("AP", false)
+        end
+      end)
+    else
+      if getgenv then
+        getgenv()._YBA_prestigeWaiting = false
+      end
+      L152_1 = L152_1 + 1
+      L151_1 = false
+      L27_1("AP", false)
+      L107_1("Auto Prestige", "Auto Storyline & Prestige disabled.")
+      if L153_1.enabled then
+        pcall(function()
+          L158_1("stopped")
+        end)
+        L153_1.enabled = false
+      end
+    end
+  end
+  
+  if getgenv then
+    getgenv().RAILhub_ToggleAutoPrestige = toggleAutoPrestige
+  end
+  _G.toggleAutoPrestige = toggleAutoPrestige
+  if L28_1("AP", false) and not L92_1 then
+    L17_1("autostart scheduled: auto prestige")
+    task.delay(2.5, function()
+      if toggleAutoPrestige and not L151_1 then
+        toggleAutoPrestige(true)
+      end
+    end)
+  end
+end
+pvpEnabled = false
+pvpSession = 0
+pvpTargetName = ""
+pvpSpectate = false
+do
+  local L151_1
+  pvpPredictEnabled = true
+  pvpPredictMult = 1.5
+  
+  local function L152_1()
+    local L0_2, L1_2 = pcall(function()
+      local L0_3 = game:GetService("Stats")
+      local L1_3 = L0_3:FindFirstChild("Network")
+      if L1_3 then
+        local L2_3 = L1_3:FindFirstChild("Data Ping")
+        if L2_3 and type(L2_3.Value) == "number" then
+          return L2_3.Value
+        end
+        local L3_3 = L1_3:FindFirstChild("ServerStatsItem")
+        if L3_3 then
+          local L4_3 = L3_3:FindFirstChild("Data Ping")
+          if L4_3 and type(L4_3.Value) == "number" then
+            return L4_3.Value
+          end
+        end
+      end
+      return nil
+    end)
+    if L0_2 and type(L1_2) == "number" and 0 < L1_2 then
+      return L1_2
+    end
+    local L2_2 = tick()
+    game:GetService("RunService").Heartbeat:Wait()
+    return math.clamp((tick() - L2_2) * 1000, 20, 500)
+  end
+  
+  local function L153_1()
+    return L152_1() / 1000
+  end
+  
+  local L154_1 = {}
+  L154_1["Star Platinum"] = {
+    "Stand Barrage",
+    "Ora Kicks"
+  }
+  L154_1["Star Platinum: The World"] = {
+    "Stand Barrage",
+    "Ora Kicks",
+    "Skull Crusher"
+  }
+  L154_1["The World"] = {
+    "Stand Barrage",
+    "Knives",
+    "Kick Barrage"
+  }
+  L154_1["The World: Alternate Universe"] = {
+    "Stand Barrage",
+    "Knives",
+    "Gun",
+    "Chop"
+  }
+  L154_1["King Crimson"] = {
+    "Stand Barrage",
+    "Chop"
+  }
+  L154_1["King Crimson Requiem"] = {
+    "Stand Barrage",
+    "Chop"
+  }
+  L154_1["Gold Experience"] = {
+    "Stand Barrage",
+    "Create Life"
+  }
+  L154_1["Gold Experience Requiem"] = {
+    "Stand Barrage",
+    "Scorpion Beam"
+  }
+  L154_1["Silver Chariot"] = {
+    "Stand Barrage",
+    "Million Pricks",
+    "Last Shot"
+  }
+  L154_1["Chariot Requiem"] = {
+    "Stand Barrage"
+  }
+  L154_1["Crazy Diamond"] = {
+    "Stand Barrage",
+    "Bearing Shot",
+    "Blood Slash"
+  }
+  L154_1["Crazy Diamond Requiem"] = {
+    "Stand Barrage"
+  }
+  L154_1["Diver Down"] = {
+    "Stand Barrage"
+  }
+  L154_1["Killer Queen"] = {
+    "Stand Barrage"
+  }
+  L154_1["Killer Queen: Bites the Dust"] = {
+    "Stand Barrage"
+  }
+  L154_1.Whitesnake = {
+    "Stand Barrage",
+    "Acid Spit"
+  }
+  L154_1["C-Moon"] = {
+    "Stand Barrage",
+    "Surface Inversion Punch"
+  }
+  L154_1["Made in Heaven"] = {
+    "Stand Barrage",
+    "Speed Slice"
+  }
+  L154_1.D4C = {
+    "Stand Barrage"
+  }
+  L154_1["D4C: Love Train"] = {
+    "Stand Barrage"
+  }
+  L154_1["Tusk Act 1"] = {"Nail Shots"}
+  L154_1["Tusk Act 2"] = {
+    "Nail Shots",
+    "Golden Rectangle Nail"
+  }
+  L154_1["Tusk Act 3"] = {
+    "Nail Shots",
+    "Golden Rectangle Nail"
+  }
+  L154_1["Tusk Act 4"] = {
+    "Stand Barrage",
+    "Golden Rectangle Nail"
+  }
+  L154_1["Hermit Purple"] = {"Vine Slap", "Vine Trap"}
+  L154_1["Magician's Red"] = {
+    "Stand Barrage",
+    "Crossfire Hurricane"
+  }
+  L154_1["Purple Haze"] = {
+    "Stand Barrage",
+    "Bulb Throw"
+  }
+  L154_1["Sticky Fingers"] = {
+    "Stand Barrage",
+    "Extend Arm"
+  }
+  L154_1["The Hand"] = {
+    "Stand Barrage",
+    "Erasure",
+    "Erasure Pull"
+  }
+  L154_1["Sex Pistols"] = {
+    "Multi Shot",
+    "Auto Reload"
+  }
+  L154_1.Aerosmith = {
+    "Stand Barrage",
+    "Vola Barrage"
+  }
+  L154_1["Beach Boy"] = {"Hook Slash", "Auto Rod"}
+  L154_1["Mr. President"] = {}
+  L154_1.Anubis = {
+    "Stand Barrage",
+    "Cursed Blade"
+  }
+  L154_1["Red Hot Chili Pepper"] = {
+    "Stand Barrage",
+    "Lightning Jab"
+  }
+  L154_1["Soft & Wet"] = {
+    "Stand Barrage",
+    "Friction Plunder"
+  }
+  L154_1["Soft & Wet: Go Beyond"] = {
+    "Stand Barrage",
+    "Go Beyond Bubble",
+    "Explosive Spin"
+  }
+  local L155_1 = {}
+  L155_1.None = true
+  L155_1["Beach Boy"] = true
+  L155_1["Sex Pistols"] = true
+  L155_1["Six Pistols"] = true
+  L155_1.Anubis = true
+  L155_1["Hermit Purple"] = true
+  L155_1["Mr. President"] = true
+  L155_1["White Album"] = true
+  L155_1["Scary Monsters"] = true
+  
+  local function L156_1()
+    local L0_2 = {}
+    for L4_2, L5_2 in ipairs(L0_1:GetPlayers()) do
+      if L5_2 ~= L2_1 then
+        local L6_2 = L5_2.Character
+        local L7_2 = L6_2 and L6_2:FindFirstChildOfClass("Humanoid")
+        if L6_2 and L7_2 and L7_2.Health > 0 then
+          table.insert(L0_2, L5_2)
+        end
+      end
+    end
+    if #L0_2 == 0 then
+      return nil
+    end
+    return L0_2[math.random(1, #L0_2)]
+  end
+  
+  local function L157_1()
+    if pvpTargetName ~= "" then
+      for L3_2, L4_2 in ipairs(L0_1:GetPlayers()) do
+        if L4_2 ~= L2_1 and L4_2.Name == pvpTargetName then
+          return L4_2
+        end
+      end
+      pvpTargetName = ""
+    end
+    return L156_1()
+  end
+  
+  function pvpDoStopSpectate()
+    pvpSpectate = false
+    if L151_1 then
+      L151_1:Disconnect()
+      L151_1 = nil
+    end
+    pcall(function()
+      L10_1.CurrentCamera.CameraType = Enum.CameraType.Custom
+    end)
+  end
+  
+  local function L158_1(A0_2)
+    if L151_1 then
+      L151_1:Disconnect()
+      L151_1 = nil
+    end
+    if not A0_2 then
+      return
+    end
+    local L1_2 = L10_1.CurrentCamera
+    L1_2.CameraType = Enum.CameraType.Scriptable
+    L151_1 = L6_1.RenderStepped:Connect(function()
+      if not (pvpSpectate and A0_2) or not A0_2.Parent then
+        pcall(function()
+          L1_2.CameraType = Enum.CameraType.Custom
+        end)
+        if L151_1 then
+          L151_1:Disconnect()
+          L151_1 = nil
+        end
+        return
+      end
+      local L0_3 = A0_2.CFrame.LookVector
+      L1_2.CFrame = CFrame.lookAt(A0_2.Position + Vector3.new(0, 2.5, 0) - L0_3 * 6, A0_2.Position + L0_3 * 3)
+    end)
+  end
+  
+  function pvpKillLoop()
+    local L0_2 = pvpSession
+    
+    local function L1_2()
+      return pvpEnabled and pvpSession == L0_2
+    end
+    
+    local L2_2 = L2_1.Character
+    if not L2_2 then
+      return
+    end
+    local L3_2 = L2_2:FindFirstChild("HumanoidRootPart")
+    if not L3_2 then
+      return
+    end
+    local L4_2 = L2_2:FindFirstChild("RemoteFunction") or vu83
+    local L5_2 = L2_2:FindFirstChild("RemoteEvent") or vu84
+    if not L4_2 then
+      return
+    end
+    local L6_2 = L2_1.PlayerStats and L2_1.PlayerStats.Stand.Value or "None"
+    local L7_2 = L6_2 ~= "None" and not L155_1[L6_2]
+    local L8_2 = L3_2.CFrame
+    local L9_2 = CFrame.new(L3_2.Position) * CFrame.Angles(math.rad(90), 0, 0)
+    local L10_2 = L157_1()
+    if L7_2 then
+      local L11_2 = L2_2:FindFirstChild("SummonedStand")
+      if L11_2 and not L11_2.Value then
+        pcall(function()
+          L4_2:InvokeServer("ToggleStand", "Toggle")
+        end)
+        task.wait(0.3)
+      end
+      L122_1(L2_1.Character, false)
+    end
+    local L11_2
+    local L12_2 = L6_1.Heartbeat:Connect(function()
+      if not L1_2() then
+        return
+      end
+      local L0_3 = L10_2 and L10_2.Character and L10_2.Character:FindFirstChild("HumanoidRootPart")
+      if L0_3 then
+        L9_2 = CFrame.new(L0_3.Position.X, L0_3.Position.Y - 20, L0_3.Position.Z) * CFrame.Angles(math.rad(90), 0, 0)
+      end
+      L3_2.CFrame = L9_2
+      L3_2.AssemblyLinearVelocity = Vector3.zero
+      L3_2.AssemblyAngularVelocity = Vector3.zero
+      if not L7_2 then
+        return
+      end
+      local L1_3 = L10_2
+      if not L1_3 then
+        return
+      end
+      local L2_3 = L1_3.Character
+      local L3_3 = L2_3 and L2_3:FindFirstChild("HumanoidRootPart")
+      local L4_3 = L2_3 and L2_3:FindFirstChildOfClass("Humanoid")
+      if not (L3_3 and L4_3) or 0 >= L4_3.Health then
+        return
+      end
+      local L5_3 = L153_1()
+      local L6_3 = L3_3.AssemblyLinearVelocity
+      local L7_3
+      if pvpPredictEnabled then
+        L7_3 = L3_3.Position + L6_3 * L5_3 * pvpPredictMult
+      else
+        L7_3 = L3_3.Position
+      end
+      local L8_3 = L2_2:FindFirstChild("StandMorph")
+      if L8_3 and L8_3.PrimaryPart then
+        L122_1(L2_1.Character, false)
+        local L9_3 = L3_3.CFrame.LookVector
+        local L10_3 = Vector3.new(L9_3.X, 0, L9_3.Z)
+        if L10_3.Magnitude > 0.01 then
+          L10_3 = L10_3.Unit
+        else
+          L10_3 = Vector3.new(0, 0, -1)
+        end
+        local L11_3 = L7_3 - L10_3 * 1.2 + Vector3.new(0, 0.5, 0)
+        L8_3.PrimaryPart.CFrame = CFrame.lookAt(L11_3, L7_3)
+        L8_3.PrimaryPart.AssemblyLinearVelocity = Vector3.zero
+        L8_3.PrimaryPart.AssemblyAngularVelocity = Vector3.zero
+        if pvpSpectate and L11_2 ~= L8_3.PrimaryPart then
+          L11_2 = L8_3.PrimaryPart
+          L158_1(L8_3.PrimaryPart)
+        end
+      end
+    end)
+    task.spawn(function()
+      while L1_2() do
+        local L0_3 = L10_2
+        if L0_3 then
+          local L1_3 = L0_3.Character
+          local L2_3 = L1_3 and L1_3:FindFirstChildOfClass("Humanoid")
+          if L1_3 and L2_3 and L2_3.Health > 0 then
+            for L6_3 = 1, 5 do
+              task.spawn(function()
+                pcall(function()
+                  L4_2:InvokeServer("Attack", "m1")
+                end)
+              end)
+            end
+          elseif L2_3 and L2_3.Health <= 0 then
+            if pvpTargetName == "" then
+              task.wait(0.5)
+              local L3_3 = L156_1()
+              if L3_3 then
+                L10_2 = L3_3
+                L107_1("PvP", "Target died \226\134\146 switching to: " .. L3_3.Name)
+              end
+            else
+              task.wait(1)
+            end
+          end
+        else
+          task.wait(0.3)
+          L10_2 = L157_1()
+        end
+        task.wait()
+      end
+    end)
+    while L1_2() do
+      task.wait(0.1)
+    end
+    L12_2:Disconnect()
+    if L7_2 then
+      L122_1(L2_1.Character, true)
+    end
+    pvpDoStopSpectate()
+    pcall(function()
+      local L0_3 = L2_1.Character
+      local L1_3 = L0_3 and L0_3:FindFirstChild("HumanoidRootPart")
+      if L1_3 then
+        L1_3.CFrame = L8_2
+        L1_3.AssemblyLinearVelocity = Vector3.zero
+        L1_3.AssemblyAngularVelocity = Vector3.zero
+      end
+    end)
+  end
+end
+do
+  local L151_1 = L146_1.PvP
+  local L152_1 = L151_1:Section({
+    Side = "Left",
+    Name = "Target Stand Player"
+  })
+  L152_1:Header({
+    Text = "Target Stand Player",
+    AutoLocalize = false
+  })
+  
+  local function L153_1()
+    local L0_2 = {}
+    for L4_2, L5_2 in ipairs(L0_1:GetPlayers()) do
+      if L5_2 ~= L2_1 then
+        table.insert(L0_2, L5_2.Name)
+      end
+    end
+    table.sort(L0_2)
+    return L0_2
+  end
+  
+  local L154_1
+  L154_1 = L152_1:Dropdown({
+    Name = "Target Player",
+    Options = L153_1(),
+    Multi = false,
+    Default = "",
+    Callback = function(A0_2)
+      pvpTargetName = A0_2 or ""
+    end
+  })
+  
+  local function L155_1()
+    pcall(function()
+      if L154_1 and L154_1.Refresh then
+        L154_1:Refresh(L153_1())
+      end
+    end)
+  end
+  
+  L0_1.PlayerAdded:Connect(function()
+    task.wait(0.5)
+    L155_1()
+  end)
+  L0_1.PlayerRemoving:Connect(function(A0_2)
+    task.wait(0.1)
+    if pvpTargetName == A0_2.Name then
+      pvpTargetName = ""
+      if pvpEnabled then
+        pvpEnabled = false
+        pvpSession = pvpSession + 1
+        pvpDoStopSpectate()
+      end
+    end
+    L155_1()
+  end)
+  L152_1:Button({
+    Name = "Refresh Player List",
+    Callback = function()
+      L155_1()
+      L107_1("PvP", "Player list refreshed!")
+    end
+  })
+  L152_1:Toggle({
+    Name = "Target Stand Player",
+    Default = false,
+    Callback = function(A0_2)
+      pvpEnabled = A0_2
+      pvpSession = pvpSession + 1
+      if A0_2 then
+        if pvpTargetName == "" then
+          L107_1("PvP", "Select a target player first!")
+          pvpEnabled = false
+          return
+        end
+        L107_1("PvP", "Attacking: " .. pvpTargetName)
+        task.spawn(pvpKillLoop)
+      else
+        pvpDoStopSpectate()
+        L107_1("PvP", "Target Stand Player stopped.")
+      end
+    end
+  })
+  L152_1:Toggle({
+    Name = "Spectate Stand",
+    Default = false,
+    Callback = function(A0_2)
+      pvpSpectate = A0_2
+      if not A0_2 then
+        pvpDoStopSpectate()
+      end
+    end
+  })
+  L152_1:Toggle({
+    Name = "Movement Prediction",
+    Default = true,
+    Callback = function(A0_2)
+      pvpPredictEnabled = A0_2
+      L107_1("PvP", "Prediction: " .. (A0_2 and "ON" or "OFF"))
+    end
+  })
+  L152_1:Slider({
+    Name = "Prediction Strength",
+    Default = 1.5,
+    Minimum = 0.1,
+    Maximum = 10,
+    Precision = 1,
+    Prefix = "x",
+    DisplayMethod = "Value",
+    Callback = function(A0_2)
+      pvpPredictMult = A0_2
+    end
+  })
+  local L156_1 = L151_1:Section({
+    Side = "Right",
+    Name = "Stand Pilot"
+  })
+  L156_1:Header({
+    Text = "Stand Pilot",
+    AutoLocalize = false
+  })
+  getgenv().standPilotActive = false
+  getgenv().pilotSpeed = 50
+  getgenv().PilotConfig = {
+    Speed = L28_1 and L28_1("PilotSpeed", 50) or 50,
+    SpeedChangerEnabled = L28_1("PSC", false),
+    IsActive = false
+  }
+  local L157_1 = {}
+  local L158_1
+  
+  local function L159_1()
+    if not getgenv().PilotConfig.IsActive then
+      return
+    end
+    pcall(function()
+      if L158_1 then
+        for L3_3, L4_3 in pairs(L158_1:GetPlayingAnimationTracks()) do
+          L4_3:Stop(0.1)
+        end
+      end
+    end)
+    for L3_2, L4_2 in pairs(L157_1) do
+      if L4_2 and typeof(L4_2) == "RBXScriptConnection" then
+        L4_2:Disconnect()
+      end
+    end
+    L157_1 = {}
+    L158_1 = nil
+    pcall(function()
+      local L0_3 = game.ReplicatedStorage:FindFirstChild("TempStoragePilot")
+      if L0_3 then
+        for L4_3, L5_3 in pairs(L0_3:GetChildren()) do
+          if L5_3.Name == "Naples' Sewers" then
+            L5_3.Parent = workspace.Locations
+          end
+        end
+        L0_3:Destroy()
+      end
+    end)
+    pcall(function()
+      local L0_3 = L2_1.Character
+      if L0_3 and L0_3:FindFirstChild("FocusCam") then
+        L0_3.FocusCam:Destroy()
+      end
+      local L1_3 = L0_3 and L0_3:FindFirstChildOfClass("Humanoid")
+      if L1_3 and workspace.CurrentCamera then
+        workspace.CurrentCamera.CameraSubject = L1_3
+      end
+    end)
+    pcall(function()
+      local L0_3 = L2_1.Character
+      if L0_3 then
+        for L4_3, L5_3 in pairs(L0_3:GetDescendants()) do
+          if L5_3:IsA("BasePart") then
+            L5_3.CanCollide = true
+          end
+        end
+      end
+    end)
+    pcall(function()
+      local L0_3 = L2_1.Character
+      if L0_3 and L0_3:FindFirstChild("StandMorph") then
+        local L1_3 = L0_3.StandMorph:FindFirstChild("HumanoidRootPart")
+        local L2_3 = L0_3:FindFirstChild("HumanoidRootPart")
+        local L3_3 = L0_3:FindFirstChild("RemoteFunction")
+        if L1_3 and L2_3 then
+          if type(moveCharacterTo) == "function" then
+            moveCharacterTo(L1_3.CFrame)
+          elseif L139_1 and type(L139_1.moveCharacterTo) == "function" then
+            L139_1.moveCharacterTo(L1_3.CFrame)
+          else
+            L2_3.CFrame = L1_3.CFrame
+          end
+        end
+        if L3_3 then
+          L3_3:InvokeServer("ToggleStand", "Toggle")
+        end
+      end
+    end)
+    getgenv().PilotConfig.IsActive = false
+    getgenv().standPilotActive = false
+  end
+  
+  L156_1:Toggle({
+    Name = "Pilot Stand",
+    Default = L28_1("PE", false),
+    Callback = function(A0_2)
+      L27_1("PE", A0_2)
+      L20_1.PilotEnabled = A0_2
+      local L1_2 = L2_1.Character
+      if not L1_2 then
+        L107_1("PvP", "Character not loaded!")
+        return
+      end
+      local L2_2 = L1_2:FindFirstChild("HumanoidRootPart")
+      local L3_2 = L1_2:FindFirstChild("Humanoid")
+      local L4_2 = L1_2:FindFirstChild("RemoteFunction")
+      if not (L2_2 and L3_2) or not L4_2 then
+        L107_1("PvP", "Character not ready!")
+        return
+      end
+      if getgenv().PilotConfig.IsActive then
+        L159_1()
+        L107_1("PvP", "Stand Pilot disabled.")
+        return
+      end
+      if not A0_2 then
+        return
+      end
+      if not L1_2:FindFirstChild("StandMorph") then
+        L4_2:InvokeServer("ToggleStand", "Toggle")
+        local L5_2 = 0
+        repeat
+          task.wait(0.1)
+          L5_2 = L5_2 + 0.1
+        until L1_2:FindFirstChild("StandMorph") or 5 < L5_2
+        if not L1_2:FindFirstChild("StandMorph") then
+          L107_1("PvP", "Failed to summon stand!")
+          return
+        end
+      end
+      local L5_2 = L1_2.StandMorph
+      L158_1 = L5_2.AnimationController
+      local L6_2 = L5_2:WaitForChild("HumanoidRootPart", 3)
+      if not L158_1 or not L6_2 then
+        L107_1("PvP", "Stand not properly loaded!")
+        return
+      end
+      if getgenv().PilotConfig.SpeedChangerEnabled then
+        L158_1.WalkSpeed = getgenv().PilotConfig.Speed
+      end
+      getgenv().PilotConfig.IsActive = true
+      getgenv().standPilotActive = true
+      local L7_2 = Instance.new("Folder", game.ReplicatedStorage)
+      L7_2.Name = "TempStoragePilot"
+      pcall(function()
+        for L3_3, L4_3 in pairs(workspace.Locations:GetChildren()) do
+          if L4_3.Name == "Naples' Sewers" then
+            L4_3.Parent = L7_2
+          end
+        end
+      end)
+      local L8_2 = L6_2 or L5_2 and L5_2.PrimaryPart or L5_2 and L5_2:FindFirstChildWhichIsA("BasePart")
+      pcall(function()
+        local L0_3 = L1_2:FindFirstChild("FocusCam")
+        if not L0_3 then
+          L0_3 = Instance.new("ObjectValue")
+          L0_3.Name = "FocusCam"
+          L0_3.Parent = L1_2
+        end
+        L0_3.Value = L8_2
+      end)
+      if L8_2 and workspace.CurrentCamera then
+        workspace.CurrentCamera.CameraSubject = L8_2
+      end
+      for L12_2, L13_2 in pairs(L1_2:GetDescendants()) do
+        if L13_2:IsA("BasePart") then
+          L13_2.CanCollide = false
+        end
+      end
+      pcall(function()
+        local L0_3 = L5_2.PrimaryPart:FindFirstChild("StandAttach")
+        if L0_3 then
+          local L1_3 = L0_3:FindFirstChild("AlignOrientation")
+          local L2_3 = L0_3:FindFirstChild("AlignPosition")
+          if L1_3 then
+            L1_3.Enabled = false
+          end
+          if L2_3 then
+            L2_3.Enabled = false
+          end
+        end
+      end)
+      local L9_2 = Instance.new("Animation")
+      L9_2.AnimationId = "rbxassetid://5191325822"
+      local L10_2
+      pcall(function()
+        if L158_1 then
+          L10_2 = L158_1:LoadAnimation(L9_2)
+          if L10_2 then
+            L10_2.Priority = Enum.AnimationPriority.Action
+            L10_2.Looped = true
+          end
+        end
+      end)
+      local L11_2 = false
+      table.insert(L157_1, L3_2:GetPropertyChangedSignal("Jump"):Connect(function()
+        if L3_2.Jump then
+          L158_1.Jump = true
+        end
+        task.wait()
+      end))
+      table.insert(L157_1, L6_1.Heartbeat:Connect(function()
+        if not L1_2 or not L1_2.Parent then
+          return
+        end
+        if not L5_2 or not L5_2.Parent then
+          pcall(function()
+            L4_2:InvokeServer("ToggleStand", "Toggle")
+          end)
+          return
+        end
+        local L0_3 = workspace.CurrentCamera.CFrame:VectorToObjectSpace(L3_2.MoveDirection)
+        L158_1:Move(L0_3, true)
+        local L1_3 = L0_3.Magnitude > 0.1
+        if L1_3 and not L11_2 then
+          L11_2 = true
+          pcall(function()
+            if L10_2 and L10_2.IsPlaying == false then
+              L10_2:Play(0.2)
+            end
+          end)
+        elseif not L1_3 and L11_2 then
+          L11_2 = false
+          pcall(function()
+            if L10_2 and L10_2.IsPlaying then
+              L10_2:Stop(0.2)
+            end
+          end)
+        end
+        if not L1_3 then
+          pcall(function()
+            if not L158_1 or not L158_1:IsPlaying() then
+            end
+          end)
+        end
+        if getgenv().PilotConfig.SpeedChangerEnabled then
+          L158_1.WalkSpeed = getgenv().PilotConfig.Speed
+        end
+        local L2_3 = L6_2 or L5_2 and (L5_2.PrimaryPart or L5_2:FindFirstChildWhichIsA("BasePart"))
+        if L2_3 and workspace.CurrentCamera then
+          if workspace.CurrentCamera.CameraSubject ~= L2_3 then
+            workspace.CurrentCamera.CameraSubject = L2_3
+          end
+          local L3_3 = L1_2:FindFirstChild("FocusCam")
+          if not L3_3 then
+            L3_3 = Instance.new("ObjectValue")
+            L3_3.Name = "FocusCam"
+            L3_3.Parent = L1_2
+          end
+          if L3_3.Value ~= L2_3 then
+            L3_3.Value = L2_3
+          end
+        end
+        if L6_2 and L2_2 then
+          L2_2.CFrame = L6_2.CFrame - Vector3.new(0, 25, 0)
+          L2_2.AssemblyLinearVelocity = Vector3.zero
+          L2_2.AssemblyAngularVelocity = Vector3.zero
+        end
+      end))
+      pcall(function()
+        for L3_3, L4_3 in pairs(L5_2.Parent:GetDescendants()) do
+          if L4_3:IsA("BasePart") or L4_3:IsA("UnionOperation") then
+            game:GetService("PhysicsService"):SetPartCollisionGroup(L4_3, "Players")
+          end
+        end
+      end)
+      L107_1("PvP", "Stand Pilot enabled!")
+    end
+  })
+  L156_1:Toggle({
+    Name = "Pilot Speed Changer",
+    Default = L28_1("PSC", false),
+    Callback = function(A0_2)
+      L27_1("PSC", A0_2)
+      getgenv().PilotConfig.SpeedChangerEnabled = A0_2
+      if A0_2 and L158_1 then
+        L158_1.WalkSpeed = getgenv().PilotConfig.Speed
+        L107_1("PvP", "Speed changer " .. (A0_2 and "enabled" or "disabled"))
+      end
+    end
+  })
+  L156_1:Slider({
+    Name = "Pilot Speed",
+    Default = tonumber(L28_1 and L28_1("PilotSpeed", getgenv().PilotConfig.Speed)) or 50,
+    Minimum = 0,
+    Maximum = 200,
+    DisplayMethod = "Value",
+    Precision = 0,
+    Callback = function(A0_2)
+      getgenv().PilotConfig.Speed = A0_2
+      L27_1("PilotSpeed", A0_2)
+      if getgenv().PilotConfig.SpeedChangerEnabled and L158_1 and L158_1.Parent then
+        L158_1.WalkSpeed = A0_2
+      end
+    end,
+    onInputComplete = function(A0_2)
+      L27_1("PilotSpeed", A0_2)
+      L107_1("PvP", "Pilot speed set to: " .. A0_2)
+    end
+  })
+  L156_1:Toggle({
+    Name = "Inf Pilot Range",
+    Default = L28_1("IPR", false),
+    Callback = function(A0_2)
+      L27_1("IPR", A0_2)
+      getgenv().infPilotRangeEnabled = A0_2
+      if A0_2 then
+        L107_1("PvP", "Infinite Pilot Range enabled.")
+        getgenv().infPilotRangeConnection = L6_1.Heartbeat:Connect(function()
+          pcall(function()
+            if L2_1.Character and L2_1.Character:FindFirstChild("StandMorph") then
+              local L0_4 = L2_1.Character.StandMorph:FindFirstChild("IsPiloting")
+              if L0_4 then
+                L0_4.Value = 999999
+              end
+            end
+          end)
+        end)
+      else
+        L107_1("PvP", "Infinite Pilot Range disabled.")
+        if getgenv().infPilotRangeConnection then
+          getgenv().infPilotRangeConnection:Disconnect()
+          getgenv().infPilotRangeConnection = nil
+        end
+      end
+    end
+  })
+  L2_1.CharacterAdded:Connect(function()
+    if getgenv().PilotConfig.IsActive then
+      L159_1()
+      L107_1("PvP", "Stand Pilot auto-disabled (character respawned).")
+    end
+    if getgenv().infPilotRangeConnection then
+      getgenv().infPilotRangeConnection:Disconnect()
+      getgenv().infPilotRangeConnection = nil
+    end
+  end)
+  L156_1:Button({
+    Name = "Force Cleanup Pilot",
+    Callback = function()
+      L159_1()
+      L107_1("PvP", "Pilot cleanup forced!")
+    end
+  })
+  local L160_1 = L151_1:Section({Side = "Right", Name = "Exploits"})
+  L160_1:Header({Text = "Exploits", AutoLocalize = false})
+  local L161_1 = false
+  local L162_1, L163_1
+  local L164_1 = 5
+  local L165_1 = {}
+  
+  local function L166_1()
+    if L162_1 then
+      L162_1:Disconnect()
+      L162_1 = nil
+    end
+    if L163_1 then
+      L163_1:Disconnect()
+      L163_1 = nil
+    end
+  end
+  
+  local function L167_1()
+    local L0_2 = {}
+    for L4_2, L5_2 in ipairs(L0_1:GetPlayers()) do
+      if L5_2 ~= L2_1 then
+        table.insert(L0_2, L5_2.Name)
+      end
+    end
+    table.sort(L0_2, function(A0_3, A1_3)
+      return A0_3:lower() < A1_3:lower()
+    end)
+    return L0_2
+  end
+  
+  local function L168_1()
+    local L0_2 = {}
+    for L4_2, L5_2 in pairs(L165_1) do
+      table.insert(L0_2, L4_2)
+    end
+    if #L0_2 == 0 then
+      return "all players"
+    else
+      table.sort(L0_2)
+      return table.concat(L0_2, ", ")
+    end
+  end
+  
+  local L169_1
+  L160_1:Toggle({
+    Name = "sticky finger exploit",
+    Default = false,
+    Callback = function(A0_2)
+      L161_1 = A0_2
+      L166_1()
+      if A0_2 then
+        L107_1("PvP", "sticky finger exp: Enabled (" .. L168_1() .. ")")
+        L163_1 = L6_1.Stepped:Connect(function()
+          if not L161_1 then
+            return
+          end
+          local L0_3 = next(L165_1) ~= nil
+          for L4_3, L5_3 in ipairs(L0_1:GetPlayers()) do
+            if L5_3 ~= L2_1 and (not L0_3 or L165_1[L5_3.Name]) then
+              local L6_3 = L5_3.Character or workspace:FindFirstChild("Living") and workspace.Living:FindFirstChild(L5_3.Name)
+              if L6_3 then
+                for L10_3, L11_3 in ipairs(L6_3:GetChildren()) do
+                  if L11_3:IsA("BasePart") then
+                    L11_3.CanCollide = false
+                  end
+                end
+              end
+            end
+          end
+        end)
+        L162_1 = L6_1.Heartbeat:Connect(function()
+          if not L161_1 then
+            return
+          end
+          local L0_3 = L2_1.Character or workspace:FindFirstChild("Living") and workspace.Living:FindFirstChild(L2_1.Name)
+          local L1_3 = L0_3 and L0_3:FindFirstChild("HumanoidRootPart")
+          if not L1_3 then
+            return
+          end
+          local L2_3 = (L1_3.CFrame * CFrame.new(0, 0, -L164_1)).Position
+          local L3_3 = L1_3.Position
+          local L4_3 = next(L165_1) ~= nil
+          for L8_3, L9_3 in ipairs(L0_1:GetPlayers()) do
+            if L9_3 ~= L2_1 and (not L4_3 or L165_1[L9_3.Name]) then
+              local L10_3 = L9_3.Character or workspace:FindFirstChild("Living") and workspace.Living:FindFirstChild(L9_3.Name)
+              local L11_3 = L10_3 and (L10_3:FindFirstChild("HumanoidRootPart") or L10_3:FindFirstChild("Torso") or L10_3:FindFirstChild("UpperTorso"))
+              local L12_3 = L10_3 and L10_3:FindFirstChildOfClass("Humanoid")
+              if L11_3 and L12_3 and 0 < L12_3.Health then
+                L11_3.AssemblyLinearVelocity = Vector3.zero
+                L11_3.AssemblyAngularVelocity = Vector3.zero
+                L11_3.CFrame = CFrame.new(L2_3, L3_3)
+              end
+            end
+          end
+        end)
+      else
+        L107_1("PvP", "sticky finger exp: Disabled")
+      end
+    end
+  })
+  L169_1 = L160_1:Dropdown({
+    Name = "target (empty = all)",
+    Options = L167_1(),
+    Multi = true,
+    Default = {},
+    Callback = function(A0_2)
+      table.clear(L165_1)
+      if type(A0_2) == "table" then
+        if A0_2[1] ~= nil then
+          for L4_2, L5_2 in ipairs(A0_2) do
+            if type(L5_2) == "string" and L5_2 ~= "" then
+              L165_1[L5_2] = true
+            end
+          end
+        else
+          for L4_2, L5_2 in pairs(A0_2) do
+            if L5_2 == true and type(L4_2) == "string" and L4_2 ~= "" then
+              L165_1[L4_2] = true
+            end
+          end
+        end
+      end
+      if L161_1 then
+        L107_1("PvP", "sticky finger exp targets: " .. L168_1())
+      end
+    end
+  })
+  
+  local function L170_1()
+    pcall(function()
+      if L169_1 and L169_1.Refresh then
+        L169_1:Refresh(L167_1())
+      end
+    end)
+  end
+  
+  L160_1:Button({
+    Name = "Refresh Target List",
+    Callback = function()
+      L170_1()
+      L107_1("PvP", "Target player list refreshed!")
+    end
+  })
+  L0_1.PlayerAdded:Connect(function()
+    task.wait(0.5)
+    L170_1()
+  end)
+  L0_1.PlayerRemoving:Connect(function(A0_2)
+    task.wait(0.1)
+    if L165_1[A0_2.Name] then
+      L165_1[A0_2.Name] = nil
+    end
+    L170_1()
+  end)
+end
+local L151_1 = L146_1.Webhooks
+do
+  local L152_1 = L151_1:Section({
+    Side = "Left",
+    Name = "Webhook Configuration"
+  })
+  L152_1:Header({
+    Text = "Configuration",
+    AutoLocalize = false
+  })
+  L152_1:Dropdown({
+    Name = "Language / \208\175\208\183\209\139\208\186",
+    Options = {
+      "English",
+      "\208\160\209\131\209\129\209\129\208\186\208\184\208\185"
+    },
+    Multi = false,
+    Default = L28_1("WH_Lang", "English"),
+    Callback = function(A0_2)
+      L109_1.Language = A0_2 or "English"
+      L27_1("WH_Lang", L109_1.Language)
+    end
+  })
+  L152_1:Input({
+    Name = "Webhook URL",
+    Default = L28_1("WH_Url", "") or L28_1("APWH", "") or "",
+    Placeholder = "https://discord.com/api/webhooks/...",
+    Callback = function(A0_2)
+      local L1_2 = tostring(A0_2 or ""):gsub("^%s+", ""):gsub("%s+$", "")
+      L109_1.Url = L1_2
+      getgenv().webhook = L1_2
+      L27_1("WH_Url", L1_2)
+    end
+  })
+  L152_1:Input({
+    Name = "Discord User ID",
+    Default = L28_1("WH_UserId", "") or "",
+    Placeholder = "123456789012345678",
+    AcceptedCharacters = "Numeric",
+    Callback = function(A0_2)
+      local L1_2 = tostring(A0_2 or ""):gsub("%D", "")
+      L109_1.UserId = L1_2
+      L27_1("WH_UserId", L1_2)
+    end
+  })
+  L152_1:Toggle({
+    Name = "Enable Ping",
+    Default = L28_1("WH_Enabled", true),
+    Callback = function(A0_2)
+      L109_1.Enabled = A0_2
+      L27_1("WH_Enabled", A0_2)
+      L27_1("WH_PingRare", A0_2)
+    end
+  })
+  L152_1:Toggle({
+    Name = "Hide Username (Spoilers)",
+    Default = L28_1("WH_HideUser", false),
+    Callback = function(A0_2)
+      L109_1.HideUser = A0_2
+      L27_1("WH_HideUser", A0_2)
+    end
+  })
+  L152_1:Button({
+    Name = "Test Webhook",
+    Callback = function()
+      local L0_2 = L109_1.Url and L109_1.Url ~= "" and L109_1.Url or getgenv and getgenv().webhook
+      if not L0_2 or L0_2 == "" or not tostring(L0_2):find("^https?://") then
+        L107_1("Webhooks", "Please enter a valid Webhook URL first.")
+        return
+      end
+      local L1_2 = L129_1()
+      if L1_2 then
+        L107_1("Webhooks", "Test webhook sent!")
+      else
+        L107_1("Webhooks", "Failed to send test webhook.")
+      end
+    end
+  })
+  local L153_1 = L151_1:Section({
+    Side = "Right",
+    Name = "Notification Filters"
+  })
+  L153_1:Header({Text = "Filters", AutoLocalize = false})
+  L153_1:Toggle({
+    Name = "Legendary Item Pickup",
+    Default = L28_1("WH_NotifyItem", true),
+    Callback = function(A0_2)
+      L109_1.NotifyItem = A0_2
+      L27_1("WH_NotifyItem", A0_2)
+    end
+  })
+  L153_1:Toggle({
+    Name = "9 Lucky + 1M Ping",
+    Default = L28_1("WH_NotifyMilestone", true),
+    Callback = function(A0_2)
+      L109_1.NotifyMilestone = A0_2
+      L27_1("WH_NotifyMilestone", A0_2)
+    end
+  })
+  L153_1:Toggle({
+    Name = "Shiny Stand",
+    Default = L28_1("WH_NotifyStand", true),
+    Callback = function(A0_2)
+      L109_1.NotifyStand = A0_2
+      L27_1("WH_NotifyStand", A0_2)
+    end
+  })
+  L153_1:Toggle({
+    Name = "Auto Prestige Progress",
+    Default = L28_1("WH_NotifyPrestige", true),
+    Callback = function(A0_2)
+      L109_1.NotifyPrestige = A0_2
+      L27_1("WH_NotifyPrestige", A0_2)
+    end
+  })
+  L153_1:Toggle({
+    Name = "Staff Detected",
+    Default = L28_1("WH_NotifyStaff", true),
+    Callback = function(A0_2)
+      L109_1.NotifyStaff = A0_2
+      L27_1("WH_NotifyStaff", A0_2)
+    end
+  })
+  L153_1:Toggle({
+    Name = "Server Reconnect / Hop",
+    Default = L28_1("WH_NotifyKick", true),
+    Callback = function(A0_2)
+      L109_1.NotifyKick = A0_2
+      L27_1("WH_NotifyKick", A0_2)
+    end
+  })
+end
+L151_1 = "Settings"
+L151_1 = L146_1[L151_1]
+local L152_1 = L151_1:Section({
+  Side = "Left",
+  Name = "Script Settings"
+})
+L152_1:Header({Text = "Settings", AutoLocalize = false})
+L152_1:Toggle({
+  Name = "Save Settings",
+  Default = L28_1("SS", true),
+  Callback = function(A0_2)
+    L20_1.SaveSettings = A0_2
+    L27_1("SS", A0_2)
+  end
+})
+L152_1:Toggle({
+  Name = "Auto Execute",
+  Default = L28_1("AE", true),
+  Callback = function(A0_2)
+    L20_1.AutoExecute = A0_2
+    L27_1("AE", A0_2)
+    if A0_2 then
+      L95_1()
+    elseif getgenv then
+      getgenv().RAILHUB_AUTOEXEC = nil
+    end
+  end
+})
+local L153_1 = L28_1 and L28_1("AutoPlay", true)
+if L153_1 == nil then
+  L153_1 = true
+end
+L152_1:Toggle({
+  Name = "Auto Play",
+  Default = L153_1,
+  Callback = function(A0_2)
+    L20_1.AutoPlay = A0_2
+    L27_1("AutoPlay", A0_2)
+    if A0_2 and (not L62_1 or not L62_1()) then
+      task.spawn(function()
+        pcall(L74_1)
+      end)
+    end
+  end
+})
+local L154_1 = L28_1 and L28_1("AutoPlayMethod", "Click") or L20_1.AutoPlayMethod or "Click"
+local L155_1 = tostring(L154_1):lower() == "skip" and 2 or 1
+L152_1:Dropdown({
+  Name = "Auto Play Method",
+  Options = {"Click", "Skip"},
+  Default = L155_1,
+  Callback = function(A0_2)
+    local L1_2 = type(A0_2) == "string" and A0_2 or A0_2 == 2 and "Skip" or "Click"
+    L20_1.AutoPlayMethod = L1_2
+    L27_1("AutoPlayMethod", L1_2)
+  end
+})
+L152_1:Toggle({
+  Name = "Anti AFK",
+  Default = L28_1("AA", true),
+  Callback = function(A0_2)
+    L80_1(A0_2)
+    L27_1("AA", A0_2)
+  end
+})
+L152_1:Toggle({
+  Name = "Remove Map",
+  Default = L28_1 and (L28_1("RemoveMap", false) or L28_1("RM", false)) or false,
+  Callback = function(A0_2)
+    L20_1.RemoveMap = A0_2
+    L27_1("RemoveMap", A0_2)
+    L27_1("RM", A0_2)
+    if A0_2 then
+      L42_1()
+      L107_1("Settings", "Map hidden (Invisible / FPS Boost active)")
+    else
+      L43_1()
+      L107_1("Settings", "Map restored (Visible)")
+    end
+  end
+})
+L152_1:Slider({
+  Name = "Menu Scale",
+  Default = tonumber(string.format("%.1f", L28_1("MenuScale") or 1)),
+  Minimum = 0.5,
+  Maximum = 1,
+  Precision = 1,
+  Prefix = "x",
+  DisplayMethod = "Value",
+  Callback = function(A0_2)
+    local L1_2 = tonumber(string.format("%.1f", A0_2))
+    L27_1("MenuScale", L1_2)
+    if not getgenv()._MenuScaleDebounce then
+      getgenv()._MenuScaleDebounce = 0
+    end
+    getgenv()._MenuScaleDebounce = getgenv()._MenuScaleDebounce + 1
+    local L2_2 = getgenv()._MenuScaleDebounce
+    task.delay(0.2, function()
+      if L2_2 == getgenv()._MenuScaleDebounce and L105_1 then
+        pcall(function()
+          if type(L105_1.SetScale) == "function" then
+            L105_1:SetScale(L1_2)
+          end
+        end)
+      end
+    end)
+  end
+})
+L152_1:Button({
+  Name = "Reset Settings to Default",
+  Callback = function()
+    L29_1()
+    L107_1("Settings", "All settings have been reset to default!")
+  end
+})
+securitySec = L151_1:Section({
+  Side = "Right",
+  Name = "Security & Protection"
+})
+securitySec:Header({
+  Text = "Staff Detector",
+  AutoLocalize = false
+})
+securitySec:Toggle({
+  Name = "Staff Detector (Auto Rejoin)",
+  Default = L28_1 and L28_1("StaffAutoKick", true) or true,
+  Callback = function(A0_2)
+    getgenv().StaffDetectorData.autoKick = A0_2
+    L27_1("StaffAutoKick", A0_2)
+    if A0_2 then
+      for L4_2, L5_2 in ipairs(L0_1:GetPlayers()) do
+        checkStaffMember(L5_2)
+      end
+    end
+  end
+})
+securitySec:Toggle({
+  Name = "Staff ESP",
+  Default = L28_1 and L28_1("StaffESP", true) or true,
+  Callback = function(A0_2)
+    getgenv().StaffDetectorData.espEnabled = A0_2
+    L27_1("StaffESP", A0_2)
+    refreshStaffESP()
+    if getgenv()._YBA_refreshPlayerESP then
+      task.defer(getgenv()._YBA_refreshPlayerESP)
+    end
+  end
+})
+reconnectSec = L151_1:Section({Side = "Right", Name = "Server"})
+reconnectSec:Header({Text = "Server", AutoLocalize = false})
+local L156_1 = L28_1 and L28_1("AutoRejoin", true)
+if L156_1 ~= nil then
+  L48_1 = L156_1
+end
+reconnectSec:Toggle({
+  Name = "Auto Rejoin (Kick/Error)",
+  Default = L156_1 ~= nil and L156_1 or true,
+  Callback = function(A0_2)
+    L48_1 = A0_2
+    L27_1("AutoRejoin", A0_2)
+  end
+})
+reconnectSec:Button({
+  Name = "Reconnect",
+  Callback = function()
+    L107_1("Settings", "Reconnecting to current server...")
+    task.wait(0.5)
+    local L0_2 = game.JobId
+    if L0_2 and L0_2 ~= "" then
+      game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, L0_2, L2_1)
+    else
+      L107_1("Settings", "Could not get server ID, rejoining...")
+      game:GetService("TeleportService"):Teleport(game.PlaceId, L2_1)
+    end
+  end
+})
+reconnectSec:Button({
+  Name = "Server Hop",
+  Callback = function()
+    serverHopToRandom()
+  end
+})
+pcall(function()
+  task.defer(function()
+    task.wait(0.05)
+    if L146_1 and L146_1.Info and type(L146_1.Info.Select) == "function" then
+      L146_1.Info:Select()
+    elseif L146_1 and L146_1.Farming and type(L146_1.Farming.Select) == "function" then
+      L146_1.Farming:Select()
+    end
+  end)
+end)
+L107_1("YBA Script", "Script loaded successfully!")

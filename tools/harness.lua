@@ -23,6 +23,47 @@ local now = 1000
 local function clock() return now end
 
 ------------------------------------------------------------------------
+-- TRACE=<file>: canonical event trace (simulated time, kind, detail) for comparing two
+-- scripts in identical scenarios; written at exit together with the final simple globals.
+------------------------------------------------------------------------
+local TRACE_PATH = os.getenv("TRACE")
+local TRACE = TRACE_PATH and {} or nil
+local PXREF                                -- set once the proxy table exists
+local function tdesc(v, depth)
+    local t = type(v)
+    if t == "number" then
+        if v == math.floor(v) and math.abs(v) < 1e15 then return string.format("%d", v) end
+        return string.format("%.3f", v)
+    elseif t == "string" then
+        if #v > 120 then v = v:sub(1, 120) .. "..." end
+        return string.format("%q", v)
+    elseif t == "table" then
+        if PXREF and PXREF[v] then return "<" .. tostring(PXREF[v].name) .. ">" end
+        if (depth or 0) >= 2 then return "{...}" end
+        local keys = {}
+        for k in pairs(v) do keys[#keys + 1] = k end
+        table.sort(keys, function(x, y) return tostring(x) < tostring(y) end)
+        local parts = {}
+        for i, k in ipairs(keys) do
+            if i > 12 then parts[#parts + 1] = "..." break end
+            parts[#parts + 1] = tostring(k) .. "=" .. tdesc(v[k], (depth or 0) + 1)
+        end
+        return "{" .. table.concat(parts, ",") .. "}"
+    elseif t == "function" then
+        return "fn"
+    end
+    return tostring(v)
+end
+local function targs(...)
+    local parts = {}
+    for i = 1, select("#", ...) do parts[i] = tdesc((select(i, ...))) end
+    return table.concat(parts, ", ")
+end
+local function trace(kind, detail)
+    if TRACE then TRACE[#TRACE + 1] = string.format("%.2f %s %s", now, kind, detail) end
+end
+
+------------------------------------------------------------------------
 -- Instruction budget (Lua 5.1 hooks are per-thread)
 ------------------------------------------------------------------------
 -- COVER=<from>-<to>: record which SCR lines in that range execute (summary at exit)
@@ -195,6 +236,7 @@ end
 -- Universal proxy: stands in for Instances, services, datatypes, Enums
 ------------------------------------------------------------------------
 local PX = setmetatable({}, { __mode = "k" })   -- proxy -> { name, short, key, parent, store, kids, typ }
+PXREF = PX
 local proxy_mt = {}
 local MACLIB_PATH = os.getenv("MACLIB_PATH")
 local STATS = { FireServer = 0, InvokeServer = 0, HttpGet = {}, Kick = 0 }
@@ -252,6 +294,7 @@ end
 local CFRAME_LOG = {}
 proxy_mt.__newindex = function(p, k, v)
     local d = PX[p]
+    if TRACE and type(v) ~= "function" then trace("set", tostring(d.name) .. "." .. tostring(k) .. " = " .. tdesc(v)) end
     if k == "CFrame" and d.short == "HumanoidRootPart" then
         CFRAME_LOG[#CFRAME_LOG + 1] = tostring(v and PX[v] and PX[v].name or v)
     end
@@ -285,6 +328,7 @@ local CONNECT_METHODS = set{ "Connect", "Once", "ConnectParallel" }
 local FRAME_SIGNALS = { Heartbeat = true, RenderStepped = true, Stepped = true,
                   PreSimulation = true, PostSimulation = true, PreRender = true }
 local FRAME_CONNS = {}
+local FRAME_ORDER = {}   -- connections in connect order, so frame callbacks run in a fixed order
 local ABSENT = {}
 for nm in (os.getenv("ABSENT") or ""):gmatch("[^,]+") do ABSENT[nm] = true end
 
@@ -352,10 +396,16 @@ proxy_mt.__call = function(p, ...)
         local fn = select(2, ...)
         if sig and FRAME_SIGNALS[sig.short] and type(fn) == "function" then
             FRAME_CONNS[conn] = fn
+            FRAME_ORDER[#FRAME_ORDER + 1] = conn
         end
         return conn
     elseif key == "Disconnect" then
-        if self ~= nil then FRAME_CONNS[self] = nil end
+        if self ~= nil and FRAME_CONNS[self] then
+            FRAME_CONNS[self] = nil
+            for i, c in ipairs(FRAME_ORDER) do
+                if c == self then table.remove(FRAME_ORDER, i) break end
+            end
+        end
         return nil
     elseif key == "Wait" then
         wait_impl(0.03)
@@ -424,8 +474,30 @@ end
 local UI_CALLS = {}
 local UI_ELEMS = {}   -- { kind, name, cb } for every MacLib element with a Callback
 local real_call = proxy_mt.__call
+local TRACE_METHODS = {}
+for nm in ("FireServer InvokeServer Kick Teleport TeleportToPlaceInstance TeleportAsync Destroy Clone "
+        .. "Play Stop Cancel Create SendKeyEvent SendMouseButtonEvent SendMouseMoveEvent ChangeState MoveTo "
+        .. "PivotTo SetPrimaryPartCFrame Activate EquipTool UnequipTools InputHoldBegin InputHoldEnd Notify "
+        .. "Connect Once HttpGet HttpGetAsync SetCore BindToRenderStep LoadAnimation SetAttribute "
+        .. "ClearAllChildren SetNetworkOwner ApplyImpulse Jump"):gmatch("%S+") do TRACE_METHODS[nm] = true end
 proxy_mt.__call = function(p, ...)
     local d = PX[p]
+    PXREF = PXREF or PX
+    if TRACE and TRACE_METHODS[tostring(d.key)] then
+        local parent = d.parent and PX[d.parent] and PX[d.parent].name or "?"
+        if d.key == "Connect" or d.key == "Once" then
+            trace("connect", tostring(parent))
+        else
+            -- method calls pass self first; drop it from the argument list
+            local n = select("#", ...)
+            local first = ...
+            if n > 0 and first == d.parent then
+                trace("call", tostring(parent) .. ":" .. tostring(d.key) .. "(" .. targs(select(2, ...)) .. ")")
+            else
+                trace("call", tostring(parent) .. "." .. tostring(d.key) .. "(" .. targs(...) .. ")")
+            end
+        end
+    end
     if d.name:sub(1, 6) == "MacLib" then
         local key = tostring(d.key)
         UI_CALLS[key] = (UI_CALLS[key] or 0) + 1
@@ -470,6 +542,12 @@ G.shared = {}
 G.typeof = mock_typeof
 G.tick, G.time, G.elapsedTime = clock, clock, clock
 os.clock = clock
+-- deterministic wall clock and RNG so two runs of the same program produce the same trace
+local real_time, real_date = os.time, os.date
+local EPOCH = 1760000000
+os.time = function(t) if t then return real_time(t) end return EPOCH + math.floor(now) end
+os.date = function(fmt, t) return real_date(fmt, t or (EPOCH + math.floor(now))) end
+math.randomseed(12345)
 G.wait = function(t) return wait_impl(t) end
 G.spawn = function(f) return schedule(0, f) end
 G.delay = function(t, f) return schedule(t, f) end
@@ -485,8 +563,8 @@ G.task = {
 G.pcall, G.xpcall = ypcall, yxpcall
 local real_wrap = coroutine.wrap
 coroutine.wrap = function(f) return function(...) return spawn_now(f, ...) end end
-G.print = function(...) local t = {} for i = 1, select("#", ...) do t[i] = tostring((select(i, ...))) end log("PRINT", table.concat(t, " ")) end
-G.warn = function(...) local t = {} for i = 1, select("#", ...) do t[i] = tostring((select(i, ...))) end log("WARN", table.concat(t, " ")) end
+G.print = function(...) local t = {} for i = 1, select("#", ...) do t[i] = tostring((select(i, ...))) end log("PRINT", table.concat(t, " ")) trace("print", table.concat(t, " ")) end
+G.warn = function(...) local t = {} for i = 1, select("#", ...) do t[i] = tostring((select(i, ...))) end log("WARN", table.concat(t, " ")) trace("warn", table.concat(t, " ")) end
 
 table.find = function(t, v, init) for i = init or 1, #t do if t[i] == v then return i end end return nil end
 table.clear = function(t) for k in pairs(t) do t[k] = nil end end
@@ -549,6 +627,25 @@ G.isfolder = function(p) return DIRS[p] == true end
 G.makefolder = function(p) DIRS[p] = true end
 G.delfile = function(p) FS[p] = nil end
 G.listfiles = function() return {} end
+-- trace executor actions
+for _, nm in ipairs({ "fireproximityprompt", "firesignal", "fireclickdetector", "firetouchinterest",
+        "setclipboard", "toclipboard", "queue_on_teleport", "writefile", "appendfile", "makefolder",
+        "delfile", "request", "http_request", "hookmetamethod", "hookfunction", "setfpscap" }) do
+    local f = G[nm]
+    G[nm] = function(...)
+        if TRACE then
+            if nm == "appendfile" or nm == "writefile" then
+                local path, data = ...
+                if not tostring(path):find("boot_log", 1, true) then
+                    trace("exec", nm .. "(" .. tdesc(path) .. ", " .. tdesc(data) .. ")")
+                end
+            else
+                trace("exec", nm .. "(" .. targs(...) .. ")")
+            end
+        end
+        return f(...)
+    end
+end
 
 -- report reads of undefined globals once each
 local MISSING = {}
@@ -601,17 +698,66 @@ end
 ------------------------------------------------------------------------
 -- Run
 ------------------------------------------------------------------------
+local function fire_frame()
+    local snap = { unpack(FRAME_ORDER) }
+    for _, conn in ipairs(snap) do
+        local fn = FRAME_CONNS[conn]
+        if fn then spawn_now(fn, 0.016) end
+    end
+end
 local fh = assert(io.open(SCRIPT, "rb"))
 local src = fh:read("*a")
 fh:close()
 local chunk, cerr = real_loadstring(src, "=SCR")
 if not chunk then log("FATAL", cerr) os.exit(1) end
+-- SANDBOX=1: run the script in a proxy environment without file/OS/loader access (for
+-- third-party obfuscated code). Its globals still land in _G so EVAL/FIRE keep working.
+if os.getenv("SANDBOX") then
+    local BLOCK = { io = true, os = true, package = true, dofile = true, loadfile = true,
+                    require = true, debug = true, module = true }
+    local SAFE_OS = { time = os.time, clock = clock, date = os.date, difftime = os.difftime }
+    local SENV = {}
+    setmetatable(SENV, {
+        __index = function(_, k)
+            if k == "os" then return SAFE_OS end
+            if BLOCK[k] then return nil end
+            return _G[k]
+        end,
+        __newindex = function(_, k, v) if not BLOCK[k] then rawset(_G, k, v) end end,
+    })
+    local real_getfenv, real_setfenv = getfenv, setfenv
+    local mock_loadstring = _G.loadstring
+    rawset(SENV, "_G", SENV)
+    rawset(SENV, "getgenv", function() return SENV end)
+    rawset(SENV, "getfenv", function(f)
+        if f == nil then f = 1 end
+        if type(f) == "number" then
+            if f == 0 then return SENV end
+            f = f + 1
+        end
+        local e = real_getfenv(f)
+        if e == _G then return SENV end
+        return e
+    end)
+    rawset(SENV, "setfenv", function(f, t)
+        if type(f) == "number" then f = f + 1 end
+        return real_setfenv(f, t)
+    end)
+    rawset(SENV, "loadstring", function(s, n)
+        local f, err = mock_loadstring(s, n)
+        if f then real_setfenv(f, SENV) end
+        return f, err
+    end)
+    rawset(SENV, "load", nil)
+    real_setfenv(chunk, SENV)
+    log("SANDBOX", "script runs in a proxy environment")
+end
 install_budget(nil, "main")
 local ok, e = xpcall(chunk, debug.traceback)
 log("MAIN", ok and "main chunk returned normally" or ("main chunk died: " .. tostring(e)))
 for _ = 1, tonumber(os.getenv("DRAIN_STEPS")) or 100 do
     now = now + 0.5
-    for _, fn in pairs(FRAME_CONNS) do spawn_now(fn, 0.016) end
+    fire_frame()
     run_due()
 end
 -- EVAL=<lua>: run code in the script's global environment after boot (results printed by the code)
@@ -638,7 +784,7 @@ if FIRE then
     end
     for _ = 1, tonumber(os.getenv("FIRE_STEPS")) or 120 do
         now = now + 0.5
-        for _, fn in pairs(FRAME_CONNS) do spawn_now(fn, 0.016) end
+        fire_frame()
         run_due()
     end
     local rep = {}
@@ -663,6 +809,24 @@ if COVER_LO then
     local out = {}
     for _, l in ipairs(ls) do out[#out + 1] = l .. "x" .. COVER_HITS[l] end
     log("SUMMARY", "covered lines: " .. table.concat(out, " "))
+end
+if TRACE then
+    local keys = {}
+    for k, v in pairs(_G) do
+        local t = type(v)
+        if type(k) == "string" and (t == "boolean" or t == "number" or t == "string") then keys[#keys + 1] = k end
+    end
+    table.sort(keys)
+    for _, k in ipairs(keys) do trace("global", k .. " = " .. tdesc(rawget(_G, k))) end
+    local files = {}
+    for path in pairs(FS) do files[#files + 1] = path end
+    table.sort(files)
+    for _, path in ipairs(files) do
+        if not path:find("boot_log", 1, true) then trace("file", path .. " = " .. tdesc(FS[path])) end
+    end
+    local fh2 = assert(io.open(TRACE_PATH, "w"))
+    fh2:write(table.concat(TRACE, "\n"), "\n")
+    fh2:close()
 end
 local uc = {}
 for k, v in pairs(UI_CALLS) do uc[#uc + 1] = k .. "=" .. v end

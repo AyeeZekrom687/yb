@@ -1,2 +1,4 @@
-yba_fixed.lua
 __pycache__/
+yba_fixed.lua
+tools/devirt/unluac/*.jar
+tools/devirt/unluac/driver/*.class
