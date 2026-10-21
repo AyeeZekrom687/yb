@@ -248,6 +248,21 @@ EDITS = [
      '      if 0 < L11_2 and L149_1.farmMethod == "Lucky Arrow" then\n',
      '      if 0 < L11_2 and (L149_1.farmMethod == "Lucky Arrow"'
      ' or L149_1.farmMethod == "Arrow + Lucky Arrow") then\n', 1),
+    # (user request) Lucky Arrows are never sold. The original only sells what its callers
+    # check against the never-sell list (Lucky Arrow is on it); sellItem itself refuses them
+    # too, so no path (auto sell, sell for Requiem/money, a sell dropdown) can sell one.
+    ('never sell lucky arrows',
+     '  function sellItem(A0_2, A1_2, A2_2)\n    if not A0_2 then\n'
+     '      return false, "No item provided"\n    end\n',
+     '  function sellItem(A0_2, A1_2, A2_2)\n    if not A0_2 then\n'
+     '      return false, "No item provided"\n    end\n'
+     '    do\n'
+     '      -- [port] (user request) Lucky Arrows are never sold, whichever path asks\n'
+     '      local L3_2 = typeof(A0_2) == "Instance" and A0_2.Name or tostring(A0_2)\n'
+     '      if L143_1(L3_2) == "Lucky Arrow" then\n'
+     '        return false, "Lucky Arrows are never sold"\n'
+     '      end\n'
+     '    end\n', 1),
     # (user request) lag reductions that keep speed and behaviour:
     # the name lowercaser ran one pcall closure + gsub per Cyrillic capital (33) on every call;
     # one gsub over the same table gives the same result (each key is \208 + one byte, no value

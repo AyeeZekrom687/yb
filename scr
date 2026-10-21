@@ -3805,6 +3805,13 @@ do
     if not A0_2 then
       return false, "No item provided"
     end
+    do
+      -- [port] (user request) Lucky Arrows are never sold, whichever path asks
+      local L3_2 = typeof(A0_2) == "Instance" and A0_2.Name or tostring(A0_2)
+      if L143_1(L3_2) == "Lucky Arrow" then
+        return false, "Lucky Arrows are never sold"
+      end
+    end
     if L150_1(A0_2) then
       return false, "Candies cannot be sold to merchant"
     end
