@@ -48,7 +48,7 @@ A copy `_rX = R` made after a call clobbered the function's own R (R was a call 
 14. **Lost gotos.** Jumps the decompiler could not structure print as `-- goto [N]` (N = 1-based instruction index in the function) and fall through. Counting: one instruction per line, `if` = 2, `else` = 1, loop `end` = 1, other `end`/`while true do` = 0, closure = 1. Dropped instructions make the count drift, so only exact matches against structural join points are used.
 15. **Double while loops.** `while true do / while true do BODY end / end` (outer body = inner loop) is one loop: as printed, `break` restarts it (the number formatter spun forever below 1000), and the code after the loop is printed at the end of BODY (a trailing return, e.g. `return formatted`), so the loop ran once.
 16. **Unnameable registers.** For-loop control registers (`in _rG, _rS, _rC` / `= _rA, _rB, _rC`) read in the loop body, and copies indexed with a member that exists only on one service (`.RenderStepped`, `.GetPlayerFromCharacter`, ...), are the enclosing variable of that name. A decompiler local that is dead where a nested closure is created (a call clobbered it), or holds a boolean/number literal while the copy is indexed, is passed through to the next owner.
-17. **Register reuse evidence (13b).** A main-chunk register R captured by a closure is reused when its next write changes the value kind (copies take their source's kind; a function replacing a function counts), when a later call is based at or below R (calls sit at the stack top), when the next write sets up an argument of a call based below R, or when the closure indexes R as an object and R later gets a string/number/boolean. The split range starts at the latest write in the closure's own block, so conditional writes in between stay consistent.
+17. **Register reuse evidence (13b).** A main-chunk register R captured by a closure is reused when its next write changes the value kind (copies take their source's kind; a function replacing a function counts), when a later call is based at or below R (calls sit at the stack top), when the next write sets up an argument of a call based below R, when the closure indexes R as an object and R later gets a string/number/boolean, or when R later gets a function literal and did not hold one (e.g. `lastTeleportTick` in register 89, later reused for the farm activity check). The split range starts at the latest write in the closure's own block, so conditional writes in between stay consistent.
 
 ## Passes in fix_deob.py (current counts)
 | Pass | What | Count |
@@ -63,7 +63,7 @@ A copy `_rX = R` made after a call clobbered the function's own R (R was a call 
 | 2b | Multi-return forwarding | 210 |
 | 3 | Targeted patches (namecall varargs, game-ready break, standfarm bridge, first-spawn loop) | 10 |
 | 3b | Or-chains | 689 |
-| 4 | Dropped right operands and guarded call bodies (register tests and comparisons) | 198 |
+| 4 | Dropped right operands and guarded call bodies (register tests and comparisons; `if A then ...; if B then end; BODY else E end` becomes `if A and B then BODY else E end` via an `_andN` flag) | 198 |
 | 4b | Constant ternaries (else restored) | 81 |
 | 5 | Varargs passthrough wrappers | 98 |
 | 6 | Timeout breaks | 5 |
@@ -76,7 +76,7 @@ A copy `_rX = R` made after a call clobbered the function's own R (R was a call 
 | 11 | Dropped return-false | 0 |
 | 12 | Game-ready initial skip (structure already correct after 0c/0d) | 0 |
 | 13 | Scope leaks (202 renamed for collisions, incl. forced upvalues and dead lexical owners) | 1,694 |
-| 13b | Closed upvalues (main-chunk registers split per captured range) | 306 |
+| 13b | Closed upvalues (main-chunk registers split per captured range) | 312 |
 | 14 | Garbled empty strings | 220 |
 
 Patch 3f (UI restore loop) was removed: Pass 0c produces the same structure generically.
@@ -97,6 +97,7 @@ With FIRE set, repeated output lines are counted (log spam shows as `N x line`).
 - Builds 8d707ab, dbd97d4, 253ad8a: see git log; their reported errors are reproduced and cleared in the harness.
 - Round 3 report (253ad8a): watermark `RenderStepped` on a ScreenGui (32513), `GetPlayerFromCharacter` nil (41841/41924), `Destroy` on nil (52419/52503), repeating `number < function` (56130). Causes: service-member collision, for-loop control register read, TESTSET false positive, main register 160 reused as an `ipairs` generator. All fixed (rules 12, 16, 17).
 - Item farm toggle ("spams logs and does not work"): the watchdog's `if status == "dead"` lost its body, so every 2 s it warned and spawned another farm thread; the farm loop itself hit a nil multiplier (lost ternary), spun without yielding (double while), and had 7 lost gotos. All fixed; in the harness the farm runs with no errors and a constant task count.
+- Round 4 report (113513c): `scr:29544 attempt to call a number value` in the item farm watchdog. Main register 89 held `lastTeleportTick` (written by the teleport marker closure) and was then reused for the farm activity function, so the first teleport overwrote it. Fixed by the function-literal rule above. The same watchdog lost its `and`: the stall recovery (no farm action for 8 s) only ran when no farm thread existed; now `if thread and status == "dead" then resurrect else stall check end`.
 - Harness, current build: in-game and main-menu boot complete (8 tabs, 62 toggles); firing all 77 toggles/buttons leaves only the mock artifacts and the AutoPlay log collision below.
 
 ## Known Residual Issues

@@ -550,10 +550,36 @@ def _guarded_call_end(lines, start, ind, reg):
 CMP_GUARD_RE = re.compile(r'^(\s*)if (.+ (?:==|~=|<=|>=|<|>) .+) then$')
 
 
+def _and_else_chain(lines, i, stop, and_flags):
+    """`if A then SETUP; if B then end; BODY else ELSE end` (BODY ends the then-branch) is
+    `if A and B then BODY else ELSE end`: rewrite it with a flag. Returns False if the shape
+    does not match."""
+    ind = _indent(lines[i])
+    o = ind - 4
+    if o < 0 or lines[stop].rstrip('\r\n') != ' ' * o + 'else':
+        return False
+    h = i - 1
+    while h >= 0 and not (lines[h].strip() and _indent(lines[h]) <= o):
+        h -= 1
+    if h < 0 or _indent(lines[h]) != o or not re.match(r'^if .+ then$', lines[h].strip()):
+        return False
+    ending = lines[i][len(lines[i].rstrip('\r\n')):]
+    flag = f'_and{len(and_flags) + 1}'
+    and_flags.append(flag)
+    pad, inner = ' ' * o, ' ' * ind
+    body = lines[i + 2:stop]
+    new = ([pad + f'local {flag} = false' + ending] + lines[h:i] +
+           [lines[i], inner + f'    {flag} = true' + ending, lines[i + 1],
+            pad + 'end' + ending, pad + f'if {flag} then' + ending] + body)
+    lines[h:stop] = new
+    return True
+
+
 def fix_broken_if_else(lines):
     """Move dropped right operands (or guarded call bodies) back inside their empty if blocks."""
     lines = list(lines)
     count = 0
+    and_flags = []
     for i in range(len(lines) - 3, -1, -1):
         m_if = BARE_IF_RE.match(lines[i].rstrip('\r\n'))
         if not m_if:
@@ -567,9 +593,11 @@ def fix_broken_if_else(lines):
             if var not in re.findall(r'_r\d+', m_cmp.group(2)):
                 continue
             stop = _guarded_call_end(lines, i + 2, len(m_cmp.group(1)), var)
-            if stop is not None and stop > i + 2:
+            if stop is None or stop <= i + 2:
+                continue
+            if not _and_else_chain(lines, i, stop, and_flags):
                 lines[i + 1:stop] = ['    ' + ln for ln in lines[i + 2:stop]] + [lines[i + 1]]
-                count += 1
+            count += 1
             continue
         indent, var = m_if.group(1), m_if.group(2)
         m_end = BARE_END_RE.match(lines[i + 1].rstrip('\r\n'))
@@ -2089,6 +2117,7 @@ def fix_closed_upvalues(text):
             # (helpers redefined per section), not a reassignment.
             if own_state or (pk and nxt[2] and (pk != nxt[2] or pk == 'function')
                              and not (pk == 'object' and nxt[2] in ('table', 'function', 'nil'))) \
+                    or (nxt[2] == 'function' and pk != 'function') \
                     or _call_based(lines, nxt[1], R) or _call_arg(lines, nxt[1], R) \
                     or (mb is not None and mb <= int(R[2:])):
                 reused.append(int(R[2:]))
