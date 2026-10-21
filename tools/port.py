@@ -62,6 +62,30 @@ EDITS = [
      '            L5_2.Character:SetAttribute("WorthinessLearned", true)\n          end)\n        end\n',
      '        -- [port fix] always learn before using arrows\n'
      '        pcall(sfLearnWorthiness, true)\n', 1),
+    # (user report, level 3: still no Worthiness) the game unlocks Worthiness at level 4 and an
+    # arrow used without it is consumed with no stand; the get-stand routine started at level 2
+    # (again on every level-up from 3), used up to 3 arrows per try for 20 tries and bought more
+    ('prestige arrows from level 4',
+     '    local function L30_2()\n      if L5_2.PlayerStats.Level.Value < 2 then\n        return false\n      end\n',
+     '    local function L30_2()\n'
+     '      -- [port fix] no arrows before Worthiness can be unlocked (level 4), nor again at a level\n'
+     '      -- where an arrow already gave no stand\n'
+     '      local L0_3 = getgenv()._YBA_ArrowRetry\n'
+     '      if L5_2.PlayerStats.Level.Value < 4 or L0_3 and L0_3.prestige == L5_2.PlayerStats.Prestige.Value'
+     ' and L5_2.PlayerStats.Level.Value < L0_3.level then\n'
+     '        return false\n      end\n', 1),
+    ('prestige one arrow per try',
+     '          L29_2(3)\n          L0_3 = L0_3 + 1\n          if L5_2.PlayerStats.Stand.Value ~= "None" then\n',
+     '          L29_2(1)\n          L0_3 = L0_3 + 1\n'
+     '          if L5_2.PlayerStats.Stand.Value == "None" then\n'
+     '            -- [port fix] the arrow gave no stand (no Worthiness yet): stop using and buying\n'
+     '            -- arrows until the next level-up\n'
+     '            getgenv()._YBA_ArrowRetry = {\n'
+     '              prestige = L5_2.PlayerStats.Prestige.Value,\n'
+     '              level = L5_2.PlayerStats.Level.Value + 1\n'
+     '            }\n'
+     '            break\n          end\n'
+     '          if L5_2.PlayerStats.Stand.Value ~= "None" then\n', 1),
 ]
 
 # Coordinator checkpoints (coordinator.lua): (name, anchor, text inserted after the anchor's first
@@ -120,7 +144,7 @@ SITES = [
      '    local function L43_2(A0_3, A1_3, A2_3, A3_3)\n      local function L4_3(A0_4)\n',
      f'      if not {CP}("AutoPrestige", L1_2) then\n        return\n      end\n'),
     ('prestige get stand',
-     '    local function L30_2()\n      if L5_2.PlayerStats.Level.Value < 2 then\n',
+     '    local function L30_2()\n      -- [port fix] no arrows before Worthiness can be unlocked (level 4), nor again at a level\n',
      f'      if not {CP}("AutoPrestige", L1_2) then\n        return false\n      end\n'),
 ]
 

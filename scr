@@ -17776,7 +17776,10 @@ do
       if not getgenv()._YBA_Coord.checkpoint("AutoPrestige", L1_2) then
         return false
       end
-      if L5_2.PlayerStats.Level.Value < 2 then
+      -- [port fix] no arrows before Worthiness can be unlocked (level 4), nor again at a level
+      -- where an arrow already gave no stand
+      local L0_3 = getgenv()._YBA_ArrowRetry
+      if L5_2.PlayerStats.Level.Value < 4 or L0_3 and L0_3.prestige == L5_2.PlayerStats.Prestige.Value and L5_2.PlayerStats.Level.Value < L0_3.level then
         return false
       end
       if L5_2.PlayerStats.Stand.Value == "None" then
@@ -17797,8 +17800,17 @@ do
             end)
             task.wait(0.3)
           end
-          L29_2(3)
+          L29_2(1)
           L0_3 = L0_3 + 1
+          if L5_2.PlayerStats.Stand.Value == "None" then
+            -- [port fix] the arrow gave no stand (no Worthiness yet): stop using and buying
+            -- arrows until the next level-up
+            getgenv()._YBA_ArrowRetry = {
+              prestige = L5_2.PlayerStats.Prestige.Value,
+              level = L5_2.PlayerStats.Level.Value + 1
+            }
+            break
+          end
           if L5_2.PlayerStats.Stand.Value ~= "None" then
             do
               local L1_3 = L5_2.PlayerStats.Stand.Value

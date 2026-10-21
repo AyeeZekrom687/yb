@@ -49,6 +49,11 @@ Only the hub's own backend is changed; all Roblox remote calls are untouched.
    get-stand routine `L30_2` learned Worthiness up front only when the character lacked the
    `WorthinessLearned` attribute (set even when learning fails, survives a prestige); it now
    always learns before using arrows. Harness: `VALUES="Stand=None,Level=1"` shows the new order.
+   Follow-up (user at level 3, P0: still no Worthiness): the game unlocks Worthiness at level 4
+   (community guides; an arrow used without it is consumed with no stand), while `L30_2` started
+   at level 2 and used up to 3 arrows x 20 tries, buying more. It now starts at level 4, uses one
+   arrow per try, and after an arrow gives no stand waits for the next level
+   (`getgenv()._YBA_ArrowRetry`). Harness `VALUES="Stand=None,Level=3,Quest="`: no arrows used.
 Kept as in the original: safe mode (`YBA/NO_AUTOSTART.txt`), headless mode (`YBA/NO_UI.txt`), the
 key-info panel (reads key metadata the loader leaves in globals; no network), webhooks, server hop.
 The payload contains no HWID or heartbeat calls (those are in the loader, which is not shipped).
