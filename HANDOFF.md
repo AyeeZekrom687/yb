@@ -18,6 +18,7 @@ transforms that work around unluac's bugs. The decompile is verified against the
 - `tools/port.py` - builds `scr`: console logger on top + decompile with the port edits below
 - `console_logger.lua` - mirrors the client console to `YBA/console_log.txt` (user request)
 - `coordinator.lua` - feature coordinator module (user request), inserted by `tools/port.py`
+- `dashboard.lua` - Low Render Mode dashboard module (user request), inserted after the coordinator
 - `scr` - the loaded script
 - `tools/harness.lua` - Lua 5.1 mock Roblox/executor environment (see Testing)
 - `tools/devirt/` - the devirtualizer/decompiler pipeline (see below)
@@ -28,10 +29,10 @@ transforms that work around unluac's bugs. The decompile is verified against the
 ## Build (MUST follow every time)
 ```bash
 set -o pipefail
-python3 -I tools/port.py payload_decompiled.lua console_logger.lua coordinator.lua scr
+python3 -I tools/port.py payload_decompiled.lua console_logger.lua coordinator.lua dashboard.lua scr
 luac-250 -p scr                 # Lua 5.1 built with LUAI_MAXVARS 250 (main has >200 locals in 5.1 counting)
 luau-compile --null scr         # real Luau compiler (github.com/luau-lang/luau releases)
-git add scr tools/port.py coordinator.lua && git commit -m "..." && git push -u origin main
+git add scr tools/port.py coordinator.lua dashboard.lua && git commit -m "..." && git push -u origin main
 ```
 Every edit in `tools/port.py` is anchored on exact text and asserts its match count.
 
@@ -159,6 +160,22 @@ Only the hub's own backend is changed; all Roblox remote calls are untouched.
      object added to workspace);
    - noclip loops (every physics step): `CanCollide` is read before `Parent`; the main noclip
      drops removed parts every 30 steps instead of every step.
+17. FPS cap (user request): "FPS Cap (0 = off)" slider in Settings (setting `FPSCap`, always
+   saved like Remove Map), through the executor's `setfpscap`; 1-9 count as 10 so a slip cannot
+   lock the game at 1 FPS; back at 0 the cap from before is restored (`getfpscap`, else 60).
+   No `setfpscap`: the slider says so. Harness: `SETUP` defines a mock `setfpscap`.
+18. Low Render Mode (user request): "Low Render Mode (Dashboard)" toggle in Settings (setting
+   `LowRender`, always saved). On: `RunService:Set3dRenderingEnabled(false)` and a dark
+   full-screen dashboard (`dashboard.lua`, ScreenGui "YBAThingDashboard", DisplayOrder 40:
+   above the game HUD, below the hub's toggle (50) and window; no element takes input, so the
+   farms' dialogue clicks still reach the game's buttons). Updated once a second, only local
+   data (no remote calls): what runs and whose turn it is (coordinator), prestige/level, money
+   and money gained since enabling, session time, stand and spec, the skin from the stand
+   farm's latest `ReturnStandSkin` check (`getgenv()._YBA_LastSkin`), stand farm counts
+   (`getgenv()._YBA_SFStats`), every Tool in backpack + character by name, and the last 8
+   notifications (the notify function `L107_1` feeds `D.log`). Off: rendering back on,
+   dashboard hidden. Harness: `PRELOAD` `{"LowRender":true}` and read
+   `getgenv()._YBA_Dashboard.labels.*.Text` from an `EVAL` task.
 Kept as in the original: safe mode (`YBA/NO_AUTOSTART.txt`), headless mode (`YBA/NO_UI.txt`),
 webhooks, server hop.
 The payload contains no HWID or heartbeat calls (those are in the loader, which is not shipped).
@@ -215,7 +232,7 @@ SANDBOX=1 TRACE=t.txt MACLIB_PATH=maclib.lua ABSENT="$A" lua-250 tools/harness.l
 masking wall-clock times). Other options: `FIRE`/`FIRE_STEPS` (plain case-insensitive substring
 match, so `FIRE="Enable Farm"` also fires "Enable farming"; `FIRE="=enable farm"` matches the
 whole name only), `ITEMS`, `COVER=<from>-<to>`,
-`LOG_REMOTES=1`, `EVAL=<lua>`, `BACKPACK=name[:count],...` (Tools in the backpack), `PRELOAD=mock/path=local/file` (e.g. a settings file; the mock JSONDecode is a real decoder), `VALUES=Stand=None,Level=2` (the `.Value` of instances with those names). Mock limits: every child exists unless in ABSENT, numeric
+`LOG_REMOTES=1`, `EVAL=<lua>` (UI elements as `_HARNESS_UI`: {kind, name, cb}), `SETUP=<lua>` (run before the script, e.g. mock executor functions), `BACKPACK=name[:count],...` (Tools in the backpack), `PRELOAD=mock/path=local/file` (e.g. a settings file; the mock JSONDecode is a real decoder), `VALUES=Stand=None,Level=2` (the `.Value` of instances with those names). Mock limits: every child exists unless in ABSENT, numeric
 properties are numbers, `IsA` is true except for ITEMS models, collected items never disappear.
 Leak checks: `LEAK=n` prints live threads/connections/`Instance.new` objects every n steps and,
 at the end, groups them by script line (threads by the innermost line they wait on, following

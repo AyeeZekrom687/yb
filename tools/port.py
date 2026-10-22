@@ -1,7 +1,7 @@
 """Build scr from the verified decompile: strip the hub's own backend, add the coordinator
 (user request), prepend the console logger.
 
-usage: python3 -I tools/port.py payload_decompiled.lua console_logger.lua coordinator.lua scr
+usage: python3 -I tools/port.py payload_decompiled.lua console_logger.lua coordinator.lua dashboard.lua scr
 
 Every edit is anchored on exact text and asserts its match count, so a changed decompile fails
 the build instead of silently skipping an edit. Everything not listed here is the decompiled
@@ -464,7 +464,8 @@ EDITS = [
     # Auto Prestige never buy Rokakaka or arrows; they farm them from the map instead (Auto
     # Prestige and the stand farm already fall back to that when they cannot afford them).
     ('buy toggle: saved always', 'A0_2 == "SAR" or A0_2 == "SFM" then\n    L24_1(L26_1)\n',
-     'A0_2 == "SAR" or A0_2 == "SFM" or A0_2 == "SF_BuyItems" then\n    L24_1(L26_1)\n', 1),
+     'A0_2 == "SAR" or A0_2 == "SFM" or A0_2 == "SF_BuyItems" or A0_2 == "FPSCap" or A0_2 == "LowRender" then\n'
+     '    L24_1(L26_1)\n', 1),
     ('buy toggle: stand farm lucky arrows',
      '          if L170_1() == "Lucky Arrow" and L157_1("Lucky Arrow") == 0 then\n',
      '          if L170_1() == "Lucky Arrow" and L139_1.sfCountLucky() == 0 and L28_1("SF_BuyItems", false) == true then\n', 1),
@@ -566,6 +567,96 @@ EDITS = [
      '        if L4_3 and L4_3.CanCollide and L4_3.Parent then\n', 1),
     ('perf: kill noclip', '            if L4_4 and L4_4.Parent and L4_4.CanCollide then\n',
      '            if L4_4 and L4_4.CanCollide and L4_4.Parent then\n', 1),
+    # (user request) FPS cap slider in Settings (setting FPSCap, 0 = off), through the
+    # executor's setfpscap. 1-9 count as 10 so a slip cannot lock the game at 1 FPS; setting it
+    # back to 0 restores the cap from before (getfpscap, else Roblox's default 60).
+    ('fps cap: slider', 'L152_1:Slider({\n  Name = "Menu Scale",\n',
+     '-- [port] (user request) FPS cap through the executor\'s setfpscap\n'
+     'do\n'
+     '  local fpsCapBefore   -- the cap before this script set one, restored at 0\n'
+     '  \n'
+     '  local function fpsCapValue(A0_2)\n'
+     '    local L1_2 = math.floor(tonumber(A0_2) or 0)\n'
+     '    if L1_2 <= 0 then\n      return 0\n    end\n'
+     '    return math.clamp(L1_2, 10, 240)\n'
+     '  end\n'
+     '  \n'
+     '  local function applyFpsCap(A0_2)\n'
+     '    if type(setfpscap) ~= "function" then\n      return\n    end\n'
+     '    if 0 < A0_2 then\n'
+     '      if fpsCapBefore == nil then\n'
+     '        local L1_2, L2_2 = pcall(function()\n'
+     '          return type(getfpscap) == "function" and tonumber(getfpscap()) or nil\n'
+     '        end)\n'
+     '        fpsCapBefore = L1_2 and L2_2 or 60\n'
+     '      end\n'
+     '      pcall(setfpscap, A0_2)\n'
+     '    elseif fpsCapBefore ~= nil then\n'
+     '      pcall(setfpscap, fpsCapBefore)\n'
+     '      fpsCapBefore = nil\n'
+     '    end\n'
+     '  end\n'
+     '  \n'
+     '  L152_1:Slider({\n'
+     '    Name = "FPS Cap (0 = off)",\n'
+     '    Default = fpsCapValue(L28_1("FPSCap", 0)),\n'
+     '    Minimum = 0,\n'
+     '    Maximum = 240,\n'
+     '    Precision = 0,\n'
+     '    DisplayMethod = "Value",\n'
+     '    Callback = function(A0_2)\n'
+     '      local L1_2 = fpsCapValue(A0_2)\n'
+     '      L27_1("FPSCap", L1_2)\n'
+     '      applyFpsCap(L1_2)\n'
+     '    end,\n'
+     '    onInputComplete = function(A0_2)\n'
+     '      local L1_2 = fpsCapValue(A0_2)\n'
+     '      if type(setfpscap) ~= "function" then\n'
+     '        L107_1("Settings", "FPS cap unavailable: this executor has no setfpscap")\n'
+     '      else\n'
+     '        L107_1("Settings", L1_2 == 0 and "FPS cap off" or "FPS cap: " .. L1_2)\n'
+     '      end\n'
+     '    end\n'
+     '  })\n'
+     '  applyFpsCap(fpsCapValue(L28_1("FPSCap", 0)))\n'
+     'end\n'
+     '-- [port] (user request) Low Render Mode: 3D rendering off and a dashboard (dashboard.lua)\n'
+     'L152_1:Toggle({\n'
+     '  Name = "Low Render Mode (Dashboard)",\n'
+     '  Default = L28_1("LowRender", false),\n'
+     '  Callback = function(A0_2)\n'
+     '    L27_1("LowRender", A0_2)\n'
+     '    getgenv()._YBA_Dashboard.setEnabled(A0_2)\n'
+     '  end\n'
+     '})\n'
+     'if L28_1("LowRender", false) then\n'
+     '  getgenv()._YBA_Dashboard.setEnabled(true)\n'
+     'end\n'
+     'L152_1:Slider({\n  Name = "Menu Scale",\n', 1),
+    # Low Render Mode dashboard (dashboard.lua) data: recent notifications (every farm's status
+    # messages go through the notify function), the stand farm's latest skin check and its
+    # session stats. Nothing new is sent to the server.
+    ('dashboard: notify log',
+     'local function L107_1(A0_2, A1_2)\n  local L2_2 = L105_1 or getgenv().RAILhubWindow or _G.RAILhubWindow\n',
+     'local function L107_1(A0_2, A1_2)\n'
+     '  -- [port] (user request) recent messages for the Low Render Mode dashboard\n'
+     '  local dash = getgenv()._YBA_Dashboard\n'
+     '  if dash then\n    pcall(dash.log, A0_2, A1_2)\n  end\n'
+     '  local L2_2 = L105_1 or getgenv().RAILhubWindow or _G.RAILhubWindow\n', 1),
+    ('dashboard: stand skin',
+     '    local L2_2, L3_2 = pcall(function()\n      return L1_2:InvokeServer("ReturnStandSkin", "Stand")\n    end)\n'
+     '    return L2_2 and L3_2 or "None"\n  end\n  \n  L149_1.sfCheckShiny = L171_1\n',
+     '    local L2_2, L3_2 = pcall(function()\n      return L1_2:InvokeServer("ReturnStandSkin", "Stand")\n    end)\n'
+     '    -- [port] (user request) remembered for the Low Render Mode dashboard\n'
+     '    local skin = L2_2 and L3_2 or "None"\n'
+     '    pcall(function()\n'
+     '      getgenv()._YBA_LastSkin = {stand = tostring(L2_1.PlayerStats.Stand.Value), skin = skin}\n'
+     '    end)\n'
+     '    return skin\n  end\n  \n  L149_1.sfCheckShiny = L171_1\n', 1),
+    ('dashboard: stand farm stats', '  startTime = 0\n}\nL149_1.standFarmRespawnConn = nil\n',
+     '  startTime = 0\n}\n'
+     'getgenv()._YBA_SFStats = L149_1.farmStats   -- [port] for the Low Render Mode dashboard\n'
+     'L149_1.standFarmRespawnConn = nil\n', 1),
 ]
 
 # Coordinator checkpoints (coordinator.lua): (name, anchor, text inserted after the anchor's first
@@ -722,7 +813,7 @@ def strip_reload(text):
     return text[:a] + RELOAD_STUB + text[b:]
 
 
-def main(src, loggerf, coordf, out):
+def main(src, loggerf, coordf, dashf, out):
     with open(src, 'r', encoding='latin-1') as f:
         text = f.read()
     for name, old, new, count in EDITS:
@@ -731,7 +822,10 @@ def main(src, loggerf, coordf, out):
         text = text.replace(old, new)
     text = strip_reload(text)
     with open(coordf, 'r', encoding='ascii') as f:
-        text = add_coordinator(text, f.read())
+        coord = f.read()
+    with open(dashf, 'r', encoding='ascii') as f:
+        coord = coord.rstrip('\n') + '\n\n' + f.read()
+    text = add_coordinator(text, coord)
     with open(loggerf, 'r', encoding='ascii') as f:
         logger = f.read().rstrip('\n')
     result = logger + '\n\n' + text
@@ -741,4 +835,4 @@ def main(src, loggerf, coordf, out):
 
 
 if __name__ == '__main__':
-    main(*sys.argv[1:5])
+    main(*sys.argv[1:6])

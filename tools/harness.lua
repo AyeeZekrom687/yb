@@ -602,7 +602,7 @@ for nm in ("FireServer InvokeServer Kick Teleport TeleportToPlaceInstance Telepo
         .. "Play Stop Cancel Create SendKeyEvent SendMouseButtonEvent SendMouseMoveEvent ChangeState MoveTo "
         .. "PivotTo SetPrimaryPartCFrame Activate EquipTool UnequipTools InputHoldBegin InputHoldEnd Notify "
         .. "Connect Once HttpGet HttpGetAsync SetCore BindToRenderStep LoadAnimation SetAttribute "
-        .. "ClearAllChildren SetNetworkOwner ApplyImpulse Jump"):gmatch("%S+") do TRACE_METHODS[nm] = true end
+        .. "ClearAllChildren SetNetworkOwner ApplyImpulse Jump Set3dRenderingEnabled"):gmatch("%S+") do TRACE_METHODS[nm] = true end
 proxy_mt.__call = function(p, ...)
     local d = PX[p]
     PXREF = PXREF or PX
@@ -901,6 +901,17 @@ if os.getenv("SANDBOX") then
     rawset(SENV, "load", nil)
     real_setfenv(chunk, SENV)
     log("SANDBOX", "script runs in a proxy environment")
+end
+-- SETUP=<lua>: run before the script (e.g. define executor functions the mock lacks). EVAL code
+-- can reach the recorded UI elements as _HARNESS_UI ({kind, name, cb} each).
+rawset(_G, "_HARNESS_UI", UI_ELEMS)
+local SETUP = os.getenv("SETUP")
+if SETUP then
+    local f, err = real_loadstring(SETUP, "=SETUP")
+    if not f then log("SETUP", "compile error: " .. tostring(err)) else
+        local ok2, e2 = pcall(f)
+        if not ok2 then log("SETUP", "error: " .. tostring(e2)) end
+    end
 end
 install_budget(nil, "main")
 local ok, e = xpcall(chunk, debug.traceback)
