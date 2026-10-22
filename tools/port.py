@@ -402,6 +402,88 @@ EDITS = [
      '      if not getgenv().HookedRemotes then\n'
      '        -- [port fix] weak keys, so destroyed RemoteEvents are released\n'
      '        getgenv().HookedRemotes = setmetatable({}, {__mode = "k"})\n      end\n', 1),
+    # (user request) Stand farm + item farm: while the item farm runs (coordinator on) and
+    # collects what the stand farm's method uses, the stand farm does not collect for itself: it
+    # takes a turn only with at least one arrow of its method and one Rokakaka, and otherwise
+    # hands the character to the item farm (coordinator.lua feeds).
+    ('stand farm: ready helper',
+     '  local function L170_1()\n    return L149_1.getFarmMethod and L149_1.getFarmMethod() or L149_1.farmMethod'
+     ' or L28_1 and L28_1("SFM", "Arrow") or "Arrow"\n  end\n  \n  local function L171_1()\n',
+     '  local function L170_1()\n    return L149_1.getFarmMethod and L149_1.getFarmMethod() or L149_1.farmMethod'
+     ' or L28_1 and L28_1("SFM", "Arrow") or "Arrow"\n  end\n  \n'
+     '  -- [port] (user request) whether the item farm picks up this item (it always takes Lucky Arrows)\n'
+     '  local function sfItemFarmCollects(A0_2)\n'
+     '    local L1_2 = selectedFarmItems\n'
+     '    if A0_2 == "Lucky Arrow" or type(L1_2) ~= "table" or #L1_2 == 0 then\n      return true\n    end\n'
+     '    local L2_2 = L139_1.normalizeItemName\n'
+     '    local L3_2 = L2_2 and L2_2(A0_2) or A0_2\n'
+     '    for _, L4_2 in ipairs(L1_2) do\n'
+     '      if L4_2 == A0_2 or L2_2 and L2_2(L4_2) == L3_2 then\n        return true\n      end\n    end\n'
+     '    return false\n  end\n  \n'
+     '  -- [port] (user request) false while the item farm should collect for the stand farm: it runs,\n'
+     '  -- the coordinator is on, it picks up Rokakaka and the method\'s arrow, and the stand farm\n'
+     '  -- lacks either (one of each lets it take its turn back)\n'
+     '  local function sfCoordReady()\n'
+     '    if not normalFarmOn or not getgenv()._YBA_Coord.enabled then\n      return true\n    end\n'
+     '    -- L1_2: the arrows the method rolls with; the item farm must pick up the first\n'
+     '    local L0_2 = L170_1()\n'
+     '    local L1_2\n'
+     '    if L0_2 == "Arrow" then\n      L1_2 = {"Mysterious Arrow"}\n'
+     '    elseif L0_2 == "Lucky Arrow" then\n      L1_2 = {"Lucky Arrow"}\n'
+     '    elseif L0_2 == "Rib Cage" then\n      L1_2 = {"Rib Cage of The Saint\'s Corpse"}\n'
+     '    elseif L0_2 == "Arrow + Lucky Arrow" then\n      L1_2 = {"Mysterious Arrow", "Lucky Arrow"}\n'
+     '    else\n      return true\n    end\n'
+     '    if not (sfItemFarmCollects("Rokakaka") and sfItemFarmCollects(L1_2[1])) then\n'
+     '      return true\n    end\n'
+     '    local L3_2 = false\n'
+     '    for _, L4_2 in ipairs(L1_2) do\n'
+     '      L3_2 = L3_2 or 0 < L157_1(L4_2)\n'
+     '    end\n'
+     '    if not L3_2 and L0_2 == "Lucky Arrow" and L28_1("SF_BuyItems", false) == true then\n'
+     '      -- bought from the shop in place\n'
+     '      L3_2 = 75000 <= (L2_1.PlayerStats and L2_1.PlayerStats.Money.Value or 0)\n'
+     '    end\n'
+     '    return L3_2 and 0 < L157_1("Rokakaka")\n'
+     '  end\n  \n'
+     '  local function L171_1()\n', 1),
+    ('stand farm: leave collecting to the item farm',
+     '          local L9_2 = L157_1("Mysterious Arrow")\n          local L10_2 = L157_1("Rokakaka")\n',
+     '          -- [port] (user request) the item farm collects for the stand farm while both run:\n'
+     '          -- no rolls, collecting or buying here until the next checkpoint hands it over\n'
+     '          if not sfCoordReady() then\n            task.wait(0.5)\n            break\n          end\n'
+     '          local L9_2 = L157_1("Mysterious Arrow")\n          local L10_2 = L157_1("Rokakaka")\n', 1),
+    # (user request) "Buy Arrows/Rokakaka with Money" (setting SF_BuyItems, off by default):
+    # off, the stand farm (shop top-up, Lucky Arrow method), Auto Requiem's arrow for Suno and
+    # Auto Prestige never buy Rokakaka or arrows; they farm them from the map instead (Auto
+    # Prestige and the stand farm already fall back to that when they cannot afford them).
+    ('buy toggle: saved always', 'A0_2 == "SAR" or A0_2 == "SFM" then\n    L24_1(L26_1)\n',
+     'A0_2 == "SAR" or A0_2 == "SFM" or A0_2 == "SF_BuyItems" then\n    L24_1(L26_1)\n', 1),
+    ('buy toggle: stand farm lucky arrows',
+     '          if L170_1() == "Lucky Arrow" and L157_1("Lucky Arrow") == 0 then\n',
+     '          if L170_1() == "Lucky Arrow" and L157_1("Lucky Arrow") == 0 and L28_1("SF_BuyItems", false) == true then\n', 1),
+    ('buy toggle: stand farm shop top-up',
+     '  function sfBuyMissingItem(A0_2)\n    if L90_1() then\n      return false\n    end\n',
+     '  function sfBuyMissingItem(A0_2)\n    if L90_1() or L28_1("SF_BuyItems", false) ~= true then\n'
+     '      return false\n    end\n', 1),
+    ('buy toggle: requiem arrow',
+     '      if 8250 <= L1_2 then\n        L170_1("Buying 1 Mysterious Arrow for Suno ($750)...")\n',
+     '      if 8250 <= L1_2 and L28_1("SF_BuyItems", false) == true then\n'
+     '        L170_1("Buying 1 Mysterious Arrow for Suno ($750)...")\n', 1),
+    ('buy toggle: prestige rokakaka',
+     '      if not L0_3 then\n        if L5_2.PlayerStats.Money.Value >= 2500 then\n',
+     '      if not L0_3 then\n        if L5_2.PlayerStats.Money.Value >= 2500 and L28_1("SF_BuyItems", false) == true then\n', 1),
+    ('buy toggle: prestige arrow',
+     '        if not L3_3 then\n          if L5_2.PlayerStats.Money.Value >= 750 then\n',
+     '        if not L3_3 then\n          if L5_2.PlayerStats.Money.Value >= 750 and L28_1("SF_BuyItems", false) == true then\n', 1),
+    ('buy toggle: ui', '      L27_1("SAR", A0_2)\n    end\n  })\n',
+     '      L27_1("SAR", A0_2)\n    end\n  })\n'
+     '  -- [port] (user request) off: no Rokakaka or arrows bought with money (stand farm, Auto\n'
+     '  -- Requiem, Auto Prestige); they are farmed from the map instead\n'
+     '  L159_1:Toggle({\n'
+     '    Name = "Buy Arrows/Rokakaka with Money",\n'
+     '    Default = L28_1("SF_BuyItems", false),\n'
+     '    Callback = function(A0_2)\n      L27_1("SF_BuyItems", A0_2)\n    end\n'
+     '  })\n', 1),
 ]
 
 # Coordinator checkpoints (coordinator.lua): (name, anchor, text inserted after the anchor's first
@@ -415,22 +497,29 @@ SITES = [
     ('item farm helpers', '  function normalFarm()\n',
      '    -- [port] coordinator hooks: the farm is on; stop its tween and item stick when pausing\n'
      '    local coordOn = function()\n      return normalFarmOn\n    end\n'
-     '    local coordPause = function()\n      L150_1()\n      L155_1()\n    end\n'),
+     '    local coordPause = function()\n      L150_1()\n      L155_1()\n    end\n'
+     '    -- waiting, it takes a turn only with an item to collect (or the server hop farm on);\n'
+     '    -- without one it roamed to a random spot and handed straight back\n'
+     '    local coordReady = function()\n'
+     '      return serverHopFarmEnabled or (findLuckyArrow() or findNearestItem(selectedFarmItems)) ~= nil\n'
+     '    end\n'),
     ('item farm loop',
      '        while normalFarmOn do\n          if L126_1 and L126_1() then\n            normalFarmOn = false\n'
      '            break\n          end\n          if L86_1() then\n',
-     f'          if not {CP}("ItemFarm", coordOn, false, coordPause, noteItemFarmProgress) then\n'
+     f'          if not {CP}("ItemFarm", coordOn, false, coordPause, noteItemFarmProgress, coordReady) then\n'
      '            break\n          end\n'),
     ('item farm roam loop',
      '          while normalFarmOn do\n            local L7_2 = false\n            if serverHopFarmEnabled then\n',
-     f'            if not {CP}("ItemFarm", coordOn, true, coordPause, noteItemFarmProgress) then\n'
+     f'            if not {CP}("ItemFarm", coordOn, true, coordPause, noteItemFarmProgress, coordReady) then\n'
      '              break\n            end\n'),
-    # stand farms (normal, rib, shiny): one participant
+    # stand farms (normal, rib, shiny): one participant. The stand farm is idle and not ready
+    # while it waits for the item farm to collect its arrows and Rokakaka (sfCoordReady).
     ('stand farm loop',
      '    while L149_1.standFarmRunning do\n      local L2_2 = false\n      while true do\n        L1_2 = L1_2 + 1\n',
+     '      local sfReady = sfCoordReady()\n'
      f'      if not {CP}("StandFarm", function()\n'
      '        return L149_1.standFarmRunning or L149_1.ribFarmRunning or L149_1.shinyFarmRunning\n'
-     '      end) then\n        break\n      end\n'),
+     '      end, not sfReady, nil, nil, sfCoordReady) then\n        break\n      end\n'),
     ('rib farm loop',
      '    while L149_1.ribFarmRunning do\n      local L7_2 = false\n      L5_2 = L5_2 + 1\n',
      f'      if not {CP}("StandFarm", function()\n'

@@ -904,15 +904,22 @@ if EVAL then
 end
 
 -- FIRE=<pattern>: switch on matching toggles / press matching buttons (case-insensitive plain
--- match on the element name, "*" = all, "a|b" = either), then run FIRE_STEPS half-second steps.
+-- match on the element name, "=name" = that whole name only, "*" = all, "a|b" = either), then
+-- run FIRE_STEPS half-second steps.
 local FIRE = os.getenv("FIRE")
 if FIRE then
     LOG_AGG = true
     local pats = {}
     for pat in FIRE:lower():gmatch("[^|]+") do pats[#pats + 1] = pat end   -- "a|b": either name
     local function wanted(name)
+        local lname = name:lower()
         for _, pat in ipairs(pats) do
-            if pat == "*" or name:lower():find(pat, 1, true) then return true end
+            if pat == "*" then return true end
+            if pat:sub(1, 1) == "=" then
+                if lname == pat:sub(2) then return true end
+            elseif lname:find(pat, 1, true) then
+                return true
+            end
         end
         return false
     end

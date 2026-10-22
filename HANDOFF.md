@@ -120,6 +120,23 @@ Only the hub's own backend is changed; all Roblox remote calls are untouched.
    the mock does not destroy on respawn (Roblox does, disconnecting them). Bounded and left
    alone: the webhook queue (drains at 2/s), console logger (capped), NPC list (deduplicated),
    name cache (4096).
+13. Item farm + stand farm (user reports: with no items on the map the item farm still took a
+   turn every 60 s, roamed to a random spot and handed straight back; the stand farm's own
+   Rokakaka/arrow collecting should not compete with the item farm). See the Coordinator
+   section: the item farm only takes a turn with an item on the map (or server hop farm on);
+   while the item farm runs (coordinator on) and picks up Rokakaka and the method's main arrow
+   (its item list empty or containing them), the stand farm (`sfCoordReady`) makes no rolls,
+   collects nothing and buys nothing until it has at least one arrow of its method and one
+   Rokakaka, and hands the character to the item farm meanwhile. Item farm off: the original
+   stand farm behaviour.
+14. "Buy Arrows/Rokakaka with Money" toggle in the stand farm section (user request; setting
+   `SF_BuyItems`, off by default, saved like the other stand farm options). Off, nothing buys
+   Rokakaka or arrows with money: the stand farm's shop top-up (`sfBuyMissingItem`) and its
+   Lucky Arrow method purchase, the Mysterious Arrow Auto Requiem buys for Suno, and Auto
+   Prestige's arrow/Rokakaka purchases. Those paths then farm the items from the map (Auto
+   Prestige, stand farm) or report the missing arrow (Suno), as they already did when money ran
+   short. Not affected: the Requiem Arrow itself (Auto Requiem), the item farm's own "Auto Buy
+   Lucky Arrow" toggle, Hamon.
 Kept as in the original: safe mode (`YBA/NO_AUTOSTART.txt`), headless mode (`YBA/NO_UI.txt`),
 webhooks, server hop.
 The payload contains no HWID or heartbeat calls (those are in the loader, which is not shipped).
@@ -173,7 +190,9 @@ SANDBOX=1 TRACE=t.txt MACLIB_PATH=maclib.lua ABSENT="$A" lua-250 tools/harness.l
 ... ABSENT="$A,DialogueGui" ITEMS="Mysterious Arrow,Rokakaka,Pure Rokakaka,Gold Coin" FIRE=farm FIRE_STEPS=240   # item farm
 ```
 `TRACE` writes a canonical event trace (compare runs of two scripts with `sort` + diff after
-masking wall-clock times). Other options: `FIRE`/`FIRE_STEPS`, `ITEMS`, `COVER=<from>-<to>`,
+masking wall-clock times). Other options: `FIRE`/`FIRE_STEPS` (plain case-insensitive substring
+match, so `FIRE="Enable Farm"` also fires "Enable farming"; `FIRE="=enable farm"` matches the
+whole name only), `ITEMS`, `COVER=<from>-<to>`,
 `LOG_REMOTES=1`, `EVAL=<lua>`, `PRELOAD=mock/path=local/file` (e.g. a settings file; the mock JSONDecode is a real decoder), `VALUES=Stand=None,Level=2` (the `.Value` of instances with those names). Mock limits: every child exists unless in ABSENT, numeric
 properties are numbers, `IsA` is true except for ITEMS models, collected items never disappear.
 Leak checks: `LEAK=n` prints live threads/connections/`Instance.new` objects every n steps and,
@@ -190,13 +209,21 @@ Expected harness errors (same in the original): `require` is nil, `UDim2.X.Scale
 The original's character-driving features do not know about each other (item farm, stand farm
 which teleports back to its spot every iteration, quest/NPC farm, auto prestige), so running two
 makes them fight over the character. The coordinator is a cooperative lease: each feature calls
-`getgenv()._YBA_Coord.checkpoint(name, isOn, idle, onPause, onWait)` at safe points, and only the
-holder proceeds. With one feature on, checkpoint returns at once (harness: item-farm-only and
-quest-farm-only traces are identical to the build without it, apart from one console line).
+`getgenv()._YBA_Coord.checkpoint(name, isOn, idle, onPause, onWait, readyFn)` at safe points,
+and only the holder proceeds. With one feature on, checkpoint returns at once (harness: item
+farm, stand farm, quest farm alone give traces identical to the build without it).
 - Turns: the holder keeps the character for the turn length (Settings > Coordinator, 60 s
-  default), then hands over at its next checkpoint to the feature that has waited longest. A
-  feature with nothing to do (item farm with no items: roam loop; NPC farm with no target) hands
-  over at once.
+  default), then hands over at its next checkpoint to the ready feature that has waited
+  longest. A feature with nothing to do (item farm with no items: roam loop; NPC farm with no
+  target; stand farm waiting for items) hands over at once.
+- Ready: a waiting feature only gets a turn when `readyFn()` is true (none given: always):
+  the item farm when an item is on the map or the server hop farm is on; the stand farm when it
+  has its arrow and Rokakaka (or the item farm is not collecting for it). `feeds = {StandFarm =
+  "ItemFarm"}` also makes the item farm ready while the stand farm waits for items, so the item
+  farm keeps the character (roaming for spawns) until the stand farm can roll again. A vacant
+  lease (holder off or stuck) goes to the longest waiting feature even if none is ready.
+  Tested with `lua5.1 tools/coordsim.lua coordinator.lua <scenario>` (scenarios: noitems_hasitems,
+  items_lacking, noitems_lacking, both_ready, item_alone, stand_off, item_off).
 - Quest/NPC farm yields to Auto Prestige while it runs (both use the game's single quest slot).
 - Checkpoints: item farm per-item loop and roam loop (pausing stops its tween and item stick; the
   stall watchdog's progress time is kept fresh while it waits); stand/rib/shiny farm loops (their

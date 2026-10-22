@@ -276,7 +276,7 @@ L17_1("settings loaded early")
 
 local function L27_1(A0_2, A1_2)
   L26_1[A0_2] = A1_2
-  if L20_1.SaveSettings or A0_2 == "SS" or A0_2 == "AE" or A0_2 == "AR" or A0_2 == "RemoveMap" or A0_2 == "RM" or A0_2 == "AutoPlay" or A0_2 == "AutoPlayMethod" or A0_2 == "SH_Delay" or A0_2 == "SHD" or A0_2 == "SHF" or A0_2 == "SF_HopNoItems" or A0_2 == "StandFarmKeep" or A0_2 == "StandFarmShinies" or A0_2 == "SKS" or A0_2 == "SAR" or A0_2 == "SFM" then
+  if L20_1.SaveSettings or A0_2 == "SS" or A0_2 == "AE" or A0_2 == "AR" or A0_2 == "RemoveMap" or A0_2 == "RM" or A0_2 == "AutoPlay" or A0_2 == "AutoPlayMethod" or A0_2 == "SH_Delay" or A0_2 == "SHD" or A0_2 == "SHF" or A0_2 == "SF_HopNoItems" or A0_2 == "StandFarmKeep" or A0_2 == "StandFarmShinies" or A0_2 == "SKS" or A0_2 == "SAR" or A0_2 == "SFM" or A0_2 == "SF_BuyItems" then
     L24_1(L26_1)
   end
 end
@@ -302,9 +302,12 @@ do
     waiting = {},         -- feature -> tick() when it started waiting
     active = {},          -- feature -> function: is the feature still switched on
     seen = {},            -- feature -> tick() of its latest checkpoint
+    ready = {},           -- feature -> function: it has something to do now (absent: always)
     STALE = 120,          -- a holder silent this long while on is treated as stuck
     -- the quest farm and Auto Prestige's storyline share the game's single quest slot
     yieldsTo = {QuestFarm = "AutoPrestige"},
+    -- while both run, the stand farm gets its arrows and Rokakaka from the item farm
+    feeds = {StandFarm = "ItemFarm"},
     names = {
       ItemFarm = "Item Farm",
       StandFarm = "Stand Farm",
@@ -333,11 +336,35 @@ do
     return holder == nil or not running(holder) or tick() - (C.seen[holder] or 0) > C.STALE
   end
 
-  -- the feature that has waited longest and may run now, other than except
-  local function nextWaiter(except)
+  local function ownReady(name)
+    local f = C.ready[name]
+    if not f then
+      return true
+    end
+    local ok, r = pcall(f)
+    return not ok or (r and true or false)   -- a failing check never starves a feature
+  end
+
+  -- a feature has something to do: by its own check, or a running feature it feeds waits on it
+  local function ready(name)
+    if ownReady(name) then
+      return true
+    end
+    for other, source in pairs(C.feeds) do
+      if source == name and running(other) and not ownReady(other) then
+        return true
+      end
+    end
+    return false
+  end
+
+  -- the feature that has waited longest and may run now, other than except; only ready ones
+  -- unless anyState
+  local function nextWaiter(except, anyState)
     local best, bestT
     for name, t in pairs(C.waiting) do
-      if name ~= except and running(name) and not blocked(name) and (bestT == nil or t < bestT) then
+      if name ~= except and running(name) and not blocked(name) and (bestT == nil or t < bestT)
+        and (anyState or ready(name)) then
         best, bestT = name, t
       end
     end
@@ -356,11 +383,13 @@ do
 
   -- name: feature id; isOn(): whether the feature is still switched on; idle: it has nothing to
   -- do right now (hand over at once if another feature waits); onPause(): stops the feature's own
-  -- movement before another takes over; onWait(): called every 0.25 s while it waits.
+  -- movement before another takes over; onWait(): called every 0.25 s while it waits;
+  -- readyFn(): while it waits, whether it has something to do (a turn is only handed to a ready
+  -- feature; when none is, the longest waiting one takes a vacant lease).
   -- Returns false when the feature is off or was switched off while waiting (the caller leaves
   -- its loop). An old session still looping after its toggle went off (Auto Prestige's storyline
   -- loop never checked) stops here instead of running forever.
-  function C.checkpoint(name, isOn, idle, onPause, onWait)
+  function C.checkpoint(name, isOn, idle, onPause, onWait, readyFn)
     local ok, on = pcall(isOn)
     if not (ok and on) then
       return false
@@ -369,6 +398,7 @@ do
       return true
     end
     C.active[name] = isOn
+    C.ready[name] = readyFn
     C.seen[name] = tick()
     local holder = C.holder
     if holder == name or vacant(holder) then
@@ -376,8 +406,11 @@ do
         if holder ~= name then
           grant(name)
         end
+        if not idle and tick() - C.sliceStart < C.slice then
+          return true
+        end
         local other = nextWaiter(name)
-        if other == nil or not idle and tick() - C.sliceStart < C.slice then
+        if other == nil then
           return true
         end
         grant(other)
@@ -408,7 +441,7 @@ do
         C.seen[name] = tick()
         return true
       end
-      if vacant(C.holder) and nextWaiter(nil) == name then
+      if vacant(C.holder) and (nextWaiter(nil) or nextWaiter(nil, true)) == name then
         grant(name)
         return true
       end
@@ -8242,6 +8275,11 @@ do
       L150_1()
       L155_1()
     end
+    -- waiting, it takes a turn only with an item to collect (or the server hop farm on);
+    -- without one it roamed to a random spot and handed straight back
+    local coordReady = function()
+      return serverHopFarmEnabled or (findLuckyArrow() or findNearestItem(selectedFarmItems)) ~= nil
+    end
     if not waitForGameLoad() then
       if not L62_1 or not L62_1() then
         normalFarmOn = false
@@ -8282,7 +8320,7 @@ do
           L2_2 = 0
         end
         while normalFarmOn do
-          if not getgenv()._YBA_Coord.checkpoint("ItemFarm", coordOn, false, coordPause, noteItemFarmProgress) then
+          if not getgenv()._YBA_Coord.checkpoint("ItemFarm", coordOn, false, coordPause, noteItemFarmProgress, coordReady) then
             break
           end
           if L126_1 and L126_1() then
@@ -8388,7 +8426,7 @@ do
           break
         else
           while normalFarmOn do
-            if not getgenv()._YBA_Coord.checkpoint("ItemFarm", coordOn, true, coordPause, noteItemFarmProgress) then
+            if not getgenv()._YBA_Coord.checkpoint("ItemFarm", coordOn, true, coordPause, noteItemFarmProgress, coordReady) then
               break
             end
             local L7_2 = false
@@ -12822,7 +12860,7 @@ do
     end
     local L2_2 = L150_1("Mysterious Arrow")
     if L2_2 < 1 then
-      if 8250 <= L1_2 then
+      if 8250 <= L1_2 and L28_1("SF_BuyItems", false) == true then
         L170_1("Buying 1 Mysterious Arrow for Suno ($750)...")
         local L3_2 = L2_1.Character and L2_1.Character:FindFirstChild("RemoteEvent")
         if L3_2 then
@@ -13842,7 +13880,7 @@ do
   end
   
   function sfBuyMissingItem(A0_2)
-    if L90_1() then
+    if L90_1() or L28_1("SF_BuyItems", false) ~= true then
       return false
     end
     local L1_2 = L2_1.Character
@@ -14035,6 +14073,57 @@ do
     return L149_1.getFarmMethod and L149_1.getFarmMethod() or L149_1.farmMethod or L28_1 and L28_1("SFM", "Arrow") or "Arrow"
   end
   
+  -- [port] (user request) whether the item farm picks up this item (it always takes Lucky Arrows)
+  local function sfItemFarmCollects(A0_2)
+    local L1_2 = selectedFarmItems
+    if A0_2 == "Lucky Arrow" or type(L1_2) ~= "table" or #L1_2 == 0 then
+      return true
+    end
+    local L2_2 = L139_1.normalizeItemName
+    local L3_2 = L2_2 and L2_2(A0_2) or A0_2
+    for _, L4_2 in ipairs(L1_2) do
+      if L4_2 == A0_2 or L2_2 and L2_2(L4_2) == L3_2 then
+        return true
+      end
+    end
+    return false
+  end
+  
+  -- [port] (user request) false while the item farm should collect for the stand farm: it runs,
+  -- the coordinator is on, it picks up Rokakaka and the method's arrow, and the stand farm
+  -- lacks either (one of each lets it take its turn back)
+  local function sfCoordReady()
+    if not normalFarmOn or not getgenv()._YBA_Coord.enabled then
+      return true
+    end
+    -- L1_2: the arrows the method rolls with; the item farm must pick up the first
+    local L0_2 = L170_1()
+    local L1_2
+    if L0_2 == "Arrow" then
+      L1_2 = {"Mysterious Arrow"}
+    elseif L0_2 == "Lucky Arrow" then
+      L1_2 = {"Lucky Arrow"}
+    elseif L0_2 == "Rib Cage" then
+      L1_2 = {"Rib Cage of The Saint's Corpse"}
+    elseif L0_2 == "Arrow + Lucky Arrow" then
+      L1_2 = {"Mysterious Arrow", "Lucky Arrow"}
+    else
+      return true
+    end
+    if not (sfItemFarmCollects("Rokakaka") and sfItemFarmCollects(L1_2[1])) then
+      return true
+    end
+    local L3_2 = false
+    for _, L4_2 in ipairs(L1_2) do
+      L3_2 = L3_2 or 0 < L157_1(L4_2)
+    end
+    if not L3_2 and L0_2 == "Lucky Arrow" and L28_1("SF_BuyItems", false) == true then
+      -- bought from the shop in place
+      L3_2 = 75000 <= (L2_1.PlayerStats and L2_1.PlayerStats.Money.Value or 0)
+    end
+    return L3_2 and 0 < L157_1("Rokakaka")
+  end
+  
   local function L171_1()
     if not L62_1 or not L62_1() then
       local L0_2 = tick()
@@ -14072,9 +14161,10 @@ do
     local L0_2 = tick()
     local L1_2 = 0
     while L149_1.standFarmRunning do
+      local sfReady = sfCoordReady()
       if not getgenv()._YBA_Coord.checkpoint("StandFarm", function()
         return L149_1.standFarmRunning or L149_1.ribFarmRunning or L149_1.shinyFarmRunning
-      end) then
+      end, not sfReady, nil, nil, sfCoordReady) then
         break
       end
       local L2_2 = false
@@ -14184,6 +14274,12 @@ do
                 break
               end
             end
+          end
+          -- [port] (user request) the item farm collects for the stand farm while both run:
+          -- no rolls, collecting or buying here until the next checkpoint hands it over
+          if not sfCoordReady() then
+            task.wait(0.5)
+            break
           end
           local L9_2 = L157_1("Mysterious Arrow")
           local L10_2 = L157_1("Rokakaka")
@@ -14308,7 +14404,7 @@ do
             return {}
           end
           
-          if L170_1() == "Lucky Arrow" and L157_1("Lucky Arrow") == 0 then
+          if L170_1() == "Lucky Arrow" and L157_1("Lucky Arrow") == 0 and L28_1("SF_BuyItems", false) == true then
             local L20_2 = L2_1.PlayerStats and L2_1.PlayerStats.Money.Value or 0
             if 75000 <= L20_2 then
               do
@@ -15529,6 +15625,15 @@ do
         _G.YBAItemFarm.setAutoRequiem(A0_2)
       end
       L27_1("SAR", A0_2)
+    end
+  })
+  -- [port] (user request) off: no Rokakaka or arrows bought with money (stand farm, Auto
+  -- Requiem, Auto Prestige); they are farmed from the map instead
+  L159_1:Toggle({
+    Name = "Buy Arrows/Rokakaka with Money",
+    Default = L28_1("SF_BuyItems", false),
+    Callback = function(A0_2)
+      L27_1("SF_BuyItems", A0_2)
     end
   })
   L159_1:Button({
@@ -17780,7 +17885,7 @@ do
     local function L28_2()
       local L0_3 = L5_2.Backpack:FindFirstChild("Rokakaka") or L6_2 and L6_2:FindFirstChild("Rokakaka")
       if not L0_3 then
-        if L5_2.PlayerStats.Money.Value >= 2500 then
+        if L5_2.PlayerStats.Money.Value >= 2500 and L28_1("SF_BuyItems", false) == true then
           pcall(function()
             L15_2("PurchaseShopItem", {
               ItemName = "1x Rokakaka"
@@ -17828,7 +17933,7 @@ do
         local L2_3 = L5_2.PlayerStats.Stand.Value
         local L3_3 = L5_2.Backpack:FindFirstChild("Mysterious Arrow") or L6_2 and L6_2:FindFirstChild("Mysterious Arrow")
         if not L3_3 then
-          if L5_2.PlayerStats.Money.Value >= 750 then
+          if L5_2.PlayerStats.Money.Value >= 750 and L28_1("SF_BuyItems", false) == true then
             pcall(function()
               L15_2("PurchaseShopItem", {
                 ItemName = "1x Mysterious Arrow"
