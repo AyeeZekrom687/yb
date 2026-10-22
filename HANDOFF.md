@@ -176,6 +176,29 @@ Only the hub's own backend is changed; all Roblox remote calls are untouched.
    notifications (the notify function `L107_1` feeds `D.log`). Off: rendering back on,
    dashboard hidden. Harness: `PRELOAD` `{"LowRender":true}` and read
    `getgenv()._YBA_Dashboard.labels.*.Text` from an `EVAL` task.
+19. Low-end PC round (user request: cull work repeated many times a second; movement,
+   teleports and the bypass untouched). Traces identical to the previous build in the idle,
+   item, roam, stand, quest and BlockBot/ESP scenarios.
+   - Window acrylic blur followed nothing: created with `AcrylicBlur = true` although its "UI
+     Transparency" setting (`UIBlur`) defaults to off and was never applied at load; while the
+     window is open MacLib rebuilds glass parts and a depth-of-field effect every frame. It now
+     follows the setting (fix).
+   - Low Render Mode also pauses the visual-only loops the dashboard covers (HUD health text,
+     watermark text, Player/Item ESP refresh, weather effect: removed once, back when the mode
+     is off), turns the window blur off meanwhile (restored after), and shows notifications on
+     the dashboard instead of as pop-ups (`getgenv()._YBA_LowRender`).
+   - Item farm roam with the tween travel method (used when "Tween" is chosen or the bypass did
+     not load): the tween's stop check (`checkAndSellMax` + two full item scans) ran twice per
+     frame for the whole roam; now at most every 0.25 s (the farm's item-wait interval),
+     keeping its answer in between: 362 calls -> 8 scans over a 3 s roam (standalone test;
+     the mock's tweens end at once because all positions are equal).
+   - PvP auto-block hooks every player's animations, sounds and character descendants: with
+     BlockBot off, `proroc` returned after two pure lookups and the hooks first looked up the
+     root part; the flag (`L150_1.blockbot`, now mirrored by `setBlockbot`) is checked first.
+     Character descendants: `ClassName` compared once (Sound/Animator have no subclasses).
+   - HUD health text (10/s): each GUI level looked up once instead of re-walking the path.
+   Noted, not changed: the hub's "Stability Control" frame-time check (`L151_1` next to its
+   setting) is never called, in the original too, so nothing waits out lag before teleports.
 Kept as in the original: safe mode (`YBA/NO_AUTOSTART.txt`), headless mode (`YBA/NO_UI.txt`),
 webhooks, server hop.
 The payload contains no HWID or heartbeat calls (those are in the loader, which is not shipped).

@@ -219,7 +219,10 @@ do
     setText(L.activity, activityText())
   end
 
-  -- on: 3D rendering off, dashboard shown and updated every second; off: both restored
+  -- on: 3D rendering off, dashboard shown and updated every second; off: both restored.
+  -- getgenv()._YBA_LowRender pauses the visual-only loops the dashboard covers (HUD health text,
+  -- watermark, ESP refresh, weather); the hub's acrylic blur (per-frame work while the window is
+  -- open) is off meanwhile and restored after.
   function D.setEnabled(on)
     on = on and true or false
     if on == D.enabled then
@@ -227,8 +230,22 @@ do
     end
     D.enabled = on
     D.gen = D.gen + 1
+    getgenv()._YBA_LowRender = on
     pcall(function()
       L6_1:Set3dRenderingEnabled(not on)
+    end)
+    pcall(function()
+      local win = getgenv().RAILhubWindow
+      if not win then
+        return
+      end
+      if on then
+        D.blurBefore = win:GetAcrylicBlurState()
+        win:SetAcrylicBlurState(false)
+      elseif D.blurBefore ~= nil then
+        win:SetAcrylicBlurState(D.blurBefore)
+        D.blurBefore = nil
+      end
     end)
     if not on then
       if D.gui then

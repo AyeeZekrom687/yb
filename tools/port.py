@@ -641,7 +641,11 @@ EDITS = [
      'local function L107_1(A0_2, A1_2)\n'
      '  -- [port] (user request) recent messages for the Low Render Mode dashboard\n'
      '  local dash = getgenv()._YBA_Dashboard\n'
-     '  if dash then\n    pcall(dash.log, A0_2, A1_2)\n  end\n'
+     '  if dash then\n    pcall(dash.log, A0_2, A1_2)\n'
+     '    if dash.enabled then\n'
+     '      return   -- shown on the dashboard instead of as a pop-up (Low Render Mode)\n'
+     '    end\n'
+     '  end\n'
      '  local L2_2 = L105_1 or getgenv().RAILhubWindow or _G.RAILhubWindow\n', 1),
     ('dashboard: stand skin',
      '    local L2_2, L3_2 = pcall(function()\n      return L1_2:InvokeServer("ReturnStandSkin", "Stand")\n    end)\n'
@@ -657,6 +661,97 @@ EDITS = [
      '  startTime = 0\n}\n'
      'getgenv()._YBA_SFStats = L149_1.farmStats   -- [port] for the Low Render Mode dashboard\n'
      'L149_1.standFarmRespawnConn = nil\n', 1),
+    # (user request, low-end PC) The window was always created with acrylic blur on (glass parts
+    # and a depth-of-field effect rebuilt every frame while it is open), although its "UI
+    # Transparency" setting defaults to off and was never applied at load; it now follows it.
+    ('perf: window blur follows its setting',
+     '    Keybind = Enum.KeyCode.RightControl,\n    AcrylicBlur = true\n  })\n',
+     '    Keybind = Enum.KeyCode.RightControl,\n'
+     '    AcrylicBlur = L28_1("UIBlur", false) == true   -- [port fix] was always true\n  })\n', 1),
+    # Low Render Mode pauses visual-only loops whose output the dashboard covers
+    ('low render: hud health', '      if getgenv().HUDHealthEnabled then\n        L0_2 = true\n',
+     '      if getgenv().HUDHealthEnabled and not getgenv()._YBA_LowRender then\n        L0_2 = true\n', 1),
+    ('low render: watermark', '    if L0_2.Enabled then\n      L6_2.Text = string.format("YBA Thing | %s',
+     '    if L0_2.Enabled and not getgenv()._YBA_LowRender then\n      L6_2.Text = string.format("YBA Thing | %s', 1),
+    ('low render: player esp',
+     '      while L1_2.enabled and L1_2.loopGen == loopGen do\n        refreshPlayerESP()\n        task.wait(0.25)\n',
+     '      while L1_2.enabled and L1_2.loopGen == loopGen do\n'
+     '        if not getgenv()._YBA_LowRender then\n          refreshPlayerESP()\n        end\n'
+     '        task.wait(0.25)\n', 1),
+    ('low render: item esp',
+     '        if L1_2.enabled and L1_2.loopGen == loopGen then\n          pcall(refreshItemESP)\n',
+     '        if L1_2.enabled and L1_2.loopGen == loopGen and not getgenv()._YBA_LowRender then\n'
+     '          pcall(refreshItemESP)\n', 1),
+    ('low render: weather',
+     '        if getgenv().WeatherCfg.Enabled then\n          local L0_3 = getgenv().WeatherCfg.Selected\n',
+     '        if getgenv().WeatherCfg.Enabled and not getgenv()._YBA_LowRender then\n'
+     '          local L0_3 = getgenv().WeatherCfg.Selected\n', 1),
+    # (user request, low-end PC: cull work repeated many times a second; movement, teleports
+    # and the bypass are unchanged)
+    # Item farm roam: the tween's stop check (auto-sell check + two full item scans) ran twice
+    # per frame for the whole roam; it now runs at most every 0.25 s, the farm's own item-wait
+    # interval, and keeps its answer in between (a new item ends the roam at most 0.25 s later).
+    ('cull: roam stop check',
+     '                tweenMoveTo(L9_2, getRandomFarmRoamCFrame(), moveTweenSpeed, function()\n'
+     '                  return L6_2() or not normalFarmOn or serverHopFarmEnabled\n                end)\n',
+     '                -- [port perf] stop check at most every 0.25 s (it ran twice per frame)\n'
+     '                local roamNext, roamHit = 0, false\n'
+     '                tweenMoveTo(L9_2, getRandomFarmRoamCFrame(), moveTweenSpeed, function()\n'
+     '                  if not roamHit and roamNext <= tick() then\n'
+     '                    roamNext = tick() + 0.25\n'
+     '                    roamHit = L6_2()\n'
+     '                  end\n'
+     '                  return roamHit or not normalFarmOn or serverHopFarmEnabled\n                end)\n', 1),
+    # PvP auto-block hooks every player's animations and sounds; with BlockBot off, proroc
+    # returned after two lookups (TimeStop, RagdollParts) and the hooks first looked up the
+    # character's root part. The flag is now checked first (same result: those were pure reads).
+    ('cull: blockbot flag mirror', '  function L150_1.setBlockbot(A0_2)\n    L151_1 = A0_2\n  end\n',
+     '  function L150_1.setBlockbot(A0_2)\n    L151_1 = A0_2\n'
+     '    L150_1.blockbot = A0_2   -- [port perf] read by the animation/sound hooks\n  end\n', 1),
+    ('cull: proroc flag first',
+     '  function proroc(A0_2, A1_2, A2_2)\n    if L174_1() then\n      return\n    end\n'
+     '    if L175_1(game.Players.LocalPlayer.Character) then\n      return\n    end\n'
+     '    if not L151_1 then\n      return\n    end\n',
+     '  function proroc(A0_2, A1_2, A2_2)\n'
+     '    if not L151_1 then   -- [port perf] checked first: the two checks below only read\n      return\n    end\n'
+     '    if L174_1() then\n      return\n    end\n'
+     '    if L175_1(game.Players.LocalPlayer.Character) then\n      return\n    end\n', 1),
+    ('cull: blockbot sound hook',
+     '  local function L152_1(A0_2, A1_2)\n    local L2_2 = A0_2.PrimaryPart or A0_2:FindFirstChild(\"HumanoidRootPart\") or A0_2:FindFirstChild(\"UpperTorso\") or A0_2:FindFirstChild(\"Torso\")\n    if L2_2 and L151_1 then\n',
+     '  local function L152_1(A0_2, A1_2)\n'
+     '    if not L150_1.blockbot then   -- [port perf] BlockBot off: nothing to do\n      return\n    end\n'
+     '    local L2_2 = A0_2.PrimaryPart or A0_2:FindFirstChild(\"HumanoidRootPart\") or A0_2:FindFirstChild(\"UpperTorso\") or A0_2:FindFirstChild(\"Torso\")\n    if L2_2 and L151_1 then\n', 1),
+    ('cull: blockbot animation hook 1',
+     '    A1_2.AnimationPlayed:Connect(function(A0_3)\n      local L1_3 = A0_2.PrimaryPart or A0_2:FindFirstChild(\"HumanoidRootPart\") or A0_2:FindFirstChild(\"UpperTorso\") or A0_2:FindFirstChild(\"Torso\")\n',
+     '    A1_2.AnimationPlayed:Connect(function(A0_3)\n'
+     '      if not L150_1.blockbot then   -- [port perf] BlockBot off: nothing to do\n        return\n      end\n'
+     '      local L1_3 = A0_2.PrimaryPart or A0_2:FindFirstChild(\"HumanoidRootPart\") or A0_2:FindFirstChild(\"UpperTorso\") or A0_2:FindFirstChild(\"Torso\")\n', 1),
+    ('cull: blockbot animation hook 2',
+     '        L2_2.AnimationPlayed:Connect(function(A0_3)\n          local L1_3 = A0_2.PrimaryPart or A0_2:FindFirstChild(\"HumanoidRootPart\") or A0_2:FindFirstChild(\"UpperTorso\") or A0_2:FindFirstChild(\"Torso\")\n',
+     '        L2_2.AnimationPlayed:Connect(function(A0_3)\n'
+     '          if not L150_1.blockbot then   -- [port perf] BlockBot off: nothing to do\n            return\n          end\n'
+     '          local L1_3 = A0_2.PrimaryPart or A0_2:FindFirstChild(\"HumanoidRootPart\") or A0_2:FindFirstChild(\"UpperTorso\") or A0_2:FindFirstChild(\"Torso\")\n', 1),
+    # every descendant added to any player's character went through up to three IsA calls;
+    # Sound and Animator have no subclasses, so a ClassName compare matches IsA exactly
+    ('cull: character descendant hook',
+     '    A0_2.DescendantAdded:Connect(function(A0_3)\n      if A0_3:IsA("Sound") then\n        L152_1(A0_2, A0_3)\n'
+     '      elseif A0_3:IsA("Model") and A0_3.Name == "StandMorph" then\n',
+     '    A0_2.DescendantAdded:Connect(function(A0_3)\n'
+     '      local cls = A0_3.ClassName   -- [port perf] read once\n'
+     '      if cls == "Sound" then\n        L152_1(A0_2, A0_3)\n'
+     '      elseif A0_3.Name == "StandMorph" and A0_3:IsA("Model") then\n', 1),
+    ('cull: character descendant hook animator',
+     '      elseif A0_3:IsA("Animator") then\n        L153_1(A0_2, A0_3)\n      end\n    end)\n',
+     '      elseif cls == "Animator" then\n        L153_1(A0_2, A0_3)\n      end\n    end)\n', 1),
+    # HUD health text (10 times a second): each GUI level is looked up once instead of
+    # re-walking PlayerGui.HUD.Main... from the top for every level
+    ('cull: hud health lookups',
+     '          local L0_3 = L2_1.PlayerGui:FindFirstChild("HUD") and L2_1.PlayerGui.HUD:FindFirstChild("Main") and L2_1.PlayerGui.HUD.Main:FindFirstChild("Indicators") and L2_1.PlayerGui.HUD.Main.Indicators:FindFirstChild("Bars")\n',
+     '          -- [port perf] each level looked up once\n'
+     '          local hud = L2_1.PlayerGui:FindFirstChild("HUD")\n'
+     '          local hudMain = hud and hud:FindFirstChild("Main")\n'
+     '          local hudInd = hudMain and hudMain:FindFirstChild("Indicators")\n'
+     '          local L0_3 = hudInd and hudInd:FindFirstChild("Bars")\n', 1),
 ]
 
 # Coordinator checkpoints (coordinator.lua): (name, anchor, text inserted after the anchor's first

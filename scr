@@ -683,7 +683,10 @@ do
     setText(L.activity, activityText())
   end
 
-  -- on: 3D rendering off, dashboard shown and updated every second; off: both restored
+  -- on: 3D rendering off, dashboard shown and updated every second; off: both restored.
+  -- getgenv()._YBA_LowRender pauses the visual-only loops the dashboard covers (HUD health text,
+  -- watermark, ESP refresh, weather); the hub's acrylic blur (per-frame work while the window is
+  -- open) is off meanwhile and restored after.
   function D.setEnabled(on)
     on = on and true or false
     if on == D.enabled then
@@ -691,8 +694,22 @@ do
     end
     D.enabled = on
     D.gen = D.gen + 1
+    getgenv()._YBA_LowRender = on
     pcall(function()
       L6_1:Set3dRenderingEnabled(not on)
+    end)
+    pcall(function()
+      local win = getgenv().RAILhubWindow
+      if not win then
+        return
+      end
+      if on then
+        D.blurBefore = win:GetAcrylicBlurState()
+        win:SetAcrylicBlurState(false)
+      elseif D.blurBefore ~= nil then
+        win:SetAcrylicBlurState(D.blurBefore)
+        D.blurBefore = nil
+      end
     end)
     if not on then
       if D.gui then
@@ -2854,6 +2871,9 @@ local function L107_1(A0_2, A1_2)
   local dash = getgenv()._YBA_Dashboard
   if dash then
     pcall(dash.log, A0_2, A1_2)
+    if dash.enabled then
+      return   -- shown on the dashboard instead of as a pop-up (Low Render Mode)
+    end
   end
   local L2_2 = L105_1 or getgenv().RAILhubWindow or _G.RAILhubWindow
   if L2_2 and type(L2_2.Notify) == "function" then
@@ -5472,7 +5492,7 @@ do
     task.spawn(function()
       while L1_2.enabled and L1_2.loopGen == loopGen do
         task.wait(2)
-        if L1_2.enabled and L1_2.loopGen == loopGen then
+        if L1_2.enabled and L1_2.loopGen == loopGen and not getgenv()._YBA_LowRender then
           pcall(refreshItemESP)
         end
       end
@@ -5934,7 +5954,9 @@ do
     local loopGen = L1_2.loopGen
     task.spawn(function()
       while L1_2.enabled and L1_2.loopGen == loopGen do
-        refreshPlayerESP()
+        if not getgenv()._YBA_LowRender then
+          refreshPlayerESP()
+        end
         task.wait(0.25)
       end
     end)
@@ -5944,10 +5966,14 @@ do
   task.spawn(function()
     local L0_2 = false
     while true do
-      if getgenv().HUDHealthEnabled then
+      if getgenv().HUDHealthEnabled and not getgenv()._YBA_LowRender then
         L0_2 = true
         pcall(function()
-          local L0_3 = L2_1.PlayerGui:FindFirstChild("HUD") and L2_1.PlayerGui.HUD:FindFirstChild("Main") and L2_1.PlayerGui.HUD.Main:FindFirstChild("Indicators") and L2_1.PlayerGui.HUD.Main.Indicators:FindFirstChild("Bars")
+          -- [port perf] each level looked up once
+          local hud = L2_1.PlayerGui:FindFirstChild("HUD")
+          local hudMain = hud and hud:FindFirstChild("Main")
+          local hudInd = hudMain and hudMain:FindFirstChild("Indicators")
+          local L0_3 = hudInd and hudInd:FindFirstChild("Bars")
           if L0_3 then
             local L1_3 = L0_3:GetChildren()
             local L2_3 = L1_3[6]
@@ -8722,8 +8748,14 @@ do
               if not L9_2 then
                 task.wait(0.1)
               elseif not getgenv()._YBA_directTP then
+                -- [port perf] stop check at most every 0.25 s (it ran twice per frame)
+                local roamNext, roamHit = 0, false
                 tweenMoveTo(L9_2, getRandomFarmRoamCFrame(), moveTweenSpeed, function()
-                  return L6_2() or not normalFarmOn or serverHopFarmEnabled
+                  if not roamHit and roamNext <= tick() then
+                    roamNext = tick() + 0.25
+                    roamHit = L6_2()
+                  end
+                  return roamHit or not normalFarmOn or serverHopFarmEnabled
                 end)
                 task.wait(0.5)
               else
@@ -9221,7 +9253,7 @@ do
     DragStyle = 2,
     ShowUserInfo = true,
     Keybind = Enum.KeyCode.RightControl,
-    AcrylicBlur = true
+    AcrylicBlur = L28_1("UIBlur", false) == true   -- [port fix] was always true
   })
   if type(L105_1.SetScale) == "function" then
     L105_1:SetScale(L157_1)
@@ -10075,7 +10107,7 @@ task.spawn(function()
       return
     end
     L9_2 = L0_3
-    if L0_2.Enabled then
+    if L0_2.Enabled and not getgenv()._YBA_LowRender then
       L6_2.Text = string.format("YBA Thing | %s | %s | %d FPS", os.date("%H:%M:%S"), os.date("%d/%m/%Y"), L8_2)
     end
   end)
@@ -10654,7 +10686,7 @@ do
     while true do
       task.wait(1)
       pcall(function()
-        if getgenv().WeatherCfg.Enabled then
+        if getgenv().WeatherCfg.Enabled and not getgenv()._YBA_LowRender then
           local L0_3 = getgenv().WeatherCfg.Selected
           if L0_3 == "Rain" then
             local L1_3 = require(game:GetService("ReplicatedStorage").Modules.Rain)
@@ -17339,13 +17371,13 @@ do
   end
   
   function proroc(A0_2, A1_2, A2_2)
+    if not L151_1 then   -- [port perf] checked first: the two checks below only read
+      return
+    end
     if L174_1() then
       return
     end
     if L175_1(game.Players.LocalPlayer.Character) then
-      return
-    end
-    if not L151_1 then
       return
     end
     if L157_1 > tick() then
@@ -17517,6 +17549,7 @@ do
   
   function L150_1.setBlockbot(A0_2)
     L151_1 = A0_2
+    L150_1.blockbot = A0_2   -- [port perf] read by the animation/sound hooks
   end
   
   function L150_1.setReblocking(A0_2)
@@ -17545,6 +17578,9 @@ do
   end
   
   local function L152_1(A0_2, A1_2)
+    if not L150_1.blockbot then   -- [port perf] BlockBot off: nothing to do
+      return
+    end
     local L2_2 = A0_2.PrimaryPart or A0_2:FindFirstChild("HumanoidRootPart") or A0_2:FindFirstChild("UpperTorso") or A0_2:FindFirstChild("Torso")
     if L2_2 and L151_1 then
       L151_1(A1_2, L2_2, nil)
@@ -17554,6 +17590,9 @@ do
   local function L153_1(A0_2, A1_2)
     task.wait(0.1)
     A1_2.AnimationPlayed:Connect(function(A0_3)
+      if not L150_1.blockbot then   -- [port perf] BlockBot off: nothing to do
+        return
+      end
       local L1_3 = A0_2.PrimaryPart or A0_2:FindFirstChild("HumanoidRootPart") or A0_2:FindFirstChild("UpperTorso") or A0_2:FindFirstChild("Torso")
       if L1_3 and L151_1 then
         L151_1(A0_3, L1_3, nil)
@@ -17566,9 +17605,10 @@ do
       return
     end
     A0_2.DescendantAdded:Connect(function(A0_3)
-      if A0_3:IsA("Sound") then
+      local cls = A0_3.ClassName   -- [port perf] read once
+      if cls == "Sound" then
         L152_1(A0_2, A0_3)
-      elseif A0_3:IsA("Model") and A0_3.Name == "StandMorph" then
+      elseif A0_3.Name == "StandMorph" and A0_3:IsA("Model") then
         task.wait(0.15)
         A0_3.DescendantAdded:Connect(function(A0_4)
           if A0_4:IsA("Sound") then
@@ -17577,7 +17617,7 @@ do
             L153_1(A0_2, A0_4)
           end
         end)
-      elseif A0_3:IsA("Animator") then
+      elseif cls == "Animator" then
         L153_1(A0_2, A0_3)
       end
     end)
@@ -17586,6 +17626,9 @@ do
       local L2_2 = L1_2:FindFirstChild("Animator")
       if L2_2 then
         L2_2.AnimationPlayed:Connect(function(A0_3)
+          if not L150_1.blockbot then   -- [port perf] BlockBot off: nothing to do
+            return
+          end
           local L1_3 = A0_2.PrimaryPart or A0_2:FindFirstChild("HumanoidRootPart") or A0_2:FindFirstChild("UpperTorso") or A0_2:FindFirstChild("Torso")
           if L1_3 and L151_1 then
             L151_1(A0_3, L1_3, nil)
