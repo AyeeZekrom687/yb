@@ -9,20 +9,6 @@ original unchanged (Roblox remote calls included).
 """
 import sys
 
-GUARD = '''if getgenv().RAILhub_YBA_Loaded then
-  local L92_1 = L46_1 and L46_1() or L4_1
-  local L93_1 = L92_1 and L92_1:FindFirstChild("HUD")
-  if L93_1 and L93_1:IsA("ScreenGui") and L93_1.Enabled then
-    local L94_1 = getgenv()._lastRunningWarn or 0
-    if 5 < tick() - L94_1 then
-      getgenv()._lastRunningWarn = tick()
-      warn("[RAILhub] Script already running.")
-    end
-    return
-  end
-end
-'''
-
 RELOAD_START = 'local function L95_1(A0_2)\n'
 RELOAD_END = '\nend\n\npcall(function()\n  local L0_2 = L45_1 and L45_1() or L2_1 or game:GetService("Players").LocalPlayer\n'
 RELOAD_STUB = '''local function L95_1(A0_2)
@@ -41,7 +27,10 @@ STAND_FARM_ON_MAX = (
 EDITS = [
     # (name, old, new, expected count)
     ('folder', '"RAILhubYBA', '"YBA', 6),
-    ('duplicate-run guard', GUARD, '-- [port] duplicate-run guard removed\n', 1),
+    # The original's duplicate-run guard stays: running the script again in the same server
+    # would leave the first copy's loops, handlers and farms running (its runtime Shutdown only
+    # destroys the old GUI) and stack its anti-teleport hooks, whose calls through
+    # getgenv().oldNc / oldMagnitude would then loop back into the old hook.
     # Auto Prestige bug fixes (user report: no Worthiness when using arrows after the first time).
     # Its per-step skill routine spent every point on Agility, Vitality and Sturdiness I-V before
     # Worthiness, so after a prestige reset the skill tree the next stand's arrows were used
@@ -169,7 +158,7 @@ EDITS = [
     # console and webhooks, and the names of the script's own GUI/ESP instances. Internal getgenv
     # flags, the key loader's data and download URLs keep their names (not shown anywhere).
     ('brand: name', 'RAIL Hub', 'YBA Thing', 29),
-    ('brand: warn prefix', '[RAILhub]', '[YBA Thing]', 1),
+    ('brand: warn prefix', '[RAILhub]', '[YBA Thing]', 2),
     ('brand: boot log', 'RAILhub UI & features', 'YBA Thing UI & features', 1),
     ('brand: window title', 'Title = "RailHub"', 'Title = "YBA Thing"', 1),
     ('brand: title fallback', '"RAIL|hub"', '"YBA Thing"', 2),
@@ -327,6 +316,92 @@ EDITS = [
      '    Name = "Discord Link",\n    Callback = function()\n'
      '      L104_1("https://discord.gg/67UTqK8su5")\n    end\n  })\n',
      '', 1),
+    # Leak fixes (user request: memory leaks that build up). Auto Prestige: the session's last
+    # CharacterAdded handler was never disconnected (one more on the player per session), and the
+    # others only disconnected at their next event. The handler now disconnects itself, and the
+    # toggle disconnects the previous session's handlers when it stops or restarts Auto Prestige.
+    # A session that went stale while starting cleans up and does nothing more.
+    ('leak: prestige session handlers',
+     '    L59_2()\n    L5_2.CharacterAdded:Connect(function(A0_3)\n      if not L1_2() then\n'
+     '        return\n      end\n      task.wait(1)\n      L59_2()\n    end)\n'
+     '    L49_2(L6_2)\n    L54_2()\n  end\n',
+     '    L59_2()\n'
+     '    local respawnConn\n'
+     '    respawnConn = L5_2.CharacterAdded:Connect(function(A0_3)\n      if not L1_2() then\n'
+     '        if respawnConn then\n          respawnConn:Disconnect()\n        end\n'
+     '        return\n      end\n      task.wait(1)\n      L59_2()\n    end)\n'
+     '    -- [port fix] the toggle disconnects these when Auto Prestige stops or restarts\n'
+     '    local function sessionCleanup()\n'
+     '      for _, conn in pairs({L55_2, L56_2, L57_2, L58_2, respawnConn}) do\n'
+     '        pcall(conn.Disconnect, conn)\n      end\n    end\n'
+     '    if not L1_2() then\n      sessionCleanup()\n      return\n    end\n'
+     '    getgenv()._YBA_APCleanup = sessionCleanup\n'
+     '    L49_2(L6_2)\n    L54_2()\n  end\n', 1),
+    ('leak: prestige toggle on',
+     '      getgenv()._YBA_prestigeWaiting = false\n      L152_1 = L152_1 + 1\n      L27_1("AP", true)\n',
+     '      getgenv()._YBA_prestigeWaiting = false\n'
+     '      -- [port fix] disconnect the previous session\'s event handlers\n'
+     '      if getgenv()._YBA_APCleanup then\n        pcall(getgenv()._YBA_APCleanup)\n'
+     '        getgenv()._YBA_APCleanup = nil\n      end\n'
+     '      L152_1 = L152_1 + 1\n      L27_1("AP", true)\n', 1),
+    ('leak: prestige toggle off',
+     '        getgenv()._YBA_prestigeWaiting = false\n      end\n      L152_1 = L152_1 + 1\n'
+     '      L151_1 = false\n',
+     '        getgenv()._YBA_prestigeWaiting = false\n      end\n'
+     '      -- [port fix] disconnect this session\'s event handlers\n'
+     '      if getgenv()._YBA_APCleanup then\n        pcall(getgenv()._YBA_APCleanup)\n'
+     '        getgenv()._YBA_APCleanup = nil\n      end\n'
+     '      L152_1 = L152_1 + 1\n      L151_1 = false\n', 1),
+    # Item ESP: turning it off cleared loopRunning while the refresh loop still slept, so an
+    # off/on within 2 s started a second loop next to the old one (one more per quick toggle).
+    # Each enable now starts one loop and ends the previous one.
+    ('leak: item esp off', '    if not A0_2 then\n      L1_2.loopRunning = false\n      return\n    end\n',
+     '    if not A0_2 then\n      return\n    end\n', 1),
+    ('leak: item esp loop',
+     '    if not L1_2.loopRunning then\n      L1_2.loopRunning = true\n      task.spawn(function()\n'
+     '        while L1_2.enabled do\n          task.wait(2)\n          if L1_2.enabled then\n'
+     '            pcall(refreshItemESP)\n          end\n        end\n'
+     '        L1_2.loopRunning = false\n      end)\n    end\n',
+     '    -- [port fix] one refresh loop per enable; the previous one ends at its next wake\n'
+     '    L1_2.loopGen = (L1_2.loopGen or 0) + 1\n'
+     '    local loopGen = L1_2.loopGen\n'
+     '    task.spawn(function()\n'
+     '      while L1_2.enabled and L1_2.loopGen == loopGen do\n        task.wait(2)\n'
+     '        if L1_2.enabled and L1_2.loopGen == loopGen then\n'
+     '          pcall(refreshItemESP)\n        end\n      end\n    end)\n', 1),
+    # Player ESP: same race (an off/on within 0.25 s kept the old refresh loop as well)
+    ('leak: player esp loop',
+     '    task.spawn(function()\n      while L1_2.enabled do\n        refreshPlayerESP()\n'
+     '        task.wait(0.25)\n      end\n    end)\n  end\n',
+     '    -- [port fix] one refresh loop per enable; the previous one ends at its next wake\n'
+     '    L1_2.loopGen = (L1_2.loopGen or 0) + 1\n'
+     '    local loopGen = L1_2.loopGen\n'
+     '    task.spawn(function()\n'
+     '      while L1_2.enabled and L1_2.loopGen == loopGen do\n        refreshPlayerESP()\n'
+     '        task.wait(0.25)\n      end\n    end)\n  end\n', 1),
+    # Noclip: the character's part list gained every part added to the character (stand
+    # summons, effects) and was walked every physics step, but parts that were removed stayed
+    # in it until the next character. The per-step walk now drops them.
+    ('leak: noclip part list',
+     '    L151_1(A0_2)\n    for L4_2 = 1, #L147_1 do\n      local L5_2 = L147_1[L4_2]\n'
+     '      if L5_2 and L5_2.Parent and L5_2.CanCollide then\n        pcall(function()\n'
+     '          L5_2.CanCollide = false\n        end)\n      end\n    end\n  end\n',
+     '    L151_1(A0_2)\n'
+     '    -- [port fix] drop parts that left the character, so the list does not grow for as\n'
+     '    -- long as the character lives\n'
+     '    local kept = 0\n'
+     '    for L4_2 = 1, #L147_1 do\n      local L5_2 = L147_1[L4_2]\n'
+     '      if L5_2 and L5_2.Parent then\n        kept = kept + 1\n        L147_1[kept] = L5_2\n'
+     '        if L5_2.CanCollide then\n          pcall(function()\n'
+     '            L5_2.CanCollide = false\n          end)\n        end\n      end\n    end\n'
+     '    for L4_2 = #L147_1, kept + 1, -1 do\n      L147_1[L4_2] = nil\n    end\n  end\n', 1),
+    # Finisher changer: every RemoteEvent it hooked (each character's, for every player and
+    # respawn) stayed in this table after it was destroyed
+    ('leak: hooked remotes',
+     '      if not getgenv().HookedRemotes then\n        getgenv().HookedRemotes = {}\n      end\n',
+     '      if not getgenv().HookedRemotes then\n'
+     '        -- [port fix] weak keys, so destroyed RemoteEvents are released\n'
+     '        getgenv().HookedRemotes = setmetatable({}, {__mode = "k"})\n      end\n', 1),
 ]
 
 # Coordinator checkpoints (coordinator.lua): (name, anchor, text inserted after the anchor's first

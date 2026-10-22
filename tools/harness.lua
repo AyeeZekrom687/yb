@@ -199,19 +199,24 @@ local function note_pcall_error(err, co)
     end
 end
 
+PCALL_INNER = setmetatable({}, { __mode = "k" })   -- thread -> coroutine of its running pcall
 local function ypcall(f, ...)
     if type(f) ~= "function" and not (type(f) == "table" and getmetatable(f) and getmetatable(f).__call) then
         return false, "attempt to call a " .. type(f) .. " value"
     end
     local co = coroutine.create(function(...) return f(...) end)
     install_budget(co, "pcall")
+    local outer = coroutine.running() or "main"
+    PCALL_INNER[outer] = co
     local res = { coroutine.resume(co, ...) }
     while true do
         if not res[1] then
+            PCALL_INNER[outer] = nil
             note_pcall_error(res[2], co)
             return false, res[2]
         end
         if coroutine.status(co) == "dead" then
+            PCALL_INNER[outer] = nil
             return true, unpack(res, 2, table.maxn(res))
         end
         -- inner code yielded (a wait): forward it
@@ -404,6 +409,40 @@ local FRAME_ORDER = {}   -- connections in connect order, so frame callbacks run
 local ABSENT = {}
 for nm in (os.getenv("ABSENT") or ""):gmatch("[^,]+") do ABSENT[nm] = true end
 
+-- Leak monitor (LEAK/CYCLE/RESPAWN options): live connections and Instance.new objects,
+-- each with the SCR line that created it
+local LEAK_CONNS = {}   -- connection proxy -> { sig, line, fn }
+local LEAK_INSTS = {}   -- instance proxy -> { cls, line }
+local function scr_line()
+    for lvl = 3, 60 do
+        local info = debug.getinfo(lvl, "Sl")
+        if not info then break end
+        if info.short_src == "SCR" then return info.currentline end
+    end
+    return 0
+end
+local function parented_to(p, target)
+    for _ = 1, 30 do
+        local d = PX[p]
+        if not d then return false end
+        local par = rawget(d.store, "Parent")
+        if par == nil then return false end
+        if par == target then return true end
+        p = par
+    end
+    return false
+end
+local function leak_destroyed(p)
+    if p == nil then return end
+    LEAK_INSTS[p] = nil
+    for q in pairs(LEAK_INSTS) do
+        if parented_to(q, p) then LEAK_INSTS[q] = nil end
+    end
+    for c, info in pairs(LEAK_CONNS) do
+        if info.owner == p or (info.owner and parented_to(info.owner, p)) then LEAK_CONNS[c] = nil end
+    end
+end
+
 -- Only members that look like methods/constructors are callable; calling an Instance,
 -- property or child errors as in Roblox.
 local METHOD_PREFIXES = { "Get", "Set", "Find", "Is", "Wait", "Connect", "Once", "Fire", "Invoke",
@@ -466,12 +505,15 @@ proxy_mt.__call = function(p, ...)
         local conn = mkproxy("Connection", "Connection", nil, "RBXScriptConnection")
         local sig = d.parent and PX[d.parent]
         local fn = select(2, ...)
+        LEAK_CONNS[conn] = { sig = sig and sig.short or "?", line = scr_line(), fn = type(fn) == "function" and fn or nil,
+                             owner = sig and sig.parent }
         if sig and FRAME_SIGNALS[sig.short] and type(fn) == "function" then
             FRAME_CONNS[conn] = fn
             FRAME_ORDER[#FRAME_ORDER + 1] = conn
         end
         return conn
     elseif key == "Disconnect" then
+        if self ~= nil then LEAK_CONNS[self] = nil end
         if self ~= nil and FRAME_CONNS[self] then
             FRAME_CONNS[self] = nil
             for i, c in ipairs(FRAME_ORDER) do
@@ -528,7 +570,16 @@ proxy_mt.__call = function(p, ...)
     if pd and (key == "new" or key:match("^from") or key == "lookAt" or key == "Angles") then
         typ = (pd.short == "Instance") and "Instance" or pd.short
     end
-    return mkproxy(d.name .. "()", key .. "()", nil, typ)
+    if key == "Destroy" and is_proxy(self) then
+        leak_destroyed(self)
+    elseif key == "AddItem" then
+        leak_destroyed((select(2, ...)))
+    end
+    local result = mkproxy(d.name .. "()", key .. "()", nil, typ)
+    if key == "new" and pd and pd.short == "Instance" then
+        LEAK_INSTS[result] = { cls = tostring((...)), line = scr_line() }
+    end
+    return result
 end
 
 local function mock_typeof(v)
@@ -628,7 +679,11 @@ G.task = {
     spawn = function(f, ...) if type(f) == "thread" then return f end return spawn_now(f, ...) end,
     defer = function(f, ...) return schedule(0, f, ...) end,
     delay = function(t, f, ...) return schedule(t, f, ...) end,
-    cancel = function() end,
+    cancel = function(co)
+        for i = #tasks, 1, -1 do
+            if tasks[i].co == co then table.remove(tasks, i) end
+        end
+    end,
     synchronize = function() end,
     desynchronize = function() end,
 }
@@ -861,16 +916,64 @@ if FIRE then
         end
         return false
     end
+    local fired = {}
     for _, el in ipairs(UI_ELEMS) do
         if wanted(el.name) and (el.kind == "Toggle" or el.kind == "Button") then
             log("FIRE", el.kind .. " '" .. el.name .. "'")
-            if el.kind == "Toggle" then spawn_now(el.cb, true) else spawn_now(el.cb) end
+            if el.kind == "Toggle" then spawn_now(el.cb, true); fired[#fired + 1] = el else spawn_now(el.cb) end
         end
     end
-    for _ = 1, tonumber(os.getenv("FIRE_STEPS")) or 120 do
+    -- LEAK=n: every n steps print live threads / connections / created instances;
+    -- CYCLE=n: every n steps switch the fired toggles off, and on again the next step;
+    -- RESPAWN=n: every n steps fire every CharacterAdded handler (a simulated respawn)
+    local LEAK, CYCLE, RESPAWN = tonumber(os.getenv("LEAK")), tonumber(os.getenv("CYCLE")), tonumber(os.getenv("RESPAWN"))
+    local function count(t) local n = 0 for _ in pairs(t) do n = n + 1 end return n end
+    for step = 1, tonumber(os.getenv("FIRE_STEPS")) or 120 do
         now = now + 0.5
+        if CYCLE and step % CYCLE == 0 then
+            for _, el in ipairs(fired) do spawn_now(el.cb, false) end
+        elseif CYCLE and step % CYCLE == 1 and step > 1 then
+            for _, el in ipairs(fired) do spawn_now(el.cb, true) end
+        end
+        if RESPAWN and step % RESPAWN == 0 then
+            local char = G.game.Players.LocalPlayer.Character
+            for _, info in pairs(LEAK_CONNS) do
+                if info.sig == "CharacterAdded" and info.fn then spawn_now(info.fn, char) end
+            end
+        end
         fire_frame()
         run_due()
+        if LEAK and step % LEAK == 0 then
+            log("LEAK", string.format("t=%.0f threads=%d conns=%d instances=%d", now, #tasks, count(LEAK_CONNS), count(LEAK_INSTS)))
+        end
+    end
+    if LEAK then
+        local function report(title, src, key)
+            local agg = {}
+            for _, info in pairs(src) do local k = key(info) agg[k] = (agg[k] or 0) + 1 end
+            local rows = {}
+            for k, c in pairs(agg) do rows[#rows + 1] = { k, c } end
+            table.sort(rows, function(a, b) return a[2] > b[2] end)
+            log("LEAK", title)
+            for i = 1, math.min(#rows, 25) do real_print(string.format("   %5d x %s", rows[i][2], rows[i][1])) end
+        end
+        report("live connections by signal@line:", LEAK_CONNS, function(i) return i.sig .. "@SCR:" .. i.line end)
+        report("live created instances by class@line:", LEAK_INSTS, function(i) return i.cls .. "@SCR:" .. i.line end)
+        report("live threads by creator:", tasks, function(t) return t.label:gsub("#%d+", "") end)
+        -- where each live thread is suspended: the innermost SCR frame of its stack
+        report("live threads by suspended SCR line:", tasks, function(t)
+            local co = t.co
+            for _ = 1, 20 do                      -- follow running pcalls to the innermost
+                if not PCALL_INNER[co] then break end
+                co = PCALL_INNER[co]
+            end
+            for lvl = 0, 60 do
+                local info = debug.getinfo(co, lvl, "Sl")
+                if not info then break end
+                if info.short_src == "SCR" then return "SCR:" .. info.currentline end
+            end
+            return "?"
+        end)
     end
     local rep = {}
     for s, c in pairs(LOG_COUNTS) do if c > 1 then rep[#rep + 1] = string.format("%6d x %s", c, s) end end

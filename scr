@@ -357,8 +357,14 @@ do
   -- name: feature id; isOn(): whether the feature is still switched on; idle: it has nothing to
   -- do right now (hand over at once if another feature waits); onPause(): stops the feature's own
   -- movement before another takes over; onWait(): called every 0.25 s while it waits.
-  -- Returns false when the feature was switched off while waiting (the caller leaves its loop).
+  -- Returns false when the feature is off or was switched off while waiting (the caller leaves
+  -- its loop). An old session still looping after its toggle went off (Auto Prestige's storyline
+  -- loop never checked) stops here instead of running forever.
   function C.checkpoint(name, isOn, idle, onPause, onWait)
+    local ok, on = pcall(isOn)
+    if not (ok and on) then
+      return false
+    end
     if not C.enabled then
       return true
     end
@@ -2269,7 +2275,18 @@ local function L91_1(A0_2)
   return 3.8
 end
 
--- [port] duplicate-run guard removed
+if getgenv().RAILhub_YBA_Loaded then
+  local L92_1 = L46_1 and L46_1() or L4_1
+  local L93_1 = L92_1 and L92_1:FindFirstChild("HUD")
+  if L93_1 and L93_1:IsA("ScreenGui") and L93_1.Enabled then
+    local L94_1 = getgenv()._lastRunningWarn or 0
+    if 5 < tick() - L94_1 then
+      getgenv()._lastRunningWarn = tick()
+      warn("[YBA Thing] Script already running.")
+    end
+    return
+  end
+end
 getgenv().RAILhub_YBA_Loaded = true
 local L92_1 = false
 pcall(function()
@@ -5135,7 +5152,6 @@ do
     L1_2.enabled = A0_2
     clearItemESP()
     if not A0_2 then
-      L1_2.loopRunning = false
       return
     end
     L153_1(L1_2.selected)
@@ -5153,18 +5169,17 @@ do
         L157_1(A0_3)
       end))
     end
-    if not L1_2.loopRunning then
-      L1_2.loopRunning = true
-      task.spawn(function()
-        while L1_2.enabled do
-          task.wait(2)
-          if L1_2.enabled then
-            pcall(refreshItemESP)
-          end
+    -- [port fix] one refresh loop per enable; the previous one ends at its next wake
+    L1_2.loopGen = (L1_2.loopGen or 0) + 1
+    local loopGen = L1_2.loopGen
+    task.spawn(function()
+      while L1_2.enabled and L1_2.loopGen == loopGen do
+        task.wait(2)
+        if L1_2.enabled and L1_2.loopGen == loopGen then
+          pcall(refreshItemESP)
         end
-        L1_2.loopRunning = false
-      end)
-    end
+      end
+    end)
   end
   
   L139_1.enableInstantPickup = enableInstantPickup
@@ -5617,8 +5632,11 @@ do
         L1_2.labels[A0_3] = nil
       end
     end))
+    -- [port fix] one refresh loop per enable; the previous one ends at its next wake
+    L1_2.loopGen = (L1_2.loopGen or 0) + 1
+    local loopGen = L1_2.loopGen
     task.spawn(function()
-      while L1_2.enabled do
+      while L1_2.enabled and L1_2.loopGen == loopGen do
         refreshPlayerESP()
         task.wait(0.25)
       end
@@ -5799,13 +5817,23 @@ do
       return
     end
     L151_1(A0_2)
+    -- [port fix] drop parts that left the character, so the list does not grow for as
+    -- long as the character lives
+    local kept = 0
     for L4_2 = 1, #L147_1 do
       local L5_2 = L147_1[L4_2]
-      if L5_2 and L5_2.Parent and L5_2.CanCollide then
-        pcall(function()
-          L5_2.CanCollide = false
-        end)
+      if L5_2 and L5_2.Parent then
+        kept = kept + 1
+        L147_1[kept] = L5_2
+        if L5_2.CanCollide then
+          pcall(function()
+            L5_2.CanCollide = false
+          end)
+        end
       end
+    end
+    for L4_2 = #L147_1, kept + 1, -1 do
+      L147_1[L4_2] = nil
     end
   end
   
@@ -10417,7 +10445,8 @@ do
         return
       end
       if not getgenv().HookedRemotes then
-        getgenv().HookedRemotes = {}
+        -- [port fix] weak keys, so destroyed RemoteEvents are released
+        getgenv().HookedRemotes = setmetatable({}, {__mode = "k"})
       end
       if getgenv().HookedRemotes[A0_3] then
         return
@@ -20285,13 +20314,28 @@ do
     end
     
     L59_2()
-    L5_2.CharacterAdded:Connect(function(A0_3)
+    local respawnConn
+    respawnConn = L5_2.CharacterAdded:Connect(function(A0_3)
       if not L1_2() then
+        if respawnConn then
+          respawnConn:Disconnect()
+        end
         return
       end
       task.wait(1)
       L59_2()
     end)
+    -- [port fix] the toggle disconnects these when Auto Prestige stops or restarts
+    local function sessionCleanup()
+      for _, conn in pairs({L55_2, L56_2, L57_2, L58_2, respawnConn}) do
+        pcall(conn.Disconnect, conn)
+      end
+    end
+    if not L1_2() then
+      sessionCleanup()
+      return
+    end
+    getgenv()._YBA_APCleanup = sessionCleanup
     L49_2(L6_2)
     L54_2()
   end
@@ -20304,6 +20348,11 @@ do
         return
       end
       getgenv()._YBA_prestigeWaiting = false
+      -- [port fix] disconnect the previous session's event handlers
+      if getgenv()._YBA_APCleanup then
+        pcall(getgenv()._YBA_APCleanup)
+        getgenv()._YBA_APCleanup = nil
+      end
       L152_1 = L152_1 + 1
       L27_1("AP", true)
       L151_1 = true
@@ -20339,6 +20388,11 @@ do
     else
       if getgenv then
         getgenv()._YBA_prestigeWaiting = false
+      end
+      -- [port fix] disconnect this session's event handlers
+      if getgenv()._YBA_APCleanup then
+        pcall(getgenv()._YBA_APCleanup)
+        getgenv()._YBA_APCleanup = nil
       end
       L152_1 = L152_1 + 1
       L151_1 = false

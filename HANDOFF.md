@@ -38,8 +38,13 @@ Every edit in `tools/port.py` is anchored on exact text and asserts its match co
 ## Port edits (tools/port.py)
 Only the hub's own backend is changed; all Roblox remote calls are untouched.
 1. Folder `RAILhubYBA` -> `YBA` (settings, boot log; same folder as the old port and the logger).
-2. Duplicate-run guard removed (`getgenv().RAILhub_YBA_Loaded` + HUD visible -> return). The
-   runtime's own `__YBA_RUNTIME.Shutdown` still replaces a previous instance.
+2. Duplicate-run guard kept as in the original (`getgenv().RAILhub_YBA_Loaded` + game HUD
+   visible -> "Script already running." and return). An earlier port removed it on the belief
+   that `__YBA_RUNTIME.Shutdown` replaces a previous instance; it only destroys the old GUI
+   (`_itemFarmStop` is never set). A second copy in the same server left every loop, handler
+   and farm of the first running, and stacked the anti-teleport hooks: each new hook calls
+   `getgenv().oldNc`/`oldMagnitude`, which then point at the old hook, which calls itself.
+   To load an update, rejoin or hop, then execute.
 3. Auto-reload `L95_1` stubbed: it queued the paid-key loader (`AZX0OZ/keyrh`) with
    `queue_on_teleport` and wrote `autoexec/railhub.lua`. The AutoExecute setting is still stored.
 4. Auto Prestige Worthiness (bug fix, user report: arrows used without Worthiness after the first
@@ -91,8 +96,32 @@ Only the hub's own backend is changed; all Roblox remote calls are untouched.
    (merchant dialogue) and the one every sell path calls, refuses any item the name normalizer
    maps to "Lucky Arrow" (English or Russian). The original already kept it on its never-sell
    list, which callers check.
-Kept as in the original: safe mode (`YBA/NO_AUTOSTART.txt`), headless mode (`YBA/NO_UI.txt`), the
-key-info panel (reads key metadata the loader leaves in globals; no network), webhooks, server hop.
+12. Leak fixes (user request: leaks that build up). Found with the harness `LEAK`/`CYCLE`/
+   `RESPAWN` options (600 simulated seconds, every toggle switched off and on each 60 s,
+   respawn every 40 s):
+   - Auto Prestige's storyline loop `L53_2` never checked its session, so each off/on left
+     the old loop running forever (it still talked to NPCs and prestiged). The coordinator's
+     checkpoint, its first call, now returns false for a feature that is off (also with
+     "Coordinate Farms" off).
+   - Auto Prestige's session handlers: the last `CharacterAdded` handler was never
+     disconnected (one more per session), the others only at their next event. That handler
+     now disconnects itself like the others, and `toggleAutoPrestige` disconnects the previous
+     session's handlers (`getgenv()._YBA_APCleanup`) when it stops or restarts. Before: 20
+     cycles left 20 loops and 80 handlers; after: none.
+   - Item ESP: disabling cleared `loopRunning` while the 2 s refresh loop slept, so an off/on
+     within 2 s added a loop each time; Player ESP's 0.25 s loop had the same race. Each enable
+     now starts one loop (`loopGen`) and the previous one ends at its next wake.
+   - Noclip part list (`L147_1`): every part added to the character (stand summons, effects)
+     was appended and walked every physics step, and removed parts stayed until the next
+     character. The walk now drops parts with no parent.
+   - Finisher changer: `getgenv().HookedRemotes` kept every hooked RemoteEvent (each
+     character's, every player, every respawn) after it was destroyed; now weak-keyed.
+   Remaining growth in the harness is handlers on the Humanoid, Backpack and character, which
+   the mock does not destroy on respawn (Roblox does, disconnecting them). Bounded and left
+   alone: the webhook queue (drains at 2/s), console logger (capped), NPC list (deduplicated),
+   name cache (4096).
+Kept as in the original: safe mode (`YBA/NO_AUTOSTART.txt`), headless mode (`YBA/NO_UI.txt`),
+webhooks, server hop.
 The payload contains no HWID or heartbeat calls (those are in the loader, which is not shipped).
 
 ## Regenerating the decompile (tools/devirt)
@@ -147,6 +176,13 @@ SANDBOX=1 TRACE=t.txt MACLIB_PATH=maclib.lua ABSENT="$A" lua-250 tools/harness.l
 masking wall-clock times). Other options: `FIRE`/`FIRE_STEPS`, `ITEMS`, `COVER=<from>-<to>`,
 `LOG_REMOTES=1`, `EVAL=<lua>`, `PRELOAD=mock/path=local/file` (e.g. a settings file; the mock JSONDecode is a real decoder), `VALUES=Stand=None,Level=2` (the `.Value` of instances with those names). Mock limits: every child exists unless in ABSENT, numeric
 properties are numbers, `IsA` is true except for ITEMS models, collected items never disappear.
+Leak checks: `LEAK=n` prints live threads/connections/`Instance.new` objects every n steps and,
+at the end, groups them by script line (threads by the innermost line they wait on, following
+pcalls); `CYCLE=n` switches every fired toggle off and on again each n steps; `RESPAWN=n`
+fires the script's `CharacterAdded` handlers each n steps. Example:
+`LEAK=100 CYCLE=60 RESPAWN=40 FIRE_STEPS=1200 ... FIRE="Auto Prestige" ... scr 4000000000`.
+The mock never destroys the old character, so handlers on it, its Humanoid and the Backpack
+always grow there.
 Expected harness errors (same in the original): `require` is nil, `UDim2.X.Scale` on a number,
 `debug` nil in the sandbox.
 
@@ -167,6 +203,8 @@ quest-farm-only traces are identical to the build without it, apart from one con
   respawn teleports only happen on the stand farm's turn); quest farm and NPC farm loops; auto
   prestige storyline step (`L53_2`), NPC dialogue (`L37_2`), kill (`L43_2`), get stand (`L30_2`).
 - A holder that is switched off, or has not reached a checkpoint for 120 s, loses the lease.
+- A checkpoint called by a feature that is off returns false (the caller leaves its loop), even
+  with "Coordinate Farms" off; this ends stale loops such as an old Auto Prestige session.
 - Turn changes print `[Coordinator] A -> B` (in `YBA/console_log.txt`). "Coordinate Farms" off
   restores the original free-for-all.
 - Not covered: actions the item farm takes inside its own turn that leave the area (server hop

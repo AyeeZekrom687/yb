@@ -67,8 +67,14 @@ do
   -- name: feature id; isOn(): whether the feature is still switched on; idle: it has nothing to
   -- do right now (hand over at once if another feature waits); onPause(): stops the feature's own
   -- movement before another takes over; onWait(): called every 0.25 s while it waits.
-  -- Returns false when the feature was switched off while waiting (the caller leaves its loop).
+  -- Returns false when the feature is off or was switched off while waiting (the caller leaves
+  -- its loop). An old session still looping after its toggle went off (Auto Prestige's storyline
+  -- loop never checked) stops here instead of running forever.
   function C.checkpoint(name, isOn, idle, onPause, onWait)
+    local ok, on = pcall(isOn)
+    if not (ok and on) then
+      return false
+    end
     if not C.enabled then
       return true
     end
