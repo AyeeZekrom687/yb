@@ -3642,6 +3642,11 @@ do
   
   L139_1.sfCountItem = L151_1
   
+  -- [port] (user request) Lucky Arrows the stand farm rolls with: regular and Redeemed
+  function L139_1.sfCountLucky()
+    return L151_1("Lucky Arrow") + (getRedeemedLuckyCount and getRedeemedLuckyCount() or 0)
+  end
+  
   local function L152_1(A0_2)
     if not A0_2 then
       return false
@@ -13681,13 +13686,15 @@ do
       if L90_1() then
         return true
       end
-      local L11_2 = L150_1("Lucky Arrow")
+      local L11_2 = L139_1.sfCountLucky()
       if 0 < L11_2 and (L149_1.farmMethod == "Lucky Arrow" or L149_1.farmMethod == "Arrow + Lucky Arrow") then
-        L170_1("Using Lucky Arrow (no stand)...")
+        -- [port] (user request) Redeemed Lucky Arrows first
+        local luckyName = getRedeemedLuckyCount and 0 < getRedeemedLuckyCount() and "Redeemed Lucky Arrow" or "Lucky Arrow"
+        L170_1("Using " .. luckyName .. " (no stand)...")
         local L12_2 = A7_2.Stand.Value
-        local L13_2 = useItemDirect("Lucky Arrow", "Lucky Arrow")
+        local L13_2 = useItemDirect(luckyName, luckyName)
         if not L13_2 then
-          L170_1("Lucky Arrow not found / failed to equip")
+          L170_1(luckyName .. " not found / failed to equip")
           task.wait(1)
           return true
         end
@@ -14115,7 +14122,7 @@ do
     end
     local L3_2 = false
     for _, L4_2 in ipairs(L1_2) do
-      L3_2 = L3_2 or 0 < L157_1(L4_2)
+      L3_2 = L3_2 or 0 < (L4_2 == "Lucky Arrow" and L139_1.sfCountLucky() or L157_1(L4_2))
     end
     if not L3_2 and L0_2 == "Lucky Arrow" and L28_1("SF_BuyItems", false) == true then
       -- bought from the shop in place
@@ -14284,7 +14291,7 @@ do
           local L9_2 = L157_1("Mysterious Arrow")
           local L10_2 = L157_1("Rokakaka")
           local L11_2 = L157_1("Rib Cage of The Saint's Corpse")
-          local L12_2 = L157_1("Lucky Arrow")
+          local L12_2 = L139_1.sfCountLucky()
           local L13_2 = L166_1["Mysterious Arrow"] or 25
           local L14_2 = L166_1.Rokakaka or 25
           local L15_2 = L166_1["Rib Cage of The Saint's Corpse"] or 10
@@ -14343,7 +14350,7 @@ do
             local L1_3 = L157_1("Mysterious Arrow")
             local L2_3 = L157_1("Rokakaka")
             local L3_3 = L157_1("Rib Cage of The Saint's Corpse")
-            local L4_3 = L157_1("Lucky Arrow")
+            local L4_3 = L139_1.sfCountLucky()
             local L5_3 = L170_1()
             local L6_3 = math.min(5, L166_1.Rokakaka or 25)
             local L7_3 = math.min(5, L166_1["Mysterious Arrow"] or 25)
@@ -14404,7 +14411,7 @@ do
             return {}
           end
           
-          if L170_1() == "Lucky Arrow" and L157_1("Lucky Arrow") == 0 and L28_1("SF_BuyItems", false) == true then
+          if L170_1() == "Lucky Arrow" and L139_1.sfCountLucky() == 0 and L28_1("SF_BuyItems", false) == true then
             local L20_2 = L2_1.PlayerStats and L2_1.PlayerStats.Money.Value or 0
             if 75000 <= L20_2 then
               do

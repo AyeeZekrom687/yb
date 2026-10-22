@@ -437,7 +437,7 @@ EDITS = [
      '      return true\n    end\n'
      '    local L3_2 = false\n'
      '    for _, L4_2 in ipairs(L1_2) do\n'
-     '      L3_2 = L3_2 or 0 < L157_1(L4_2)\n'
+     '      L3_2 = L3_2 or 0 < (L4_2 == "Lucky Arrow" and L139_1.sfCountLucky() or L157_1(L4_2))\n'
      '    end\n'
      '    if not L3_2 and L0_2 == "Lucky Arrow" and L28_1("SF_BuyItems", false) == true then\n'
      '      -- bought from the shop in place\n'
@@ -460,7 +460,7 @@ EDITS = [
      'A0_2 == "SAR" or A0_2 == "SFM" or A0_2 == "SF_BuyItems" then\n    L24_1(L26_1)\n', 1),
     ('buy toggle: stand farm lucky arrows',
      '          if L170_1() == "Lucky Arrow" and L157_1("Lucky Arrow") == 0 then\n',
-     '          if L170_1() == "Lucky Arrow" and L157_1("Lucky Arrow") == 0 and L28_1("SF_BuyItems", false) == true then\n', 1),
+     '          if L170_1() == "Lucky Arrow" and L139_1.sfCountLucky() == 0 and L28_1("SF_BuyItems", false) == true then\n', 1),
     ('buy toggle: stand farm shop top-up',
      '  function sfBuyMissingItem(A0_2)\n    if L90_1() then\n      return false\n    end\n',
      '  function sfBuyMissingItem(A0_2)\n    if L90_1() or L28_1("SF_BuyItems", false) ~= true then\n'
@@ -484,6 +484,39 @@ EDITS = [
      '    Default = L28_1("SF_BuyItems", false),\n'
      '    Callback = function(A0_2)\n      L27_1("SF_BuyItems", A0_2)\n    end\n'
      '  })\n', 1),
+    # (user request) Redeemed Lucky Arrows (bought from Jack in the Halloween event; the name
+    # normalizer files them under "(Redeemed Items)", so nothing counted or used them) count as
+    # Lucky Arrows for the stand farm's Lucky Arrow and Arrow + Lucky Arrow methods, and are used
+    # first (they cannot be traded or sold). Buy caps stay per kind (money buy: regular ones,
+    # Jack: Redeemed ones), as in the original.
+    ('redeemed lucky: count helper', '  L139_1.sfCountItem = L151_1\n',
+     '  L139_1.sfCountItem = L151_1\n'
+     '  \n'
+     '  -- [port] (user request) Lucky Arrows the stand farm rolls with: regular and Redeemed\n'
+     '  function L139_1.sfCountLucky()\n'
+     '    return L151_1("Lucky Arrow") + (getRedeemedLuckyCount and getRedeemedLuckyCount() or 0)\n'
+     '  end\n', 1),
+    ('redeemed lucky: use first',
+     '      local L11_2 = L150_1("Lucky Arrow")\n'
+     '      if 0 < L11_2 and (L149_1.farmMethod == "Lucky Arrow" or L149_1.farmMethod == "Arrow + Lucky Arrow") then\n'
+     '        L170_1("Using Lucky Arrow (no stand)...")\n'
+     '        local L12_2 = A7_2.Stand.Value\n'
+     '        local L13_2 = useItemDirect("Lucky Arrow", "Lucky Arrow")\n'
+     '        if not L13_2 then\n'
+     '          L170_1("Lucky Arrow not found / failed to equip")\n',
+     '      local L11_2 = L139_1.sfCountLucky()\n'
+     '      if 0 < L11_2 and (L149_1.farmMethod == "Lucky Arrow" or L149_1.farmMethod == "Arrow + Lucky Arrow") then\n'
+     '        -- [port] (user request) Redeemed Lucky Arrows first\n'
+     '        local luckyName = getRedeemedLuckyCount and 0 < getRedeemedLuckyCount() and "Redeemed Lucky Arrow" or "Lucky Arrow"\n'
+     '        L170_1("Using " .. luckyName .. " (no stand)...")\n'
+     '        local L12_2 = A7_2.Stand.Value\n'
+     '        local L13_2 = useItemDirect(luckyName, luckyName)\n'
+     '        if not L13_2 then\n'
+     '          L170_1(luckyName .. " not found / failed to equip")\n', 1),
+    ('redeemed lucky: stand farm can roll', '          local L12_2 = L157_1("Lucky Arrow")\n',
+     '          local L12_2 = L139_1.sfCountLucky()\n', 1),
+    ('redeemed lucky: needed items', '            local L4_3 = L157_1("Lucky Arrow")\n',
+     '            local L4_3 = L139_1.sfCountLucky()\n', 1),
 ]
 
 # Coordinator checkpoints (coordinator.lua): (name, anchor, text inserted after the anchor's first

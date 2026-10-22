@@ -828,6 +828,23 @@ if os.getenv("ITEMS") then
     PX[folder].store.__descendants = all
 end
 
+-- BACKPACK=<name[:count],...>: Tools in LocalPlayer.Backpack (used items never disappear)
+if os.getenv("BACKPACK") then
+    local bp = game.Players.LocalPlayer.Backpack
+    local tools = {}
+    for entry in os.getenv("BACKPACK"):gmatch("[^,]+") do
+        local nm, n = entry:match("^(.-):(%d+)$")
+        nm, n = nm or entry, tonumber(n) or 1
+        for _ = 1, n do
+            local tool = mkproxy("game.Players.LocalPlayer.Backpack." .. nm, nm, bp)
+            PX[tool].store.ClassName = "Tool"
+            tools[#tools + 1] = tool
+        end
+    end
+    PX[bp].store.__children = tools
+    PX[bp].store.__descendants = tools
+end
+
 ------------------------------------------------------------------------
 -- Run
 ------------------------------------------------------------------------

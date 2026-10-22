@@ -137,6 +137,16 @@ Only the hub's own backend is changed; all Roblox remote calls are untouched.
    Prestige, stand farm) or report the missing arrow (Suno), as they already did when money ran
    short. Not affected: the Requiem Arrow itself (Auto Requiem), the item farm's own "Auto Buy
    Lucky Arrow" toggle, Hamon.
+15. Redeemed Lucky Arrows (user request): the Halloween ones bought from Jack were never counted
+   or used, since the name normalizer files them under "(Redeemed Items)". The stand farm's
+   Lucky Arrow and Arrow + Lucky Arrow methods now count them as Lucky Arrows
+   (`L139_1.sfCountLucky`, used by the roll, can-roll check, needed-items list, Lucky Arrow buy
+   check and `sfCoordReady`) and use them first, then regular Lucky Arrows, then Mysterious
+   Arrows. Buy caps stay per kind as in the original (money buy: regular, Jack: Redeemed).
+   Harness: `BACKPACK="Redeemed Lucky Arrow:2,Rokakaka:3" ABSENT="$A,DialogueGui"
+   EVAL='task.spawn(function() sfUseResetItem(false, 3, 0, 0, 25, 25, 10,
+   game.Players.LocalPlayer.PlayerStats) end)'` equips the Redeemed one (the stand farm loop
+   itself stops in the mock at its Vector3 distance check).
 Kept as in the original: safe mode (`YBA/NO_AUTOSTART.txt`), headless mode (`YBA/NO_UI.txt`),
 webhooks, server hop.
 The payload contains no HWID or heartbeat calls (those are in the loader, which is not shipped).
@@ -193,7 +203,7 @@ SANDBOX=1 TRACE=t.txt MACLIB_PATH=maclib.lua ABSENT="$A" lua-250 tools/harness.l
 masking wall-clock times). Other options: `FIRE`/`FIRE_STEPS` (plain case-insensitive substring
 match, so `FIRE="Enable Farm"` also fires "Enable farming"; `FIRE="=enable farm"` matches the
 whole name only), `ITEMS`, `COVER=<from>-<to>`,
-`LOG_REMOTES=1`, `EVAL=<lua>`, `PRELOAD=mock/path=local/file` (e.g. a settings file; the mock JSONDecode is a real decoder), `VALUES=Stand=None,Level=2` (the `.Value` of instances with those names). Mock limits: every child exists unless in ABSENT, numeric
+`LOG_REMOTES=1`, `EVAL=<lua>`, `BACKPACK=name[:count],...` (Tools in the backpack), `PRELOAD=mock/path=local/file` (e.g. a settings file; the mock JSONDecode is a real decoder), `VALUES=Stand=None,Level=2` (the `.Value` of instances with those names). Mock limits: every child exists unless in ABSENT, numeric
 properties are numbers, `IsA` is true except for ITEMS models, collected items never disappear.
 Leak checks: `LEAK=n` prints live threads/connections/`Instance.new` objects every n steps and,
 at the end, groups them by script line (threads by the innermost line they wait on, following
