@@ -129,7 +129,15 @@ do
       end
     end
     table.sort(parts)
-    return "Doing: " .. (#parts > 0 and table.concat(parts, ", ") or "no farm running")
+    local s = "Doing: " .. (#parts > 0 and table.concat(parts, ", ") or "no farm running")
+    local guard = getgenv()._YBA_LagGuard
+    if guard then
+      local state = not guard.enabled and "off"
+        or guard.waiting > 0 and ("holding " .. guard.waiting .. " move(s)")
+        or guard.unstable() and "lag detected" or "steady"
+      s = s .. "\nLag Guard: " .. state .. " (" .. guard.status() .. ")"
+    end
+    return s
   end
 
   local function playerText(ps)

@@ -1,7 +1,7 @@
 """Build scr from the verified decompile: strip the hub's own backend, add the coordinator
 (user request), prepend the console logger.
 
-usage: python3 -I tools/port.py payload_decompiled.lua console_logger.lua coordinator.lua dashboard.lua scr
+usage: python3 -I tools/port.py payload_decompiled.lua console_logger.lua coordinator.lua dashboard.lua lagguard.lua scr
 
 Every edit is anchored on exact text and asserts its match count, so a changed decompile fails
 the build instead of silently skipping an edit. Everything not listed here is the decompiled
@@ -464,7 +464,7 @@ EDITS = [
     # Auto Prestige never buy Rokakaka or arrows; they farm them from the map instead (Auto
     # Prestige and the stand farm already fall back to that when they cannot afford them).
     ('buy toggle: saved always', 'A0_2 == "SAR" or A0_2 == "SFM" then\n    L24_1(L26_1)\n',
-     'A0_2 == "SAR" or A0_2 == "SFM" or A0_2 == "SF_BuyItems" or A0_2 == "FPSCap" or A0_2 == "LowRender" then\n'
+     'A0_2 == "SAR" or A0_2 == "SFM" or A0_2 == "SF_BuyItems" or A0_2 == "FPSCap" or A0_2 == "LowRender" or A0_2 == "LagGuard" then\n'
      '    L24_1(L26_1)\n', 1),
     ('buy toggle: stand farm lucky arrows',
      '          if L170_1() == "Lucky Arrow" and L157_1("Lucky Arrow") == 0 then\n',
@@ -632,6 +632,15 @@ EDITS = [
      'if L28_1("LowRender", false) then\n'
      '  getgenv()._YBA_Dashboard.setEnabled(true)\n'
      'end\n'
+     '-- [port] (user request) Lag Guard (lagguard.lua)\n'
+     'L152_1:Toggle({\n'
+     '  Name = "Lag Guard (wait out lag before moving)",\n'
+     '  Default = getgenv()._YBA_LagGuard.enabled,\n'
+     '  Callback = function(A0_2)\n'
+     '    L27_1("LagGuard", A0_2)\n'
+     '    getgenv()._YBA_LagGuard.enabled = A0_2 and true or false\n'
+     '  end\n'
+     '})\n'
      'L152_1:Slider({\n  Name = "Menu Scale",\n', 1),
     # Low Render Mode dashboard (dashboard.lua) data: recent notifications (every farm's status
     # messages go through the notify function), the stand farm's latest skin check and its
@@ -923,6 +932,81 @@ EDITS = [
      '    if not L2_2 or not L3_2 then\n'
      '      return\n'
      '    end\n', 1),
+    # (user request: kicks when the client lags) Lag Guard (lagguard.lua): moves wait for
+    # steady frames before they start, a running tween stops at a hitch frame (the farm retries),
+    # and kick/error messages are logged with the frame state.
+    ('lag guard: tween start',
+     '  function tweenMoveTo(A0_2, A1_2, A2_2, A3_2)\n'
+     '    if not A0_2 or not A0_2.Parent then\n'
+     '      return false\n'
+     '    end\n'
+     '    stopMoveTween()\n',
+     '  function tweenMoveTo(A0_2, A1_2, A2_2, A3_2)\n'
+     '    if not A0_2 or not A0_2.Parent then\n'
+     '      return false\n'
+     '    end\n'
+     '    -- [port] (user request) Lag Guard: wait for steady frames before moving\n'
+     '    local guard = getgenv()._YBA_LagGuard\n'
+     '    if guard and guard.wait() and not A0_2.Parent then\n'
+     '      return false\n'
+     '    end\n'
+     '    stopMoveTween()\n', 1),
+    ('lag guard: tween hitch',
+     '    L157_1 = L6_1.Stepped:Connect(function()\n'
+     '      if not (L5_2 and L5_2.Parent and A0_2) or not A0_2.Parent then\n'
+     '        L9_2 = true\n'
+     '        return\n'
+     '      end\n',
+     '    L157_1 = L6_1.Stepped:Connect(function(_, stepDt)\n'
+     '      if not (L5_2 and L5_2.Parent and A0_2) or not A0_2.Parent then\n'
+     '        L9_2 = true\n'
+     '        return\n'
+     '      end\n'
+     '      -- [port] (user request) Lag Guard: a hitch frame stops the tween before it catches up;\n'
+     '      -- the farm retries the move once frames are steady\n'
+     '      if guard and guard.enabled and stepDt and stepDt > guard.SPIKE then\n'
+     '        pcall(L8_2.Pause, L8_2)\n'
+     '        L9_2 = true\n'
+     '        return\n'
+     '      end\n', 1),
+    ('lag guard: moveCharacterTo',
+     '  function moveCharacterTo(A0_2, A1_2, A2_2)\n'
+     '    if L90_1() then\n',
+     '  function moveCharacterTo(A0_2, A1_2, A2_2)\n'
+     '    local guard = getgenv()._YBA_LagGuard   -- [port] (user request) Lag Guard\n'
+     '    if guard then\n'
+     '      guard.wait()\n'
+     '    end\n'
+     '    if L90_1() then\n', 1),
+    ('lag guard: travelToInstant',
+     '  function travelToInstant(A0_2)\n'
+     '    if L86_1() then\n',
+     '  function travelToInstant(A0_2)\n'
+     '    local guard = getgenv()._YBA_LagGuard   -- [port] (user request) Lag Guard\n'
+     '    if guard then\n'
+     '      guard.wait()\n'
+     '    end\n'
+     '    if L86_1() then\n', 1),
+    ('lag guard: npc kill',
+     '  local function L194_1(A0_2)\n'
+     '    local L1_2 = L2_1.Character\n',
+     '  local function L194_1(A0_2)\n'
+     '    local guard = getgenv()._YBA_LagGuard   -- [port] (user request) Lag Guard\n'
+     '    if guard then\n'
+     '      guard.wait()\n'
+     '    end\n'
+     '    local L1_2 = L2_1.Character\n', 1),
+    ('kick log',
+     'local function L50_1(A0_2)\n'
+     '  if not L48_1 or L49_1 then\n',
+     'local function L50_1(A0_2)\n'
+     '  -- [port] (user request) kick/error text in YBA/console_log.txt, with the frame state then\n'
+     '  pcall(function()\n'
+     '    local guard = getgenv()._YBA_LagGuard\n'
+     '    print("[Kick/Error] " .. tostring(A0_2) .. " | " .. tostring(game:GetService("GuiService"):GetErrorMessage())\n'
+     '      .. (guard and " | Lag Guard: " .. guard.status() or ""))\n'
+     '  end)\n'
+     '  if not L48_1 or L49_1 then\n', 1),
 ]
 
 # Coordinator checkpoints (coordinator.lua): (name, anchor, text inserted after the anchor's first
@@ -1079,7 +1163,8 @@ def strip_reload(text):
     return text[:a] + RELOAD_STUB + text[b:]
 
 
-def main(src, loggerf, coordf, dashf, out):
+def main(src, loggerf, *rest):
+    *modules, out = rest
     with open(src, 'r', encoding='latin-1') as f:
         text = f.read()
     for name, old, new, count in EDITS:
@@ -1087,11 +1172,11 @@ def main(src, loggerf, coordf, dashf, out):
         assert found == count, f'{name}: expected {count} matches, found {found}'
         text = text.replace(old, new)
     text = strip_reload(text)
-    with open(coordf, 'r', encoding='ascii') as f:
-        coord = f.read()
-    with open(dashf, 'r', encoding='ascii') as f:
-        coord = coord.rstrip('\n') + '\n\n' + f.read()
-    text = add_coordinator(text, coord)
+    parts = []
+    for path in modules:
+        with open(path, 'r', encoding='ascii') as f:
+            parts.append(f.read().rstrip('\n'))
+    text = add_coordinator(text, '\n\n'.join(parts) + '\n')
     with open(loggerf, 'r', encoding='ascii') as f:
         logger = f.read().rstrip('\n')
     result = logger + '\n\n' + text
@@ -1101,4 +1186,4 @@ def main(src, loggerf, coordf, dashf, out):
 
 
 if __name__ == '__main__':
-    main(*sys.argv[1:6])
+    main(*sys.argv[1:])

@@ -104,6 +104,14 @@ do
     if not (ok and on) then
       return false
     end
+    -- Lag Guard (lagguard.lua): no new action starts while the client lags
+    local guard = getgenv()._YBA_LagGuard
+    if guard and guard.wait() then
+      ok, on = pcall(isOn)
+      if not (ok and on) then
+        return false
+      end
+    end
     if not C.enabled then
       return true
     end

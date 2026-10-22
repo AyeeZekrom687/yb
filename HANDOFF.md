@@ -19,6 +19,7 @@ transforms that work around unluac's bugs. The decompile is verified against the
 - `console_logger.lua` - mirrors the client console to `YBA/console_log.txt` (user request)
 - `coordinator.lua` - feature coordinator module (user request), inserted by `tools/port.py`
 - `dashboard.lua` - Low Render Mode dashboard module (user request), inserted after the coordinator
+- `lagguard.lua` - Lag Guard module (user request), inserted after the dashboard
 - `scr` - the loaded script
 - `tools/harness.lua` - Lua 5.1 mock Roblox/executor environment (see Testing)
 - `tools/devirt/` - the devirtualizer/decompiler pipeline (see below)
@@ -29,10 +30,10 @@ transforms that work around unluac's bugs. The decompile is verified against the
 ## Build (MUST follow every time)
 ```bash
 set -o pipefail
-python3 -I tools/port.py payload_decompiled.lua console_logger.lua coordinator.lua dashboard.lua scr
+python3 -I tools/port.py payload_decompiled.lua console_logger.lua coordinator.lua dashboard.lua lagguard.lua scr
 luac-250 -p scr                 # Lua 5.1 built with LUAI_MAXVARS 250 (main has >200 locals in 5.1 counting)
 luau-compile --null scr         # real Luau compiler (github.com/luau-lang/luau releases)
-git add scr tools/port.py coordinator.lua dashboard.lua && git commit -m "..." && git push -u origin main
+git add scr tools/port.py coordinator.lua dashboard.lua lagguard.lua && git commit -m "..." && git push -u origin main
 ```
 Every edit in `tools/port.py` is anchored on exact text and asserts its match count.
 
@@ -213,6 +214,20 @@ Only the hub's own backend is changed; all Roblox remote calls are untouched.
    - movement loop (every frame): root part looked up only with Fly or Speed on.
    Left as is: per-frame checks that decide when a world action happens (item stick, NPC/
    prestige kill locks, teleport detector) still run every frame.
+21. Lag Guard (user report: kicked when the client lags; setting `LagGuard`, default on, toggle
+   in Settings, always saved). `lagguard.lua` keeps a moving average of frame time and the time
+   of the last hitch (a frame over 0.25 s). The client counts as lagging for 1.5 s after a hitch
+   or while the average is over 0.1 s (under 10 FPS). While it lags, new actions wait (up to 10 s,
+   then go ahead): the coordinator checkpoint (every farm's loop/action start), `tweenMoveTo`,
+   `moveCharacterTo`, `travelToInstant` (item pickup moves) and the NPC kill `L194_1`. A running
+   tween is paused and stopped at a hitch frame (Stepped `deltaTime` over 0.25 s), before it
+   catches up; the farm retries the move. Holds that are already in place (item stick, kill
+   locks) and prompt firing are not interrupted. Kick/error messages are now printed (in
+   `YBA/console_log.txt`) with the frame state, to see what the anti-cheat reacts to. The
+   dashboard shows the guard's state. With steady frames nothing waits (traces identical to the
+   previous build apart from the guard's Heartbeat connection); harness: injected lag held the
+   item farm's next move until 1.5 s after the lag ended. Keep an FPS cap above 10, or the
+   guard counts every frame as lag (it then still moves after 10 s waits).
 Kept as in the original: safe mode (`YBA/NO_AUTOSTART.txt`), headless mode (`YBA/NO_UI.txt`),
 webhooks, server hop.
 The payload contains no HWID or heartbeat calls (those are in the loader, which is not shipped).
