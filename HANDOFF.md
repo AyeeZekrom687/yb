@@ -147,6 +147,18 @@ Only the hub's own backend is changed; all Roblox remote calls are untouched.
    EVAL='task.spawn(function() sfUseResetItem(false, 3, 0, 0, 25, 25, 10,
    game.Players.LocalPlayer.PlayerStats) end)'` equips the Redeemed one (the stand farm loop
    itself stops in the mock at its Vector3 distance check).
+16. Optimisations with identical results (user request; traces identical to the previous build
+   in the all-toggles, item, stand, quest, prestige, ESP and combined scenarios):
+   - item lookup (`findNearestItem`, used by the item farm, its wait/roam loops, the
+     coordinator and the stand farm's own collecting) counted the backpack once per item on
+     the map; a scan does not yield, so counts are kept per item name for the scan (harness,
+     7 items of 5 kinds: 1100 -> 580 backpack walks);
+   - backpack counter: removed an `IsA("Tool") or Name` test that is always true;
+   - PvP auto-block's always-connected `workspace.DescendantAdded` handler compares the new
+     object's name before reading the character and its class (about 5 fewer engine calls per
+     object added to workspace);
+   - noclip loops (every physics step): `CanCollide` is read before `Parent`; the main noclip
+     drops removed parts every 30 steps instead of every step.
 Kept as in the original: safe mode (`YBA/NO_AUTOSTART.txt`), headless mode (`YBA/NO_UI.txt`),
 webhooks, server hop.
 The payload contains no HWID or heartbeat calls (those are in the loader, which is not shipped).

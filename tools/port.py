@@ -381,20 +381,27 @@ EDITS = [
      '        task.wait(0.25)\n      end\n    end)\n  end\n', 1),
     # Noclip: the character's part list gained every part added to the character (stand
     # summons, effects) and was walked every physics step, but parts that were removed stayed
-    # in it until the next character. The per-step walk now drops them.
+    # in it until the next character. They are now dropped every 30 steps ([port perf]: the
+    # per-step check reads CanCollide first, so parts already non-colliding cost one read).
+    ('leak: noclip sweep counter', '  local L146_1 = false\n  local L147_1 = {}\n  local L148_1, L149_1\n',
+     '  local L146_1 = false\n  local L147_1 = {}\n  local L148_1, L149_1\n  local noclipSweep = 0\n', 1),
     ('leak: noclip part list',
      '    L151_1(A0_2)\n    for L4_2 = 1, #L147_1 do\n      local L5_2 = L147_1[L4_2]\n'
      '      if L5_2 and L5_2.Parent and L5_2.CanCollide then\n        pcall(function()\n'
      '          L5_2.CanCollide = false\n        end)\n      end\n    end\n  end\n',
-     '    L151_1(A0_2)\n'
+     '    L151_1(A0_2)\n    for L4_2 = 1, #L147_1 do\n      local L5_2 = L147_1[L4_2]\n'
+     '      if L5_2 and L5_2.CanCollide and L5_2.Parent then\n        pcall(function()\n'
+     '          L5_2.CanCollide = false\n        end)\n      end\n    end\n'
      '    -- [port fix] drop parts that left the character, so the list does not grow for as\n'
      '    -- long as the character lives\n'
-     '    local kept = 0\n'
-     '    for L4_2 = 1, #L147_1 do\n      local L5_2 = L147_1[L4_2]\n'
-     '      if L5_2 and L5_2.Parent then\n        kept = kept + 1\n        L147_1[kept] = L5_2\n'
-     '        if L5_2.CanCollide then\n          pcall(function()\n'
-     '            L5_2.CanCollide = false\n          end)\n        end\n      end\n    end\n'
-     '    for L4_2 = #L147_1, kept + 1, -1 do\n      L147_1[L4_2] = nil\n    end\n  end\n', 1),
+     '    noclipSweep = noclipSweep + 1\n'
+     '    if 30 <= noclipSweep then\n      noclipSweep = 0\n'
+     '      local kept = 0\n'
+     '      for L4_2 = 1, #L147_1 do\n        local L5_2 = L147_1[L4_2]\n'
+     '        if L5_2 and L5_2.Parent then\n          kept = kept + 1\n          L147_1[kept] = L5_2\n'
+     '        end\n      end\n'
+     '      for L4_2 = #L147_1, kept + 1, -1 do\n        L147_1[L4_2] = nil\n      end\n'
+     '    end\n  end\n', 1),
     # Finisher changer: every RemoteEvent it hooked (each character's, for every player and
     # respawn) stayed in this table after it was destroyed
     ('leak: hooked remotes',
@@ -517,6 +524,48 @@ EDITS = [
      '          local L12_2 = L139_1.sfCountLucky()\n', 1),
     ('redeemed lucky: needed items', '            local L4_3 = L157_1("Lucky Arrow")\n',
      '            local L4_3 = L139_1.sfCountLucky()\n', 1),
+    # (user request) Optimisations with identical results: the same reads, writes and remote
+    # calls happen in the same cases, only fewer redundant ones.
+    # Item lookup: the backpack was walked once per item on the map (sfCountItem per item); a
+    # scan does not yield, so counts cannot change during it and are kept per item name.
+    ('perf: item lookup counts',
+     '  function findNearestItem(A0_2)\n    local L1_2 = L3_1.Character and L3_1.Character:FindFirstChild("HumanoidRootPart")\n',
+     '  function findNearestItem(A0_2)\n'
+     '    -- [port perf] backpack counts per item name for this scan (it does not yield)\n'
+     '    local countCache = {}\n'
+     '    local L1_2 = L3_1.Character and L3_1.Character:FindFirstChild("HumanoidRootPart")\n', 1),
+    ('perf: item lookup count use', '          local L19_2 = L145_1 and L145_1(L18_2) or 0\n',
+     '          local L19_2 = L18_2 ~= nil and countCache[L18_2]\n'
+     '          if not L19_2 then\n'
+     '            L19_2 = L145_1 and L145_1(L18_2) or 0\n'
+     '            if L18_2 ~= nil then\n              countCache[L18_2] = L19_2\n            end\n'
+     '          end\n', 1),
+    # Backpack counter: "IsA("Tool") or Name" is always true (a Name is a string), so the IsA
+    # call per backpack item did nothing
+    ('perf: backpack count',
+     '            if L11_2 and (L11_2:IsA("Tool") or L11_2.Name) and L143_1(L11_2.Name) == L1_2 then\n',
+     '            if L11_2 and L143_1(L11_2.Name) == L1_2 then\n', 1),
+    # PvP auto-block's workspace.DescendantAdded handler (always connected) read the local
+    # character and the object's class for every object added to workspace before comparing
+    # its name; the name is now compared first
+    ('perf: auto-block workspace listener',
+     '      for L4_2, L5_2 in ipairs(L170_1) do\n        local L6_2 = game.Players.LocalPlayer.Character\n'
+     '        local L7_2 = L6_2 and (L6_2.PrimaryPart or L6_2:FindFirstChild("HumanoidRootPart"))\n'
+     '        if L7_2 and A0_2:IsA("BasePart") and L5_2[1] == A0_2.Name and (L5_2[2] == "any" or L5_2[2] == A0_2.Parent) and (L7_2.Position - A0_2.Position).Magnitude < L5_2[3] then\n'
+     '          reqblock(L5_2[4]())\n        end\n      end\n',
+     '      -- [port perf] the object\'s name is compared before the character is read\n'
+     '      local blockName = A0_2.Name\n'
+     '      for L4_2, L5_2 in ipairs(L170_1) do\n'
+     '        if L5_2[1] == blockName then\n'
+     '          local L6_2 = game.Players.LocalPlayer.Character\n'
+     '          local L7_2 = L6_2 and (L6_2.PrimaryPart or L6_2:FindFirstChild("HumanoidRootPart"))\n'
+     '          if L7_2 and A0_2:IsA("BasePart") and (L5_2[2] == "any" or L5_2[2] == A0_2.Parent) and (L7_2.Position - A0_2.Position).Magnitude < L5_2[3] then\n'
+     '            reqblock(L5_2[4]())\n          end\n        end\n      end\n', 1),
+    # Tween and Auto Prestige kill noclip (every physics step): CanCollide is read before Parent
+    ('perf: tween noclip', '        if L4_3 and L4_3.Parent and L4_3.CanCollide then\n',
+     '        if L4_3 and L4_3.CanCollide and L4_3.Parent then\n', 1),
+    ('perf: kill noclip', '            if L4_4 and L4_4.Parent and L4_4.CanCollide then\n',
+     '            if L4_4 and L4_4.CanCollide and L4_4.Parent then\n', 1),
 ]
 
 # Coordinator checkpoints (coordinator.lua): (name, anchor, text inserted after the anchor's first

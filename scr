@@ -3617,7 +3617,7 @@ do
         end)
         if L5_2 and L6_2 then
           for L10_2, L11_2 in ipairs(L6_2) do
-            if L11_2 and (L11_2:IsA("Tool") or L11_2.Name) and L143_1(L11_2.Name) == L1_2 then
+            if L11_2 and L143_1(L11_2.Name) == L1_2 then
               L2_2 = L2_2 + 1
             end
           end
@@ -5756,6 +5756,7 @@ do
   local L146_1 = false
   local L147_1 = {}
   local L148_1, L149_1
+  local noclipSweep = 0
   
   local function L150_1(A0_2)
     if table.clear then
@@ -5855,23 +5856,30 @@ do
       return
     end
     L151_1(A0_2)
-    -- [port fix] drop parts that left the character, so the list does not grow for as
-    -- long as the character lives
-    local kept = 0
     for L4_2 = 1, #L147_1 do
       local L5_2 = L147_1[L4_2]
-      if L5_2 and L5_2.Parent then
-        kept = kept + 1
-        L147_1[kept] = L5_2
-        if L5_2.CanCollide then
-          pcall(function()
-            L5_2.CanCollide = false
-          end)
-        end
+      if L5_2 and L5_2.CanCollide and L5_2.Parent then
+        pcall(function()
+          L5_2.CanCollide = false
+        end)
       end
     end
-    for L4_2 = #L147_1, kept + 1, -1 do
-      L147_1[L4_2] = nil
+    -- [port fix] drop parts that left the character, so the list does not grow for as
+    -- long as the character lives
+    noclipSweep = noclipSweep + 1
+    if 30 <= noclipSweep then
+      noclipSweep = 0
+      local kept = 0
+      for L4_2 = 1, #L147_1 do
+        local L5_2 = L147_1[L4_2]
+        if L5_2 and L5_2.Parent then
+          kept = kept + 1
+          L147_1[kept] = L5_2
+        end
+      end
+      for L4_2 = #L147_1, kept + 1, -1 do
+        L147_1[L4_2] = nil
+      end
     end
   end
   
@@ -6368,7 +6376,7 @@ do
       end
       for L3_3 = 1, #L10_2 do
         local L4_3 = L10_2[L3_3]
-        if L4_3 and L4_3.Parent and L4_3.CanCollide then
+        if L4_3 and L4_3.CanCollide and L4_3.Parent then
           pcall(function()
             L4_3.CanCollide = false
           end)
@@ -7201,6 +7209,8 @@ do
   end)()
   
   function findNearestItem(A0_2)
+    -- [port perf] backpack counts per item name for this scan (it does not yield)
+    local countCache = {}
     local L1_2 = L3_1.Character and L3_1.Character:FindFirstChild("HumanoidRootPart")
     if not L1_2 then
       return nil
@@ -7252,7 +7262,13 @@ do
               break
             end
           end
-          local L19_2 = L145_1 and L145_1(L18_2) or 0
+          local L19_2 = L18_2 ~= nil and countCache[L18_2]
+          if not L19_2 then
+            L19_2 = L145_1 and L145_1(L18_2) or 0
+            if L18_2 ~= nil then
+              countCache[L18_2] = L19_2
+            end
+          end
           local L20_2 = L157_1 and (L157_1[L18_2] or L144_1 and L157_1[L144_1(L18_2)]) or 25
           if isAutoSellBlacklisted and isAutoSellBlacklisted(L18_2) and L19_2 >= L20_2 then
             break
@@ -17197,11 +17213,15 @@ do
       return
     end
     if L170_1 and type(L170_1) == "table" then
+      -- [port perf] the object's name is compared before the character is read
+      local blockName = A0_2.Name
       for L4_2, L5_2 in ipairs(L170_1) do
-        local L6_2 = game.Players.LocalPlayer.Character
-        local L7_2 = L6_2 and (L6_2.PrimaryPart or L6_2:FindFirstChild("HumanoidRootPart"))
-        if L7_2 and A0_2:IsA("BasePart") and L5_2[1] == A0_2.Name and (L5_2[2] == "any" or L5_2[2] == A0_2.Parent) and (L7_2.Position - A0_2.Position).Magnitude < L5_2[3] then
-          reqblock(L5_2[4]())
+        if L5_2[1] == blockName then
+          local L6_2 = game.Players.LocalPlayer.Character
+          local L7_2 = L6_2 and (L6_2.PrimaryPart or L6_2:FindFirstChild("HumanoidRootPart"))
+          if L7_2 and A0_2:IsA("BasePart") and (L5_2[2] == "any" or L5_2[2] == A0_2.Parent) and (L7_2.Position - A0_2.Position).Magnitude < L5_2[3] then
+            reqblock(L5_2[4]())
+          end
         end
       end
     end
@@ -19300,7 +19320,7 @@ do
           end
           for L3_4 = 1, #L24_3 do
             local L4_4 = L24_3[L3_4]
-            if L4_4 and L4_4.Parent and L4_4.CanCollide then
+            if L4_4 and L4_4.CanCollide and L4_4.Parent then
               L4_4.CanCollide = false
             end
           end
