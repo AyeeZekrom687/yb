@@ -199,6 +199,20 @@ Only the hub's own backend is changed; all Roblox remote calls are untouched.
    - HUD health text (10/s): each GUI level looked up once instead of re-walking the path.
    Noted, not changed: the hub's "Stability Control" frame-time check (`L151_1` next to its
    setting) is never called, in the original too, so nothing waits out lag before teleports.
+20. Read-side round (user rule: reading and deciding may change; anything acting on the world,
+   i.e. movement, CFrame writes, prompts, remotes, clicks, stays identical in what and when).
+   Traces identical in idle, no-dialogue, item (three item-list/blacklist setups and a forced
+   roam), stand, quest, NPC, prestige, movement toggles and all-toggles scenarios:
+   - item lookup: your item list normalised once per scan (was once per item on the map), the
+     sell blacklist only consulted for items at their max, the pickup priority (string work)
+     cached by name;
+   - NPC farm scan: the name test per NPC cached per target (pure except for Heaven targets,
+     which are not cached; 10,000-pair equivalence test against the original, positions varied);
+   - dialogue auto-clicker (every 0.15 s): looks for a showing dialogue before the in-game
+     check (about a dozen lookups), since with none showing it clicks nothing;
+   - movement loop (every frame): root part looked up only with Fly or Speed on.
+   Left as is: per-frame checks that decide when a world action happens (item stick, NPC/
+   prestige kill locks, teleport detector) still run every frame.
 Kept as in the original: safe mode (`YBA/NO_AUTOSTART.txt`), headless mode (`YBA/NO_UI.txt`),
 webhooks, server hop.
 The payload contains no HWID or heartbeat calls (those are in the loader, which is not shipped).

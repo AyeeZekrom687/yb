@@ -752,6 +752,177 @@ EDITS = [
      '          local hudMain = hud and hud:FindFirstChild("Main")\n'
      '          local hudInd = hudMain and hudMain:FindFirstChild("Indicators")\n'
      '          local L0_3 = hudInd and hudInd:FindFirstChild("Bars")\n', 1),
+    # (user request: reads and decisions may change, anything acting on the world stays
+    # identical in what and when) Item lookup: the item list is normalised once per scan
+    # instead of once per item, the sell blacklist is only consulted for items at their max, and
+    # the pickup priority (string work per item) is cached by name; NPC scan: the name test per
+    # NPC is cached per target (pure except for Heaven targets, which are not cached).
+    ('read: item lookup caches',
+     '  function findNearestItem(A0_2)\n'
+     '    -- [port perf] backpack counts per item name for this scan (it does not yield)\n'
+     '    local countCache = {}\n',
+     '  -- [port perf] item priority (Lucky Arrow 1, Lucky Mask 2, candy 3, else 4) by name triple\n'
+     '  local itemPriorityCache, itemPriorityCount = {}, 0\n'
+     '  \n'
+     '  function findNearestItem(A0_2)\n'
+     '    -- [port perf] backpack counts per item name for this scan (it does not yield)\n'
+     '    local countCache = {}\n'
+     '    -- [port perf] the item list normalised once per scan, not once per item on the map\n'
+     '    local selNorm, selRaw, selLucky = {}, {}, false\n'
+     '    for _, L3_2 in ipairs(A0_2) do\n'
+     '      local L4_2 = L144_1 and L144_1(L3_2)\n'
+     '      if L4_2 ~= nil then\n'
+     '        selNorm[L4_2] = true\n'
+     '      end\n'
+     '      selRaw[L3_2] = true\n'
+     '      if L3_2 == "Lucky Arrow" then\n'
+     '        selLucky = true\n'
+     '      end\n'
+     '    end\n', 1),
+    ('read: item list match',
+     '          local L21_2 = #A0_2 == 0\n'
+     '          if not L21_2 then\n'
+     '            local L22_2 = L144_1 and L144_1(L18_2) or L18_2\n'
+     '            for L26_2, L27_2 in ipairs(A0_2) do\n'
+     '              if L144_1 and L144_1(L27_2) == L22_2 or L27_2 == L18_2 or L27_2 == "Lucky Arrow" and (L18_2 == "Lucky Arrow" or L15_2.Name and L15_2.Name:find("Lucky Arrow")) then\n'
+     '                L21_2 = true\n'
+     '                break\n'
+     '              end\n'
+     '            end\n'
+     '          end\n',
+     '          local L21_2 = #A0_2 == 0\n'
+     '          if not L21_2 then\n'
+     '            local L22_2 = L144_1 and L144_1(L18_2) or L18_2\n'
+     '            L21_2 = selNorm[L22_2] or selRaw[L18_2] or selLucky and (L18_2 == "Lucky Arrow" or L15_2.Name and L15_2.Name:find("Lucky Arrow"))\n'
+     '          end\n', 1),
+    ('read: sell blacklist order',
+     '          if isAutoSellBlacklisted and isAutoSellBlacklisted(L18_2) and L19_2 >= L20_2 then\n',
+     '          if L19_2 >= L20_2 and isAutoSellBlacklisted and isAutoSellBlacklisted(L18_2) then\n', 1),
+    ('read: item priority',
+     '          local L23_2 = 4\n'
+     '          local L24_2 = (tostring(L18_2 or "") .. " " .. tostring(L17_2.ObjectText or "") .. " " .. tostring(L15_2.Name or "")):lower()\n'
+     '          local L25_2 = L24_2:gsub("[^%a%d]", "")\n'
+     '          if L25_2:find("luckyarrow", 1, true) then\n'
+     '            L23_2 = 1\n'
+     '          elseif L25_2:find("luckystonemask", 1, true) or L25_2:find("luckymask", 1, true) then\n'
+     '            L23_2 = 2\n'
+     '          elseif L25_2:find("candy", 1, true) then\n'
+     '            L23_2 = 3\n'
+     '          else\n'
+     '            L23_2 = 4\n'
+     '          end\n',
+     '          local L24_2 = tostring(L18_2 or "") .. " " .. tostring(L17_2.ObjectText or "") .. " " .. tostring(L15_2.Name or "")\n'
+     '          local L23_2 = itemPriorityCache[L24_2]\n'
+     '          if not L23_2 then\n'
+     '            local L25_2 = L24_2:lower():gsub("[^%a%d]", "")\n'
+     '            if L25_2:find("luckyarrow", 1, true) then\n'
+     '              L23_2 = 1\n'
+     '            elseif L25_2:find("luckystonemask", 1, true) or L25_2:find("luckymask", 1, true) then\n'
+     '              L23_2 = 2\n'
+     '            elseif L25_2:find("candy", 1, true) then\n'
+     '              L23_2 = 3\n'
+     '            else\n'
+     '              L23_2 = 4\n'
+     '            end\n'
+     '            if 2048 <= itemPriorityCount then\n'
+     '              itemPriorityCache, itemPriorityCount = {}, 0\n'
+     '            end\n'
+     '            itemPriorityCache[L24_2] = L23_2\n'
+     '            itemPriorityCount = itemPriorityCount + 1\n'
+     '          end\n', 1),
+    ('read: npc name match cache',
+     '    return false\n'
+     '  end\n'
+     '  \n'
+     '  local function L190_1(A0_2)\n',
+     '    return false\n'
+     '  end\n'
+     '  \n'
+     '  -- [port perf] L189_1 per NPC name for the current target: it only reads names, except for a\n'
+     '  -- Heaven target (that branch also reads the character\'s position), which is not cached\n'
+     '  local npcMatchTarget, npcMatchHeaven, npcMatchCache, npcMatchCount = nil, false, {}, 0\n'
+     '  \n'
+     '  local function npcNameMatch(A0_2, A1_2)\n'
+     '    if A1_2 ~= npcMatchTarget then\n'
+     '      npcMatchTarget, npcMatchHeaven, npcMatchCache, npcMatchCount = A1_2, L182_1(A1_2), {}, 0\n'
+     '    end\n'
+     '    if npcMatchHeaven or A0_2 == nil then\n'
+     '      return L189_1(A0_2, A1_2)\n'
+     '    end\n'
+     '    local L2_2 = npcMatchCache[A0_2]\n'
+     '    if L2_2 == nil then\n'
+     '      L2_2 = L189_1(A0_2, A1_2) and true or false\n'
+     '      if npcMatchCount < 1024 then\n'
+     '        npcMatchCache[A0_2] = L2_2\n'
+     '        npcMatchCount = npcMatchCount + 1\n'
+     '      end\n'
+     '    end\n'
+     '    return L2_2\n'
+     '  end\n'
+     '  \n'
+     '  local function L190_1(A0_2)\n', 1),
+    ('read: npc scan uses the cache',
+     'L11_3:IsA("Model") and not L0_1:GetPlayerFromCharacter(L11_3) and L189_1(L11_3.Name, A0_2) and L190_1(L11_3)',
+     'L11_3:IsA("Model") and not L0_1:GetPlayerFromCharacter(L11_3) and npcNameMatch(L11_3.Name, A0_2) and L190_1(L11_3)', 1),
+    # Dialogue auto-clicker (every 0.15 s) ran the full in-game check before looking for a
+    # dialogue; with none showing it clicks nothing, so the dialogue is looked for first. The
+    # movement loop (every frame) looked up the root part also with Fly and Speed off.
+    ('read: dialogue clicker checks a dialogue first',
+     'task.spawn(function()\n'
+     '  while true do\n'
+     '    task.wait(0.15)\n'
+     '    pcall(function()\n'
+     '      if not L76_1() then\n'
+     '        return\n'
+     '      end\n',
+     'task.spawn(function()\n'
+     '  -- [port perf] no dialogue showing means nothing to click: that is checked first, so the\n'
+     '  -- in-game check below (about a dozen lookups) only runs while a dialogue is up\n'
+     '  local dialogueNames = {"DialogueGui", "Dialogue", "NPCDialogue"}\n'
+     '  while true do\n'
+     '    task.wait(0.15)\n'
+     '    pcall(function()\n'
+     '      local pg = L2_1 and L2_1:FindFirstChild("PlayerGui")\n'
+     '      if pg then\n'
+     '        local shown = false\n'
+     '        for _, nm in ipairs(dialogueNames) do\n'
+     '          local g = pg:FindFirstChild(nm)\n'
+     '          if g and (g.Enabled or g:FindFirstChild("Frame") and g.Frame.Visible) then\n'
+     '            shown = true\n'
+     '            break\n'
+     '          end\n'
+     '        end\n'
+     '        if not shown then\n'
+     '          return\n'
+     '        end\n'
+     '      end\n'
+     '      if not L76_1() then\n'
+     '        return\n'
+     '      end\n', 1),
+    ('read: movement loop root part only for fly/speed',
+     '    local L0_2 = getgenv().PlayerMoveCfg\n'
+     '    local L1_2 = L2_1.Character\n'
+     '    local L2_2 = L1_2 and L1_2:FindFirstChildOfClass("Humanoid")\n'
+     '    local L3_2 = L1_2 and L1_2:FindFirstChild("HumanoidRootPart")\n'
+     '    if L2_2 then\n'
+     '      L2_2.UseJumpPower = true\n'
+     '    end\n'
+     '    if not L2_2 or not L3_2 then\n'
+     '      return\n'
+     '    end\n',
+     '    local L0_2 = getgenv().PlayerMoveCfg\n'
+     '    local L1_2 = L2_1.Character\n'
+     '    local L2_2 = L1_2 and L1_2:FindFirstChildOfClass("Humanoid")\n'
+     '    if L2_2 then\n'
+     '      L2_2.UseJumpPower = true\n'
+     '    end\n'
+     '    if not (L0_2.Fly or L0_2.Speed) then   -- [port perf] the root part is only for Fly/Speed\n'
+     '      return\n'
+     '    end\n'
+     '    local L3_2 = L1_2 and L1_2:FindFirstChild("HumanoidRootPart")\n'
+     '    if not L2_2 or not L3_2 then\n'
+     '      return\n'
+     '    end\n', 1),
 ]
 
 # Coordinator checkpoints (coordinator.lua): (name, anchor, text inserted after the anchor's first
