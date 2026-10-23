@@ -1,10 +1,17 @@
--- Console log: mirrors the client console (prints, warnings, errors) to YBA/console_log.txt.
+-- Console log: mirrors the client console (prints, warnings, errors) to YBA/console_log_<UserId>.txt.
 -- Inserted at the top of scr by the build step. Writes are buffered and flushed once per second;
 -- each distinct message is written at most REPEAT_LIMIT times, later copies are counted and
 -- summarised every SUMMARY_INTERVAL seconds.
 do
     local FOLDER = "YBA"
+    -- one log per account (several accounts on one PC overwrote each other's log)
     local PATH = FOLDER .. "/console_log.txt"
+    pcall(function()
+        local lp = game:GetService("Players").LocalPlayer
+        if lp and lp.UserId ~= 0 then
+            PATH = FOLDER .. "/console_log_" .. lp.UserId .. ".txt"
+        end
+    end)
     local REPEAT_LIMIT = 3
     local FLUSH_INTERVAL = 1
     local SUMMARY_INTERVAL = 30

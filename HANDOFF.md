@@ -16,7 +16,7 @@ transforms that work around unluac's bugs. The decompile is verified against the
 - `obfuscated.lua`, `payload_obfuscated.lua` - the original scripts (reference; the payload is the hub)
 - `payload_decompiled.lua` - verified decompile of the payload (generated, do not edit by hand)
 - `tools/port.py` - builds `scr`: console logger on top + decompile with the port edits below
-- `console_logger.lua` - mirrors the client console to `YBA/console_log.txt` (user request)
+- `console_logger.lua` - mirrors the client console to `YBA/console_log_<UserId>.txt` (user request)
 - `coordinator.lua` - feature coordinator module (user request), inserted by `tools/port.py`
 - `dashboard.lua` - Low Render Mode dashboard module (user request), inserted after the coordinator
 - `lagguard.lua` - Lag Guard module (user request), inserted after the dashboard
@@ -239,6 +239,25 @@ Only the hub's own backend is changed; all Roblox remote calls are untouched.
    at 60 FPS; the nudge waits `max(1, round(5 / stretch))` frames. Auto Prestige's `L27_2` also
    waits for the Lag Guard. All identical at 60 FPS and above (harness traces identical); the
    scaling follows the Lag Guard toggle. Every other wait in the script is in seconds.
+23. Server hop off by default and per-account files (user request).
+   - "Server Hop Farm" (`SHF`) defaults to off (the item farm roams on an empty map instead of
+     hopping). Three "is server hop on" helpers (`L156_1` near the stand farm's item search,
+     `L162_1`/`L158_1` in the rib/shiny farms) ended in `... or true` and always said yes, so
+     the stand farm's own item search gave up after the hop delay instead of 20 s; they now
+     return the setting. Auto Requiem's hop check uses the new default. A value already saved
+     as on stays on.
+   - Settings per account: `YBA/custom_flags_<UserId>.json`. Several accounts on one PC shared
+     `custom_flags.json`, and each saves its whole settings table, so the last one to save
+     overwrote the others. An account's own file is seeded from the shared one the first time
+     (existing settings carry over); "Reset Settings" only resets that account. Console and boot
+     logs are per account too (`console_log_<UserId>.txt`, `boot_log_<UserId>.txt`); each
+     account wiped the other's log when it started. UserId 0 (Studio) keeps the shared names.
+     Shared on purpose: `rbxcache/active_servers.json` (which servers your accounts are in),
+     `NO_AUTOSTART.txt`/`NO_UI.txt`/`NO_HOOKS.txt`. Auto Prestige's progress file was already
+     per account name.
+   Harness: shared file with SHF on -> the account's file is created from it and loaded; writes
+   go only to `custom_flags_1.json` (the mock UserId is 1); traces differ from the previous
+   build only in those file names and, with an empty map, roaming instead of hopping.
 Kept as in the original: safe mode (`YBA/NO_AUTOSTART.txt`), headless mode (`YBA/NO_UI.txt`),
 webhooks, server hop.
 The payload contains no HWID or heartbeat calls (those are in the loader, which is not shipped).

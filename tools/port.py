@@ -1054,6 +1054,50 @@ EDITS = [
      '      for L6_2 = 1, frames do\n'
      '        L6_1.Heartbeat:Wait()\n'
      '      end\n', 1),
+    # (user request) Server hop off by default; three "is server hop on" helpers ended in
+    # "or true" and always said yes (the stand farm's own item search then gave up after the hop
+    # delay instead of 20 s). Settings and boot log per account (UserId), seeded from the shared
+    # settings file the first time.
+    ('hop off: item farm default',
+     '  serverHopFarmEnabled = L28_1("SHF", true)\n',
+     '  serverHopFarmEnabled = L28_1("SHF", false)   -- [port] (user request) off by default\n', 1),
+    ('hop off: toggle default',
+     '    Default = L28_1("SHF", true),\n',
+     '    Default = L28_1("SHF", false),\n', 1),
+    ('hop off: wrappers report the setting',
+     '    return L139_1.serverHopFarmEnabled and L139_1.serverHopFarmEnabled() or L28_1 and L28_1("SHF", true) or true\n',
+     '    -- [port fix] was "... or true", so it always said server hop was on\n'
+     '    if L139_1.serverHopFarmEnabled then\n'
+     '      return L139_1.serverHopFarmEnabled() == true\n'
+     '    end\n'
+     '    return L28_1 and L28_1("SHF", false) == true\n', 3),
+    ('hop off: auto requiem',
+     '    local L3_2 = L149_1.serverHopNoItems ~= false and L28_1 and L28_1("SHF", true) ~= false\n',
+     '    local L3_2 = L149_1.serverHopNoItems ~= false and L28_1 and L28_1("SHF", false) ~= false\n', 1),
+    ('per account: settings file',
+     'local L18_1 = "YBA"\n'
+     'local L19_1 = L18_1 .. "/custom_flags.json"\n',
+     'local L18_1 = "YBA"\n'
+     'local L19_1 = L18_1 .. "/custom_flags.json"\n'
+     '-- [port] (user request) settings per account: accounts executing on one PC shared this file and\n'
+     '-- overwrote each other\'s settings (each saves its whole settings table). An account\'s own file\n'
+     '-- starts as a copy of the shared one, so existing settings carry over.\n'
+     'do\n'
+     '  local uid = L2_1 and L2_1.UserId\n'
+     '  if uid and uid ~= 0 then\n'
+     '    local own = L18_1 .. "/custom_flags_" .. tostring(uid) .. ".json"\n'
+     '    pcall(function()\n'
+     '      if type(isfile) == "function" and type(readfile) == "function" and type(writefile) == "function"\n'
+     '        and not isfile(own) and isfile(L19_1) then\n'
+     '        writefile(own, readfile(L19_1))\n'
+     '      end\n'
+     '    end)\n'
+     '    L19_1 = own\n'
+     '  end\n'
+     'end\n', 1),
+    ('per account: boot log',
+     'local L16_1 = "YBA/boot_log.txt"\n',
+     'local L16_1 = "YBA/boot_log" .. (L2_1 and L2_1.UserId ~= 0 and "_" .. tostring(L2_1.UserId) or "") .. ".txt"   -- [port] per account\n', 1),
 ]
 
 # Coordinator checkpoints (coordinator.lua): (name, anchor, text inserted after the anchor's first

@@ -1,10 +1,17 @@
--- Console log: mirrors the client console (prints, warnings, errors) to YBA/console_log.txt.
+-- Console log: mirrors the client console (prints, warnings, errors) to YBA/console_log_<UserId>.txt.
 -- Inserted at the top of scr by the build step. Writes are buffered and flushed once per second;
 -- each distinct message is written at most REPEAT_LIMIT times, later copies are counted and
 -- summarised every SUMMARY_INTERVAL seconds.
 do
     local FOLDER = "YBA"
+    -- one log per account (several accounts on one PC overwrote each other's log)
     local PATH = FOLDER .. "/console_log.txt"
+    pcall(function()
+        local lp = game:GetService("Players").LocalPlayer
+        if lp and lp.UserId ~= 0 then
+            PATH = FOLDER .. "/console_log_" .. lp.UserId .. ".txt"
+        end
+    end)
     local REPEAT_LIMIT = 3
     local FLUSH_INTERVAL = 1
     local SUMMARY_INTERVAL = 30
@@ -141,7 +148,7 @@ local L12_1 = game:GetService("Lighting")
 local L13_1 = game:GetService("TeleportService")
 local L14_1 = game:GetService("GuiService")
 local L15_1 = game:GetService("Stats")
-local L16_1 = "YBA/boot_log.txt"
+local L16_1 = "YBA/boot_log" .. (L2_1 and L2_1.UserId ~= 0 and "_" .. tostring(L2_1.UserId) or "") .. ".txt"   -- [port] per account
 
 local function L17_1(A0_2)
   pcall(function()
@@ -172,6 +179,22 @@ end)
 L17_1("exec start")
 local L18_1 = "YBA"
 local L19_1 = L18_1 .. "/custom_flags.json"
+-- [port] (user request) settings per account: accounts executing on one PC shared this file and
+-- overwrote each other's settings (each saves its whole settings table). An account's own file
+-- starts as a copy of the shared one, so existing settings carry over.
+do
+  local uid = L2_1 and L2_1.UserId
+  if uid and uid ~= 0 then
+    local own = L18_1 .. "/custom_flags_" .. tostring(uid) .. ".json"
+    pcall(function()
+      if type(isfile) == "function" and type(readfile) == "function" and type(writefile) == "function"
+        and not isfile(own) and isfile(L19_1) then
+        writefile(own, readfile(L19_1))
+      end
+    end)
+    L19_1 = own
+  end
+end
 local L20_1 = {}
 L20_1.AutoExecute = true
 L20_1.SaveSettings = true
@@ -8416,7 +8439,7 @@ do
     return false
   end
   
-  serverHopFarmEnabled = L28_1("SHF", true)
+  serverHopFarmEnabled = L28_1("SHF", false)   -- [port] (user request) off by default
   local L170_1 = 10
   local L171_1 = 4.5
   local L172_1 = 3
@@ -10548,7 +10571,7 @@ do
   })
   L151_1:Toggle({
     Name = "Server Hop Farm",
-    Default = L28_1("SHF", true),
+    Default = L28_1("SHF", false),
     Callback = function(A0_2)
       if A0_2 then
         if _G.YBAItemFarm and _G.YBAItemFarm.enableServerHopFarm then
@@ -12917,7 +12940,11 @@ do
   local L155_1 = L139_1.maxLimits or {}
   
   local function L156_1()
-    return L139_1.serverHopFarmEnabled and L139_1.serverHopFarmEnabled() or L28_1 and L28_1("SHF", true) or true
+    -- [port fix] was "... or true", so it always said server hop was on
+    if L139_1.serverHopFarmEnabled then
+      return L139_1.serverHopFarmEnabled() == true
+    end
+    return L28_1 and L28_1("SHF", false) == true
   end
   
   local function L157_1(...)
@@ -13587,7 +13614,7 @@ do
         return false, "need_quest"
       end
     end
-    local L3_2 = L149_1.serverHopNoItems ~= false and L28_1 and L28_1("SHF", true) ~= false
+    local L3_2 = L149_1.serverHopNoItems ~= false and L28_1 and L28_1("SHF", false) ~= false
     L170_1("Auto Requiem: Farming items for cash to buy Requiem Arrow from Suno...")
     local L4_2 = tick()
     local L5_2 = L3_2 and 180 or 3600
@@ -15100,7 +15127,11 @@ do
   end
   
   local function L162_1()
-    return L139_1.serverHopFarmEnabled and L139_1.serverHopFarmEnabled() or L28_1 and L28_1("SHF", true) or true
+    -- [port fix] was "... or true", so it always said server hop was on
+    if L139_1.serverHopFarmEnabled then
+      return L139_1.serverHopFarmEnabled() == true
+    end
+    return L28_1 and L28_1("SHF", false) == true
   end
   
   local function L163_1()
@@ -15418,7 +15449,11 @@ do
   end
   
   local function L158_1()
-    return L139_1.serverHopFarmEnabled and L139_1.serverHopFarmEnabled() or L28_1 and L28_1("SHF", true) or true
+    -- [port fix] was "... or true", so it always said server hop was on
+    if L139_1.serverHopFarmEnabled then
+      return L139_1.serverHopFarmEnabled() == true
+    end
+    return L28_1 and L28_1("SHF", false) == true
   end
   
   local function L159_1()
