@@ -1007,6 +1007,53 @@ EDITS = [
      '      .. (guard and " | Lag Guard: " .. guard.status() or ""))\n'
      '  end)\n'
      '  if not L48_1 or L49_1 then\n', 1),
+    # (user request) Timings that assumed 60 FPS: the teleport detector's per-frame distance,
+    # tween durations (each frame moves no further than at 60 FPS) and the 5-frame physics
+    # nudge. All unchanged at 60 FPS and above; tween/nudge scaling follows the Lag Guard toggle.
+    ('low fps: teleport detector frame time',
+     '    L6_1.Heartbeat:Connect(function()\n'
+     '      local L0_3 = L2_1 or game:GetService("Players") and game:GetService("Players").LocalPlayer\n',
+     '    L6_1.Heartbeat:Connect(function(frameDt)\n'
+     '      local L0_3 = L2_1 or game:GetService("Players") and game:GetService("Players").LocalPlayer\n', 1),
+    ('low fps: teleport detector threshold',
+     '          if 18 < L4_3 then\n'
+     '            recordTeleport()\n',
+     '          -- [port] 18 studs in one frame meant 1080 studs/s at 60 FPS; below 60 FPS the same speed\n'
+     '          -- covers more per frame, so the threshold scales with frame time (same at 60 FPS and up)\n'
+     '          if math.max(18, 1080 * (frameDt or 0)) < L4_3 then\n'
+     '            recordTeleport()\n', 1),
+    ('low fps: tween duration',
+     '    local L7_2 = math.clamp(L4_2 / L6_2, 0.05, 3)\n',
+     '    -- [port] (user request) below 60 FPS the tween takes longer, so each frame moves no further\n'
+     '    -- than at 60 FPS (Lag Guard on; unchanged at 60 FPS and up)\n'
+     '    local L7_2 = math.clamp(L4_2 / L6_2, 0.05, 3) * (guard and guard.stretch() or 1)\n', 1),
+    ('low fps: prestige move guard',
+     '    local function L27_2(A0_3, A1_3)\n'
+     '      if not A0_3 or not A1_3 then\n'
+     '        return\n'
+     '      end\n',
+     '    local function L27_2(A0_3, A1_3)\n'
+     '      if not A0_3 or not A1_3 then\n'
+     '        return\n'
+     '      end\n'
+     '      -- [port] (user request) Lag Guard: wait for steady frames before moving\n'
+     '      local guard = getgenv()._YBA_LagGuard\n'
+     '      if guard and guard.wait() and not A0_3.Parent then\n'
+     '        return\n'
+     '      end\n', 1),
+    ('low fps: prestige tween duration',
+     '        local L3_3 = math.clamp(L2_3 / 425, 0.05, 3)\n',
+     '        local L3_3 = math.clamp(L2_3 / 425, 0.05, 3) * (guard and guard.stretch() or 1)   -- [port] low FPS\n', 1),
+    ('low fps: physics nudge length',
+     '      for L6_2 = 1, 5 do\n'
+     '        L6_1.Heartbeat:Wait()\n'
+     '      end\n',
+     '      -- [port] 5 frames was about 83 ms at 60 FPS; below that it is kept near 83 ms (Lag Guard on)\n'
+     '      local guard = getgenv()._YBA_LagGuard\n'
+     '      local frames = guard and math.max(1, math.floor(5 / guard.stretch() + 0.5)) or 5\n'
+     '      for L6_2 = 1, frames do\n'
+     '        L6_1.Heartbeat:Wait()\n'
+     '      end\n', 1),
 ]
 
 # Coordinator checkpoints (coordinator.lua): (name, anchor, text inserted after the anchor's first

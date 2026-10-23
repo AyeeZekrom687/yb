@@ -801,6 +801,15 @@ do
     return true
   end
 
+  -- the script's movement timings assume 60 FPS: how much longer a move must take at the
+  -- current frame rate so each frame moves no further than at 60 FPS (1 at 60 FPS or above)
+  function G.stretch()
+    if not G.enabled then
+      return 1
+    end
+    return math.clamp(60 * G.avg, 1, 6)
+  end
+
   function G.status()
     if G.lastSpike == 0 then
       return string.format("no hitch yet, average frame %.3f s", G.avg)
@@ -2495,7 +2504,7 @@ do
   
   local L87_1
   pcall(function()
-    L6_1.Heartbeat:Connect(function()
+    L6_1.Heartbeat:Connect(function(frameDt)
       local L0_3 = L2_1 or game:GetService("Players") and game:GetService("Players").LocalPlayer
       local L1_3 = L0_3 and L0_3.Character
       local L2_3 = L1_3 and L1_3:FindFirstChild("HumanoidRootPart")
@@ -2503,7 +2512,9 @@ do
         local L3_3 = L2_3.Position
         if L87_1 then
           local L4_3 = (L3_3 - L87_1).Magnitude
-          if 18 < L4_3 then
+          -- [port] 18 studs in one frame meant 1080 studs/s at 60 FPS; below 60 FPS the same speed
+          -- covers more per frame, so the threshold scales with frame time (same at 60 FPS and up)
+          if math.max(18, 1080 * (frameDt or 0)) < L4_3 then
             recordTeleport()
           end
         end
@@ -6628,7 +6639,10 @@ do
         L2_2:ChangeState(Enum.HumanoidStateType.Running)
         L1_2.AssemblyLinearVelocity = Vector3.new(0, 0.05, 0)
       end)
-      for L6_2 = 1, 5 do
+      -- [port] 5 frames was about 83 ms at 60 FPS; below that it is kept near 83 ms (Lag Guard on)
+      local guard = getgenv()._YBA_LagGuard
+      local frames = guard and math.max(1, math.floor(5 / guard.stretch() + 0.5)) or 5
+      for L6_2 = 1, frames do
         L6_1.Heartbeat:Wait()
       end
       pcall(function()
@@ -6737,7 +6751,9 @@ do
     local L5_2 = A0_2.Parent
     zeroRootVelocity(A0_2)
     local L6_2 = math.max(A2_2 or L149_1 or 425, 50)
-    local L7_2 = math.clamp(L4_2 / L6_2, 0.05, 3)
+    -- [port] (user request) below 60 FPS the tween takes longer, so each frame moves no further
+    -- than at 60 FPS (Lag Guard on; unchanged at 60 FPS and up)
+    local L7_2 = math.clamp(L4_2 / L6_2, 0.05, 3) * (guard and guard.stretch() or 1)
     local L8_2 = L8_1:Create(A0_2, TweenInfo.new(L7_2, Enum.EasingStyle.Linear), {CFrame = A1_2})
     L148_1 = L8_2
     L159_1 = true
@@ -18353,6 +18369,11 @@ do
       if not A0_3 or not A1_3 then
         return
       end
+      -- [port] (user request) Lag Guard: wait for steady frames before moving
+      local guard = getgenv()._YBA_LagGuard
+      if guard and guard.wait() and not A0_3.Parent then
+        return
+      end
       if getgenv()._YBA_directTP then
         L25_2()
         A0_3.CFrame = A1_3
@@ -18364,7 +18385,7 @@ do
         if L2_3 < 1 then
           return
         end
-        local L3_3 = math.clamp(L2_3 / 425, 0.05, 3)
+        local L3_3 = math.clamp(L2_3 / 425, 0.05, 3) * (guard and guard.stretch() or 1)   -- [port] low FPS
         local L4_3 = L8_1:Create(A0_3, TweenInfo.new(L3_3, Enum.EasingStyle.Linear), {CFrame = A1_3})
         L4_3:Play()
         local L5_3 = tick()

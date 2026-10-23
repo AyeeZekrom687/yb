@@ -228,6 +228,17 @@ Only the hub's own backend is changed; all Roblox remote calls are untouched.
    previous build apart from the guard's Heartbeat connection); harness: injected lag held the
    item farm's next move until 1.5 s after the lag ended. Keep an FPS cap above 10, or the
    guard counts every frame as lag (it then still moves after 10 s waits).
+22. Low-FPS timings (user request: the script assumed 60 FPS). Only three things counted
+   frames: the teleport detector (18 studs between two frames = 1080 studs/s at 60 FPS, but at
+   20 FPS a normal 425 studs/s tween counted as a teleport every frame and kept resetting the
+   0.7 s teleport cooldown), tween durations (time-based, so each frame jumped further at low
+   FPS: 21 studs/frame at 20 FPS against 7 at 60), and wakeUpPhysicsAndSync's 5-frame nudge
+   (250 ms at 20 FPS, run every 0.25 s while the item farm waits). Now: detector threshold
+   `max(18, 1080 * frameDt)`; tweens (`tweenMoveTo`, Auto Prestige's `L27_2`) last
+   `stretch = clamp(60 * average frame time, 1, 6)` times longer so each frame moves as far as
+   at 60 FPS; the nudge waits `max(1, round(5 / stretch))` frames. Auto Prestige's `L27_2` also
+   waits for the Lag Guard. All identical at 60 FPS and above (harness traces identical); the
+   scaling follows the Lag Guard toggle. Every other wait in the script is in seconds.
 Kept as in the original: safe mode (`YBA/NO_AUTOSTART.txt`), headless mode (`YBA/NO_UI.txt`),
 webhooks, server hop.
 The payload contains no HWID or heartbeat calls (those are in the loader, which is not shipped).

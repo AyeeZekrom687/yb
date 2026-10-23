@@ -50,6 +50,15 @@ do
     return true
   end
 
+  -- the script's movement timings assume 60 FPS: how much longer a move must take at the
+  -- current frame rate so each frame moves no further than at 60 FPS (1 at 60 FPS or above)
+  function G.stretch()
+    if not G.enabled then
+      return 1
+    end
+    return math.clamp(60 * G.avg, 1, 6)
+  end
+
   function G.status()
     if G.lastSpike == 0 then
       return string.format("no hitch yet, average frame %.3f s", G.avg)
